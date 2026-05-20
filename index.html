@@ -1444,6 +1444,9 @@
     <div style="padding:0.8rem 1.2rem;border-bottom:1px solid var(--border)">
       <div class="table-title" style="margin-bottom:0.7rem" data-i18n="tableTitle">📋 قائمة المحولات</div>
       <div class="filters-toolbar">
+        <select id="filterTeam" onchange="currentPage=1;renderTable()" style="display:none">
+          <option value="">👥 All Teams</option>
+        </select>
         <select id="stationFilter" onchange="currentPage=1;renderTable()">
           <option value="">🏭 كل المحطات</option>
         </select>
@@ -1866,6 +1869,15 @@
       capSel.innerHTML = `<option value="">${t('allCapacities')}</option>` +
         capacities.map(c => `<option value="${c}" ${c===currentCap?'selected':''}>${c} KVA</option>`).join('');
     }
+
+    const teamSel = document.getElementById('filterTeam');
+    if (teamSel && isAdmin) {
+      teamSel.style.display = '';
+      const currentTeamFilter = teamSel.value;
+      const teams = [...new Set(records.map(r => r.team).filter(Boolean))].sort();
+      teamSel.innerHTML = `<option value="">👥 All Teams</option>` +
+        teams.map(t => `<option value="${t}" ${t===currentTeamFilter?'selected':''}>${t}</option>`).join('');
+    }
   }
 
   function matchesSearch(rec, query, mode) {
@@ -1886,14 +1898,16 @@
     const stationFilter  = document.getElementById('stationFilter')?.value  || '';
     const typeFilter     = document.getElementById('filterType')?.value     || '';
     const capacityFilter = document.getElementById('filterCapacity')?.value || '';
+    const teamFilter     = document.getElementById('filterTeam')?.value     || '';
     const searchQuery    = document.getElementById('searchInput')?.value    || '';
     return records.filter(rec => {
       const capacity = String(rec.capacity || '').replace(/,/g, '');
       const okStation  = !stationFilter  || rec.station === stationFilter;
       const okType     = !typeFilter     || rec.type    === typeFilter;
       const okCapacity = !capacityFilter || capacity    === capacityFilter;
+      const okTeam     = !teamFilter     || rec.team    === teamFilter;
       const okSearch   = !searchQuery || String(rec.id || '').includes(searchQuery.trim());
-      return okStation && okType && okCapacity && okSearch;
+      return okStation && okType && okCapacity && okTeam && okSearch;
     });
   }
 

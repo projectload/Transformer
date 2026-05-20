@@ -13,7 +13,12 @@
       "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\(\"c:\\\\Users\\\\ndl1378.DISTRIBUTION\\\\OneDrive - Electricity Holding Company \\(S.A.O.C.\\)\\\\المستندات\\\\Transformer\\\\97ecfaff-2ca7-4e26-ada9-e87340085cc3.png\"\\); $b64 = [Convert]::ToBase64String\\($bytes\\); $b64 | Set-Content \"c:\\\\Users\\\\ndl1378.DISTRIBUTION\\\\OneDrive - Electricity Holding Company \\(S.A.O.C.\\)\\\\المستندات\\\\Transformer\\\\logo_b64.txt\" -Encoding UTF8; Write-Output \"Done\")",
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\ndl1378.DISTRIBUTION\\\\OneDrive - Electricity Holding Company \\(S.A.O.C.\\)\\\\المستندات\\\\Transformer\" -Recurse -Directory | Select-Object -First 20 | ForEach-Object { $_.FullName })",
       "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\oxaao\\\\OneDrive\\\\Documents\\\\GitHub\\\\Transformer\" -Force -Recurse -Directory | Select-Object -First 20 | ForEach-Object { $_.FullName })",
-      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\oxaao\\\\OneDrive\\\\Documents\\\\GitHub\\\\Transformer\" -Recurse -Depth 3 -Force | Where-Object { $_.PSIsContainer -eq $false } | Select-Object FullName | ConvertTo-Csv -NoTypeInformation | Select-Object -First 50)"
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\oxaao\\\\OneDrive\\\\Documents\\\\GitHub\\\\Transformer\" -Recurse -Depth 3 -Force | Where-Object { $_.PSIsContainer -eq $false } | Select-Object FullName | ConvertTo-Csv -NoTypeInformation | Select-Object -First 50)",
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\oxaao\\\\OneDrive\\\\Documents\\\\GitHub\\\\Transformer\\\\backend\" -Recurse | Where-Object {$_.PSIsContainer} | Select-Object FullName | Format-Table -AutoSize | head -30)",
+      "PowerShell(ls -R \"c:\\\\Users\\\\oxaao\\\\OneDrive\\\\Documents\\\\GitHub\\\\Transformer\")",
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\oxaao\\\\OneDrive\\\\Documents\\\\GitHub\\\\Transformer\\\\backend\" -Force | Where-Object {$_.Name -ne 'node_modules'})",
+      "PowerShell(grep -n \"lat\\\\|lng\" \"c:\\\\Users\\\\oxaao\\\\OneDrive\\\\Documents\\\\GitHub\\\\Transformer\\\\supabase_schema.sql\")",
+      "PowerShell(\\(Get-Content \"c:\\\\Users\\\\oxaao\\\\OneDrive\\\\Documents\\\\GitHub\\\\Transformer\\\\supabase_schema.sql\" | Measure-Object -Line\\).Lines)"
     ]
   }
 }
