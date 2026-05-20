@@ -2002,11 +2002,12 @@
     const total    = records.length;
     const cap      = records.reduce((s,r) => s + Number(r.capacity), 0);
     const outputs  = records.reduce((s,r) => s + Number(r.outputs), 0);
+    const usedOut  = records.reduce((s,r) => s + usedFeeders(r.uid), 0);
     const groundCount = records.filter(r => r.type === 'أرضي' || r.type === 'Ground').length;
     const poleCount   = records.filter(r => r.type === 'معلق' || r.type === 'Pole').length;
     document.getElementById('statTotal').textContent    = total;
     document.getElementById('statCapacity').textContent = cap.toLocaleString();
-    document.getElementById('statOutputs').textContent  = outputs;
+    document.getElementById('statOutputs').innerHTML    = `${outputs} <span style="font-size:0.65em;color:var(--text-muted);font-weight:400">(${usedOut} used)</span>`;
     document.getElementById('statGround').textContent   = (lang==='ar'?'الأرضية':'GMT') + ': ' + groundCount;
     document.getElementById('statPole').textContent     = (lang==='ar'?'المعلقة':'PMT') + ': ' + poleCount;
   }
