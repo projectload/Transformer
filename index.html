@@ -2385,6 +2385,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
     updateCapacityOptions();
     document.getElementById('fCapacity').value = r.capacity;
     updateLvFeeders();
+    document.getElementById('fOutputs').value = r.outputs;
     editId = uid;
     window.scrollTo({ top: 0, behavior: 'smooth' });
     showToast(t('toastEditing'));
@@ -2598,16 +2599,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
       if (f.savedAt === undefined) f.savedAt = null;
     });
 
-    document.getElementById('lmMeta').innerHTML =
-      `<span>${r.station}</span> — ${t('lmId')}: <span>${r.id}</span>`;
-    document.getElementById('lmInfoRow').innerHTML = [
-      [t('lmStation'),    r.station],
-      [t('fHvFeederLabel'), formatHvFeeder(r.hvFeeder)],
-      [t('lmId'),         r.id],
-      [t('lmType'),       translateType(r.type)],
-      [t('lmCapacity'),   r.capacity.toLocaleString() + ' ' + t('kva')],
-      [t('lmOutputs'),    r.outputs + ' ' + t('feederUnit') + ' <span style="opacity:0.6;font-size:0.85em">('+usedFeeders(uid)+' '+( lang==='ar'?'مستخدم':'used')+')</span>'],
-    ].map(([k,v]) => `<div class="lm-info-item">${k}: <strong>${v}</strong></div>`).join('');
+    renderLoadInfoRow(uid);
 
     buildVoltageSection(uid);
     buildFeederTabs(uid);
@@ -2621,6 +2613,88 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
   function closeLoadModal() {
     document.getElementById('loadModal').classList.remove('active');
     currentLoadUid = null;
+  }
+
+  function renderLoadInfoRow(uid) {
+    const r = records.find(x => x.uid === uid);
+    if (!r) return;
+    document.getElementById('lmMeta').innerHTML =
+      `<span>${r.station}</span> — ${t('lmId')}: <span>${r.id}</span>`;
+    document.getElementById('lmInfoRow').innerHTML = [
+      [t('lmStation'),    r.station],
+      [t('fHvFeederLabel'), formatHvFeeder(r.hvFeeder)],
+      [t('lmId'),         r.id],
+      [t('lmType'),       translateType(r.type)],
+      [t('lmCapacity'),   r.capacity.toLocaleString() + ' ' + t('kva')],
+      [t('lmOutputs'),    r.outputs + ' ' + t('feederUnit') + ' <span style="opacity:0.6;font-size:0.85em">('+usedFeeders(uid)+' '+( lang==='ar'?'مستخدم':'used')+')</span>'],
+    ].map(([k,v]) => `<div class="lm-info-item">${k}: <strong>${v}</strong></div>`).join('');
+  }
+
+  function addFeeder() {
+    const uid = currentLoadUid;
+    if (!uid) return;
+    const rec = records.find(r => r.uid === uid);
+    if (!rec || !loadings[uid]) return;
+    syncFormToMemory();
+    rec.outputs = Number(rec.outputs) + 1;
+    loadings[uid].feeders.push({ num: loadings[uid].feeders.length + 1, name: '', iL1:'', iL2:'', iL3:'', iN:'', savedAt: null });
+    if (loadings[uid]._round && loadings[uid]._allRounds && loadings[uid]._allRounds[loadings[uid]._round]) {
+      loadings[uid]._allRounds[loadings[uid]._round].feeders = loadings[uid].feeders;
+    }
+    localStorage.setItem('transformers', JSON.stringify(records));
+    localStorage.setItem('loadings', JSON.stringify(loadings));
+    pushTransformer(rec, true).catch(e => showToast('⚠️ ' + e.message, 'error'));
+    pushLoadingData(uid).catch(() => {});
+    activeFeederIdx = loadings[uid].feeders.length - 1;
+    renderLoadInfoRow(uid);
+    buildFeederTabs(uid);
+    buildFeederForms(uid);
+    document.querySelectorAll('.reading-form').forEach((el, i) => el.classList.toggle('active', i === activeFeederIdx));
+    renderTable();
+    showToast(lang === 'ar' ? '➕ تمت إضافة فيدر' : '➕ Feeder added', 'success');
+  }
+
+  // Minimum feeders allowed for a transformer = the capacity-based default
+  function baseFeeders(rec) {
+    if (!rec) return 0;
+    const map = lvFeedersByTypeAndCapacity[rec.type] || {};
+    return map[Number(rec.capacity)] !== undefined ? map[Number(rec.capacity)] : 0;
+  }
+
+  function removeFeeder() {
+    const uid = currentLoadUid;
+    if (!uid) return;
+    const rec = records.find(r => r.uid === uid);
+    if (!rec || !loadings[uid]) return;
+    const base = baseFeeders(rec);
+    const cur  = Number(rec.outputs);
+    if (cur <= base) {
+      showToast(lang === 'ar' ? `لا يمكن الإنقاص أقل من ${base} مخارج` : `Cannot go below ${base} feeders`, 'error');
+      return;
+    }
+    const lastIdx = cur - 1;
+    const lastFeeder = loadings[uid].feeders[lastIdx];
+    if (lastFeeder && hasData(lastFeeder) &&
+        !confirm(lang === 'ar' ? `الفيدر ${lastIdx + 1} يحتوي على قراءات. هل تريد حذفه؟` : `Feeder ${lastIdx + 1} has readings. Remove it?`)) {
+      return;
+    }
+    syncFormToMemory();
+    loadings[uid].feeders.splice(lastIdx, 1);
+    rec.outputs = cur - 1;
+    if (loadings[uid]._round && loadings[uid]._allRounds && loadings[uid]._allRounds[loadings[uid]._round]) {
+      loadings[uid]._allRounds[loadings[uid]._round].feeders = loadings[uid].feeders;
+    }
+    localStorage.setItem('transformers', JSON.stringify(records));
+    localStorage.setItem('loadings', JSON.stringify(loadings));
+    pushTransformer(rec, true).catch(e => showToast('⚠️ ' + e.message, 'error'));
+    pushLoadingData(uid).catch(() => {});
+    if (activeFeederIdx >= rec.outputs) activeFeederIdx = rec.outputs - 1;
+    renderLoadInfoRow(uid);
+    buildFeederTabs(uid);
+    buildFeederForms(uid);
+    document.querySelectorAll('.reading-form').forEach((el, i) => el.classList.toggle('active', i === activeFeederIdx));
+    renderTable();
+    showToast(lang === 'ar' ? '➖ تم حذف فيدر' : '➖ Feeder removed', 'success');
   }
 
   // ── Location Picker ──────────────────────────────────
@@ -2906,7 +2980,15 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
       return `<button class="feeder-tab ${i===activeFeederIdx?'active':''}" onclick="switchFeeder(${i})">
         ${filled ? `<span class="tab-dot" style="background:${dotColor}"></span>` : ''}${t('lmFeeder')} ${f.num||i+1}${isBest?' 🔥':''}
       </button>`;
-    }).join('');
+    }).join('') +
+    `<button class="feeder-tab" onclick="addFeeder()" title="${lang==='ar'?'إضافة فيدر':'Add feeder'}" style="border-style:dashed;border-color:var(--accent3);color:var(--accent3);font-weight:700">
+      ➕ ${lang==='ar'?'إضافة فيدر':'Add Feeder'}
+    </button>` +
+    (cnt > baseFeeders(rec)
+      ? `<button class="feeder-tab" onclick="removeFeeder()" title="${lang==='ar'?'حذف آخر فيدر':'Remove last feeder'}" style="border-style:dashed;border-color:var(--danger);color:var(--danger);font-weight:700">
+      ➖ ${lang==='ar'?'حذف فيدر':'Remove Feeder'}
+    </button>`
+      : '');
   }
 
   function hasData(f) {
