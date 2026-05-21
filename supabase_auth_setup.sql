@@ -294,3 +294,64 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.admin_reject_reset_request(TEXT, INT) TO anon;
+-- ============================================
+-- TEAM ADMIN (can delete records from own team)
+-- ============================================
+-- Adds a THIRD password per team for a "team admin":
+--   * member password → full edit (add/edit), unchanged.
+--   * viewer password → read-only, unchanged.
+--   * team_admin password → add/edit + delete own team records.
+
+-- 15. ADD the team_admin password column (nullable, safe to re-run)
+ALTER TABLE public.team_auth
+  ADD COLUMN IF NOT EXISTS team_admin_password_hash TEXT;
+
+-- 16. UPDATE verify_team_role to also return 'team_admin'
+CREATE OR REPLACE FUNCTION public.verify_team_role(p_team TEXT, p_password TEXT)
+RETURNS TEXT
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public, extensions
+AS $$
+  SELECT CASE
+    WHEN EXISTS (
+      SELECT 1 FROM public.team_auth
+      WHERE team_name = p_team
+        AND password_hash = extensions.crypt(p_password, password_hash)
+    ) THEN 'member'
+    WHEN EXISTS (
+      SELECT 1 FROM public.team_auth
+      WHERE team_name = p_team
+        AND viewer_password_hash IS NOT NULL
+        AND viewer_password_hash = extensions.crypt(p_password, viewer_password_hash)
+    ) THEN 'viewer'
+    WHEN EXISTS (
+      SELECT 1 FROM public.team_auth
+      WHERE team_name = p_team
+        AND team_admin_password_hash IS NOT NULL
+        AND team_admin_password_hash = extensions.crypt(p_password, team_admin_password_hash)
+    ) THEN 'team_admin'
+    ELSE NULL
+  END;
+$$;
+
+-- 17. SEED team_admin passwords — one per team.
+--     Re-run any line to change a team''s team_admin password later.
+UPDATE public.team_auth SET team_admin_password_hash = extensions.crypt('ibri_del',     extensions.gen_salt('bf')) WHERE team_name = 'Ibri';
+UPDATE public.team_auth SET team_admin_password_hash = extensions.crypt('wadi_del',     extensions.gen_salt('bf')) WHERE team_name = 'Wadi Alain';
+UPDATE public.team_auth SET team_admin_password_hash = extensions.crypt('araqi_del',    extensions.gen_salt('bf')) WHERE team_name = 'Araqi';
+UPDATE public.team_auth SET team_admin_password_hash = extensions.crypt('hijermat_del', extensions.gen_salt('bf')) WHERE team_name = 'Hijermat';
+UPDATE public.team_auth SET team_admin_password_hash = extensions.crypt('dank_del',     extensions.gen_salt('bf')) WHERE team_name = 'Dank';
+UPDATE public.team_auth SET team_admin_password_hash = extensions.crypt('yanqul_del',   extensions.gen_salt('bf')) WHERE team_name = 'Yanqul';
+UPDATE public.team_auth SET team_admin_password_hash = extensions.crypt('hamra_del',    extensions.gen_salt('bf')) WHERE team_name = 'Hamra AlDaroo';
+UPDATE public.team_auth SET team_admin_password_hash = extensions.crypt('masrooq_del',  extensions.gen_salt('bf')) WHERE team_name = 'Masrooq';
+
+-- ============================================
+-- HELPER: CHANGE a team''s team_admin password
+-- ============================================
+--   UPDATE public.team_auth
+--   SET team_admin_password_hash = extensions.crypt('NEW_PASSWORD', extensions.gen_salt('bf'))
+--   WHERE team_name = 'TEAM_NAME';
+--
+-- Verify (should return 'team_admin'):
+--   SELECT public.verify_team_role('Ibri', 'ibri_del');

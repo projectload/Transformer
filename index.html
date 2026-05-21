@@ -1273,7 +1273,6 @@
   /* ── Read-only team admin (viewer) mode ─────────────── */
   /* Hide all edit affordances; readings/reports/map stay visible */
   body.viewer-mode .btn-icon.edit,
-  body.viewer-mode .btn-icon.del,
   body.viewer-mode #newRoundBtn,
   body.viewer-mode [onclick^="openLocationModal"],
   body.viewer-mode [onclick^="addFeeder"],
@@ -1784,6 +1783,7 @@
 
   let isAdmin = false;
   let isViewer = false; // read-only team admin: can view but not edit/change anything
+  let isTeamAdmin = false; // team admin: can delete records belonging to their own team
 
   // Block any write action when logged in as a read-only team admin
   function blockIfViewer() {
@@ -1980,7 +1980,7 @@
                 <button class="btn-icon" title="${t('loadTitle')}" onclick="openLoadModal('${r.uid}')" style="border-color:rgba(0,255,157,0.3);color:var(--accent3)">📊</button>
                 <button class="btn-icon" title="${lang==='ar'?'تقرير':'Report'}" onclick="openReport('${r.uid}')" style="border-color:rgba(167,139,250,0.4);color:#a78bfa">📄</button>
                 <button class="btn-icon" title="${r.lat ? (lang==='ar'?'تعديل الموقع':'Edit Location') : (lang==='ar'?'تحديد الموقع':'Set Location')}" onclick="openLocationModal('${r.uid}')" style="border-color:${r.lat?'rgba(251,191,36,0.4)':'rgba(107,127,163,0.25)'};color:${r.lat?'#fbbf24':'var(--text-muted)'};opacity:${r.lat?'1':'0.5'}">📍</button>
-                ${isAdmin ? `<button class="btn-icon del" title="${t('delTitle')}" onclick="deleteRecord('${r.uid}')" data-uid="${r.uid}">🗑️</button>` : ''}
+                ${(isAdmin || isViewer || isTeamAdmin) ? `<button class="btn-icon del" title="${t('delTitle')}" onclick="deleteRecord('${r.uid}')" data-uid="${r.uid}">🗑️</button>` : ''}
               </div>
             </td>
           </tr>`;
@@ -2417,10 +2417,24 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
     showToast(t('toastEditing'));
   }
 
-  function deleteRecord(uid) {
+  async function deleteRecord(uid) {
+    if (isViewer || isTeamAdmin) {
+      const rec = records.find(r => r.uid === uid);
+      if (rec && rec.team !== currentTeam) {
+        showToast(lang==='ar' ? '⛔ لا يمكنك حذف محولات فريق آخر' : '⛔ Cannot delete records from another team', 'error');
+        return;
+      }
+    }
     if (!confirm(t('confirmDelete'))) return;
+    try {
+      await supa.delete(`transformers?uid=eq.${encodeURIComponent(uid)}`);
+      await supa.delete(`loadings?uid=eq.${encodeURIComponent(uid)}`);
+    } catch(e) {
+      showToast(lang==='ar' ? '❌ فشل الحذف من الخادم' : '❌ Failed to delete from server', 'error');
+      return;
+    }
     records = records.filter(r => r.uid !== uid);
-    localStorage.setItem('transformers', JSON.stringify(records));
+    delete loadings[uid];
     updateStationFilter();
     renderTable();
     showToast(t('toastDeleted'), 'error');
@@ -4467,10 +4481,10 @@ ${(()=>{
 
     const role = await verifyTeamRole(team, pw);
     loginBtn.disabled = false; loginBtn.style.opacity = '1'; loginBtn.textContent = 'Login →';
-    if (role === 'member' || role === 'viewer') {
-      currentTeam = team; isAdmin = false; isViewer = (role === 'viewer');
+    if (role === 'member' || role === 'viewer' || role === 'team_admin') {
+      currentTeam = team; isAdmin = false; isViewer = (role === 'viewer'); isTeamAdmin = (role === 'team_admin');
       err.textContent = '';
-      saveSession({team:currentTeam, isAdmin, isViewer});
+      saveSession({team:currentTeam, isAdmin, isViewer, isTeamAdmin});
       launchApp();
     } else {
       err.textContent = '❌ Incorrect password';
@@ -4654,7 +4668,7 @@ ${(()=>{
   function doLogout() {
     localStorage.removeItem('txSession');
     localStorage.removeItem('lastActivityAt');
-    currentTeam=null; isAdmin=false; isViewer=false; adminPwCache=null; records=[]; loadings={};
+    currentTeam=null; isAdmin=false; isViewer=false; isTeamAdmin=false; adminPwCache=null; records=[]; loadings={};
     document.body.classList.remove('viewer-mode');
     document.getElementById('adminResetPanel').style.display='none';
     document.getElementById('adminBadge').style.display='none';
@@ -4775,7 +4789,11 @@ ${(()=>{
 
   const _origDeleteRecord = deleteRecord;
   deleteRecord = async function(uid) {
-    if (blockIfViewer()) return;
+    if (!isAdmin && !isViewer && !isTeamAdmin) { showToast(lang==='ar'?'⛔ صلاحية الحذف للأدمن فقط':'⛔ Delete requires admin access','error'); return; }
+    if (isViewer || isTeamAdmin) {
+      const rec = records.find(r=>r.uid===uid);
+      if (rec && rec.team !== currentTeam) { showToast(lang==='ar'?'⛔ لا يمكنك حذف محولات فريق آخر':'⛔ Cannot delete records from another team','error'); return; }
+    }
     if(!confirm(t('confirmDelete'))) return;
     try {
       await supa.delete(`loadings?uid=eq.${uid}`);
@@ -4837,6 +4855,7 @@ ${(()=>{
     const pill=document.getElementById('teamPillEl');
     if(isAdmin){pill.textContent='🔴 Admin — All Teams';pill.classList.add('admin-pill');}
     else if(isViewer){pill.textContent='👁️ '+currentTeam+(lang==='ar'?' — قراءة فقط':' — Read-only');pill.classList.remove('admin-pill');}
+    else if(isTeamAdmin){pill.textContent='🔑 '+currentTeam+(lang==='ar'?' — أدمن الفريق':' — Team Admin');pill.classList.remove('admin-pill');}
     else{pill.textContent='👥 '+currentTeam;pill.classList.remove('admin-pill');}
     document.body.classList.toggle('viewer-mode', isViewer);
     await fetchAll();
@@ -4883,7 +4902,7 @@ ${(()=>{
   function logoutExpiredSession() {
     localStorage.removeItem('txSession');
     localStorage.removeItem('lastActivityAt');
-    currentTeam = null; isAdmin = false; isViewer = false; adminPwCache = null; records = []; loadings = {};
+    currentTeam = null; isAdmin = false; isViewer = false; isTeamAdmin = false; adminPwCache = null; records = []; loadings = {};
     document.body.classList.remove('viewer-mode');
     document.getElementById('adminResetPanel').style.display = 'none';
     document.getElementById('adminBadge').style.display = 'none';
@@ -4922,7 +4941,7 @@ ${(()=>{
   if (isSessionValid()) {
     try {
       const s = JSON.parse(localStorage.getItem('txSession'));
-      currentTeam = s.team; isAdmin = s.isAdmin; isViewer = !!s.isViewer;
+      currentTeam = s.team; isAdmin = s.isAdmin; isViewer = !!s.isViewer; isTeamAdmin = !!s.isTeamAdmin;
       updateActivity();
       launchApp();
     } catch(e) { showLoginScreen(); }
