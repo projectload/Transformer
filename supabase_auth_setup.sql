@@ -250,6 +250,28 @@ UPDATE public.team_auth SET viewer_password_hash = extensions.crypt('dankadmin',
 UPDATE public.team_auth SET viewer_password_hash = extensions.crypt('yanquladmin',   extensions.gen_salt('bf')) WHERE team_name = 'Yanqul';
 UPDATE public.team_auth SET viewer_password_hash = extensions.crypt('hamraadmin',    extensions.gen_salt('bf')) WHERE team_name = 'Hamra AlDaroo';
 UPDATE public.team_auth SET viewer_password_hash = extensions.crypt('masrooqadmin',  extensions.gen_salt('bf')) WHERE team_name = 'Masrooq';
+
+-- ============================================
+-- HELPER: CHANGE / RECOVER a team's READ-ONLY ADMIN (viewer) password
+-- ============================================
+-- Run as the super-admin. Replace NEW_PASSWORD and TEAM_NAME.
+-- Must print "UPDATE 1"; if it prints "UPDATE 0" the team_name did not match.
+--
+--   UPDATE public.team_auth
+--   SET viewer_password_hash = extensions.crypt('NEW_PASSWORD', extensions.gen_salt('bf'))
+--   WHERE team_name = 'TEAM_NAME';
+--
+-- Example — set Ibri's read-only admin password to 'ibri2030':
+--   UPDATE public.team_auth
+--   SET viewer_password_hash = extensions.crypt('ibri2030', extensions.gen_salt('bf'))
+--   WHERE team_name = 'Ibri';
+--
+-- Verify (should return 'viewer'):
+--   SELECT public.verify_team_role('Ibri', 'ibri2030');
+--
+-- Valid team_name values (copy exactly):
+--   Ibri | Wadi Alain | Araqi | Hijermat | Dank | Yanqul | Hamra AlDaroo | Masrooq
+-- ============================================
 -- ============================================
 CREATE OR REPLACE FUNCTION public.admin_reject_reset_request(p_admin_pass TEXT, p_request_id INT)
 RETURNS VOID
