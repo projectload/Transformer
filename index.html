@@ -1269,6 +1269,21 @@
     .login-title { font-size: 1.3rem; }
     .stat-value { font-size: 1.1rem; }
   }
+
+  /* ── Read-only team admin (viewer) mode ─────────────── */
+  /* Hide all edit affordances; readings/reports/map stay visible */
+  body.viewer-mode .btn-icon.edit,
+  body.viewer-mode .btn-icon.del,
+  body.viewer-mode #newRoundBtn,
+  body.viewer-mode [onclick^="openLocationModal"],
+  body.viewer-mode [onclick^="addFeeder"],
+  body.viewer-mode [onclick^="removeFeeder"],
+  body.viewer-mode [onclick^="saveFeeder"],
+  body.viewer-mode [onclick^="saveVoltageReadings"] { display: none !important; }
+  /* Lock reading inputs against editing */
+  body.viewer-mode #loadModal input,
+  body.viewer-mode #loadModal select,
+  body.viewer-mode #loadModal textarea { pointer-events: none !important; opacity: 0.75; }
 </style>
 </head>
 <body>
@@ -1768,6 +1783,16 @@
   }
 
   let isAdmin = false;
+  let isViewer = false; // read-only team admin: can view but not edit/change anything
+
+  // Block any write action when logged in as a read-only team admin
+  function blockIfViewer() {
+    if (isViewer) {
+      showToast(lang==='ar' ? '👁️ وضع القراءة فقط — لا يمكن التعديل' : '👁️ Read-only mode — editing disabled', 'error');
+      return true;
+    }
+    return false;
+  }
 
   function toggleAdmin() {
     if (isAdmin) { logout(); return; }
@@ -1790,9 +1815,10 @@
     btn.disabled = false; btn.style.opacity = '1';
     if (ok) {
       isAdmin = true;
+      isViewer = false;
       adminPwCache = pw;
       closeModal();
-      localStorage.setItem('txSession', JSON.stringify({team:currentTeam, isAdmin}));
+      localStorage.setItem('txSession', JSON.stringify({team:currentTeam, isAdmin, isViewer}));
       document.getElementById('adminBadge').style.display = 'inline-flex';
       document.getElementById('adminResetPanel').style.display = 'block';
       loadResetRequests();
@@ -1810,8 +1836,8 @@
     adminPwCache = null;
     document.getElementById('adminBadge').style.display = 'none';
     document.getElementById('adminResetPanel').style.display = 'none';
-    document.getElementById('formSection').style.display = '';
-    localStorage.setItem('txSession', JSON.stringify({team:currentTeam, isAdmin}));
+    document.getElementById('formSection').style.display = isViewer ? 'none' : '';
+    localStorage.setItem('txSession', JSON.stringify({team:currentTeam, isAdmin, isViewer}));
     showToast(t('toastLogout'));
     renderTable();
   }
@@ -2375,6 +2401,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
   }
 
   function editRecord(uid) {
+    if (blockIfViewer()) return;
     const r = records.find(r => r.uid === uid);
     if (!r) return;
     populateStationDropdown(r.station || '');
@@ -2630,6 +2657,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
   }
 
   function addFeeder() {
+    if (blockIfViewer()) return;
     const uid = currentLoadUid;
     if (!uid) return;
     const rec = records.find(r => r.uid === uid);
@@ -2661,6 +2689,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
   }
 
   function removeFeeder() {
+    if (blockIfViewer()) return;
     const uid = currentLoadUid;
     if (!uid) return;
     const rec = records.find(r => r.uid === uid);
@@ -2756,6 +2785,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
   }
 
   async function confirmLocation() {
+    if (blockIfViewer()) return;
     if (!locMarker || !locTargetUid) return;
     const { lat, lng } = locMarker.getLatLng();
     const flatLat = parseFloat(lat.toFixed(6));
@@ -2864,6 +2894,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
   }
 
   function startNewRound() {
+    if (blockIfViewer()) return;
     if (!currentLoadUid) return;
     const uid = currentLoadUid;
     syncFormToMemory();
@@ -4400,6 +4431,16 @@ ${(()=>{
     ab.click();
   }
 
+  // Returns the role for a team login: 'member' | 'viewer' | null
+  async function verifyTeamRole(teamName, password) {
+    try {
+      return await supa.req('POST', 'rpc/verify_team_role', { p_team: teamName, p_password: password });
+    } catch (e) {
+      console.error('Auth error:', e);
+      return null;
+    }
+  }
+
   async function doTeamLogin() {
     const sel = document.getElementById('teamGrid').querySelector('.selected');
     const pw  = document.getElementById('loginPw').value;
@@ -4408,16 +4449,28 @@ ${(()=>{
     const team = sel.dataset.team;
     const loginBtn = document.querySelector('.btn-login-go');
     loginBtn.disabled = true; loginBtn.style.opacity = '0.6'; loginBtn.textContent = '⏳';
-    const ok = await verifyLogin(team, pw);
-    loginBtn.disabled = false; loginBtn.style.opacity = '1'; loginBtn.textContent = 'Login →';
-    if (ok) {
-      if (team === '__admin__') {
-        currentTeam = ADMIN_TEAM; isAdmin = true; adminPwCache = pw;
+
+    if (team === '__admin__') {
+      const ok = await verifyLogin('__admin__', pw);
+      loginBtn.disabled = false; loginBtn.style.opacity = '1'; loginBtn.textContent = 'Login →';
+      if (ok) {
+        currentTeam = ADMIN_TEAM; isAdmin = true; isViewer = false; adminPwCache = pw;
+        err.textContent = '';
+        saveSession({team:currentTeam, isAdmin, isViewer});
+        launchApp();
       } else {
-        currentTeam = team; isAdmin = false;
+        err.textContent = '❌ Incorrect password';
+        document.getElementById('loginPw').value = '';
       }
+      return;
+    }
+
+    const role = await verifyTeamRole(team, pw);
+    loginBtn.disabled = false; loginBtn.style.opacity = '1'; loginBtn.textContent = 'Login →';
+    if (role === 'member' || role === 'viewer') {
+      currentTeam = team; isAdmin = false; isViewer = (role === 'viewer');
       err.textContent = '';
-      saveSession({team:currentTeam, isAdmin});
+      saveSession({team:currentTeam, isAdmin, isViewer});
       launchApp();
     } else {
       err.textContent = '❌ Incorrect password';
@@ -4601,7 +4654,8 @@ ${(()=>{
   function doLogout() {
     localStorage.removeItem('txSession');
     localStorage.removeItem('lastActivityAt');
-    currentTeam=null; isAdmin=false; adminPwCache=null; records=[]; loadings={};
+    currentTeam=null; isAdmin=false; isViewer=false; adminPwCache=null; records=[]; loadings={};
+    document.body.classList.remove('viewer-mode');
     document.getElementById('adminResetPanel').style.display='none';
     document.getElementById('adminBadge').style.display='none';
     document.getElementById('loginScreen').style.display='flex';
@@ -4683,6 +4737,7 @@ ${(()=>{
   // ══════════════════════════════════════════════════
   const _origSaveRecord = saveRecord;
   saveRecord = async function() {
+    if (blockIfViewer()) return;
     const type=document.getElementById('fType').value.trim(), id=document.getElementById('fId').value.trim();
     const station=document.getElementById('fStation').value.trim(), hvFeeder=document.getElementById('fHvFeeder').value.trim();
     const capacity=Number(document.getElementById('fCapacity').value), outputs=Number(document.getElementById('fOutputs').value);
@@ -4720,6 +4775,7 @@ ${(()=>{
 
   const _origDeleteRecord = deleteRecord;
   deleteRecord = async function(uid) {
+    if (blockIfViewer()) return;
     if(!confirm(t('confirmDelete'))) return;
     try {
       await supa.delete(`loadings?uid=eq.${uid}`);
@@ -4731,6 +4787,7 @@ ${(()=>{
 
   const _origSaveFeeder = saveFeeder;
   saveFeeder = async function(fi) {
+    if (blockIfViewer()) return;
     syncFormToMemory();
     loadings[currentLoadUid].feeders[fi].savedAt = new Date().toISOString();
     buildFeederTabs(currentLoadUid); buildFeederForms(currentLoadUid); renderSummary(currentLoadUid); renderAnalysis(currentLoadUid);
@@ -4743,6 +4800,7 @@ ${(()=>{
 
   const _origSaveVoltage = saveVoltageReadings;
   saveVoltageReadings = async function() {
+    if (blockIfViewer()) return;
     if(!currentLoadUid) return;
     const rawPF=parseFloat(document.getElementById('vPF').value);
     loadings[currentLoadUid].pf=isNaN(rawPF)?'0.9':Math.min(0.99,Math.max(0.01,rawPF)).toFixed(2);
@@ -4778,7 +4836,9 @@ ${(()=>{
     // Update team pill
     const pill=document.getElementById('teamPillEl');
     if(isAdmin){pill.textContent='🔴 Admin — All Teams';pill.classList.add('admin-pill');}
+    else if(isViewer){pill.textContent='👁️ '+currentTeam+(lang==='ar'?' — قراءة فقط':' — Read-only');pill.classList.remove('admin-pill');}
     else{pill.textContent='👥 '+currentTeam;pill.classList.remove('admin-pill');}
+    document.body.classList.toggle('viewer-mode', isViewer);
     await fetchAll();
     applyLang();
     updateStationFilter();
@@ -4787,7 +4847,7 @@ ${(()=>{
     // Add team col header visibility
     const thTeam=document.getElementById('thTeam'); if(thTeam) thTeam.style.display=isAdmin?'':'none';
     // Show/hide form and admin panels based on role
-    document.getElementById('formSection').style.display = isAdmin ? 'none' : '';
+    document.getElementById('formSection').style.display = (isAdmin || isViewer) ? 'none' : '';
     if(isAdmin){
       document.getElementById('adminResetPanel').style.display='block';
       loadResetRequests();
@@ -4823,7 +4883,8 @@ ${(()=>{
   function logoutExpiredSession() {
     localStorage.removeItem('txSession');
     localStorage.removeItem('lastActivityAt');
-    currentTeam = null; isAdmin = false; adminPwCache = null; records = []; loadings = {};
+    currentTeam = null; isAdmin = false; isViewer = false; adminPwCache = null; records = []; loadings = {};
+    document.body.classList.remove('viewer-mode');
     document.getElementById('adminResetPanel').style.display = 'none';
     document.getElementById('adminBadge').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
@@ -4861,7 +4922,7 @@ ${(()=>{
   if (isSessionValid()) {
     try {
       const s = JSON.parse(localStorage.getItem('txSession'));
-      currentTeam = s.team; isAdmin = s.isAdmin;
+      currentTeam = s.team; isAdmin = s.isAdmin; isViewer = !!s.isViewer;
       updateActivity();
       launchApp();
     } catch(e) { showLoginScreen(); }

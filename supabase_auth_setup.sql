@@ -199,8 +199,58 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.admin_reject_reset_request(TEXT, INT) TO anon;
+
 -- ============================================
--- ============================================-- ============================================-- ============================================-- ============================================
+-- READ-ONLY TEAM ADMIN  (viewer password per team)
+-- ============================================
+-- Adds a SECOND password per team for a read-only "team admin":
+--   * member password (existing password_hash) → full edit, UNCHANGED.
+--   * viewer password (new viewer_password_hash) → read & view only.
+-- Nothing existing is modified: verify_team_login and member passwords stay intact.
+
+-- 12. ADD the read-only password column (nullable, safe to re-run)
+ALTER TABLE public.team_auth
+  ADD COLUMN IF NOT EXISTS viewer_password_hash TEXT;
+
+-- 13. NEW RPC: returns the role for a team + password
+--     'member' = normal editor (matches password_hash)
+--     'viewer' = read-only team admin (matches viewer_password_hash)
+--     NULL     = wrong password
+CREATE OR REPLACE FUNCTION public.verify_team_role(p_team TEXT, p_password TEXT)
+RETURNS TEXT
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public, extensions
+AS $$
+  SELECT CASE
+    WHEN EXISTS (
+      SELECT 1 FROM public.team_auth
+      WHERE team_name = p_team
+        AND password_hash = extensions.crypt(p_password, password_hash)
+    ) THEN 'member'
+    WHEN EXISTS (
+      SELECT 1 FROM public.team_auth
+      WHERE team_name = p_team
+        AND viewer_password_hash IS NOT NULL
+        AND viewer_password_hash = extensions.crypt(p_password, viewer_password_hash)
+    ) THEN 'viewer'
+    ELSE NULL
+  END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.verify_team_role(TEXT, TEXT) TO anon;
+
+-- 14. SEED read-only (team admin) passwords — one per team.
+--     Re-run any line to change a team's read-only password later.
+UPDATE public.team_auth SET viewer_password_hash = extensions.crypt('ibriadmin',     extensions.gen_salt('bf')) WHERE team_name = 'Ibri';
+UPDATE public.team_auth SET viewer_password_hash = extensions.crypt('wadiadmin',     extensions.gen_salt('bf')) WHERE team_name = 'Wadi Alain';
+UPDATE public.team_auth SET viewer_password_hash = extensions.crypt('araqiadmin',    extensions.gen_salt('bf')) WHERE team_name = 'Araqi';
+UPDATE public.team_auth SET viewer_password_hash = extensions.crypt('hijermatadmin', extensions.gen_salt('bf')) WHERE team_name = 'Hijermat';
+UPDATE public.team_auth SET viewer_password_hash = extensions.crypt('dankadmin',     extensions.gen_salt('bf')) WHERE team_name = 'Dank';
+UPDATE public.team_auth SET viewer_password_hash = extensions.crypt('yanquladmin',   extensions.gen_salt('bf')) WHERE team_name = 'Yanqul';
+UPDATE public.team_auth SET viewer_password_hash = extensions.crypt('hamraadmin',    extensions.gen_salt('bf')) WHERE team_name = 'Hamra AlDaroo';
+UPDATE public.team_auth SET viewer_password_hash = extensions.crypt('masrooqadmin',  extensions.gen_salt('bf')) WHERE team_name = 'Masrooq';
+-- ============================================
 CREATE OR REPLACE FUNCTION public.admin_reject_reset_request(p_admin_pass TEXT, p_request_id INT)
 RETURNS VOID
 LANGUAGE plpgsql
