@@ -4005,16 +4005,6 @@ ${(()=>{
         isAr2?'نسبة تحميل المحول':'Transformer load percentage',
         `${maxCurrent.toFixed(1)} ÷ ${iRated.toFixed(1)} × 100 = <b>${loadPct.toFixed(1)}%</b>`
       )}
-      ${row(
-        'KVA<sub>phase</sub> = V<sub>LN</sub> × I ÷ 1000',
-        isAr2?'الاستطاعة الظاهرية لكل فاز':'Per-phase apparent power',
-        `(${(f1.v1||vLL/SQRT3).toFixed(1)}×${f1.i1.toFixed(0)} + ${(f1.v2||vLL/SQRT3).toFixed(1)}×${f1.i2.toFixed(0)} + ${(f1.v3||vLL/SQRT3).toFixed(1)}×${f1.i3.toFixed(0)}) ÷ 1000 = <b>${kva1ex.toFixed(2)} KVA</b>`
-      )}
-      ${row(
-        'KW = KVA × PF',
-        isAr2?'الاستطاعة الفعلية':'Active power',
-        `${kva1ex.toFixed(2)} × ${pfR} = <b>${kw1ex.toFixed(2)} KW</b>`
-      )}
       ${amp1 ? row(
         'Cable Load% = I<sub>max</sub> ÷ Ampacity × 100',
         isAr2?`حمل الكيبل (${f1.f.name} mm² = ${amp1}A)`:`Cable load (${f1.f.name} mm² = ${amp1}A)`,
@@ -4024,6 +4014,16 @@ ${(()=>{
         'Imb% = (I<sub>max</sub> − I<sub>avg</sub>) ÷ I<sub>avg</sub> × 100',
         isAr2?'نسبة عدم التوازن بين الأطوار':'Phase imbalance percentage',
         `(${imax1.toFixed(1)} − ${iavg1.toFixed(1)}) ÷ ${iavg1.toFixed(1)} × 100 = <b>${imb1.toFixed(1)}%</b>`
+      )}
+      ${row(
+        'KVA<sub>phase</sub> = V<sub>LN</sub> × I ÷ 1000',
+        isAr2?'الاستطاعة الظاهرية لكل فاز':'Per-phase apparent power',
+        `(${(f1.v1||vLL/SQRT3).toFixed(1)}×${f1.i1.toFixed(0)} + ${(f1.v2||vLL/SQRT3).toFixed(1)}×${f1.i2.toFixed(0)} + ${(f1.v3||vLL/SQRT3).toFixed(1)}×${f1.i3.toFixed(0)}) ÷ 1000 = <b>${kva1ex.toFixed(2)} KVA</b>`
+      )}
+      ${row(
+        'KW = KVA × PF',
+        isAr2?'الاستطاعة الفعلية':'Active power',
+        `${kva1ex.toFixed(2)} × ${pfR} = <b>${kw1ex.toFixed(2)} KW</b>`
       )}
     </tbody>
   </table>
