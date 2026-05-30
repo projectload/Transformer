@@ -4893,9 +4893,13 @@ ${(()=>{
     return Date.now() - lastAt < SESSION_TIMEOUT;
   }
 
+  let _lastActivityWrite = 0;
   function updateActivity() {
+    const now = Date.now();
+    if (now - _lastActivityWrite < 30000) return;
     if (localStorage.getItem('txSession')) {
-      localStorage.setItem('lastActivityAt', Date.now().toString());
+      localStorage.setItem('lastActivityAt', now.toString());
+      _lastActivityWrite = now;
     }
   }
 
