@@ -5,7 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>سجل المحولات الكهربائية</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script>
+  function loadXlsx(cb) {
+    if (window.XLS || window.XLSX) { cb(); return; }
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
+    s.onload = cb;
+    document.head.appendChild(s);
+  }
+</script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -1134,6 +1142,10 @@
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
   .sync-dot.syncing{background:#ffcc00}
   .sync-dot.error{background:var(--danger);animation:none}
+  @media (prefers-reduced-motion: reduce) { .sync-dot { animation: none; } }
+  @media (max-width: 768px) {
+    .modal-overlay, .load-modal-overlay, #mapViewModal, #resetPwModal { backdrop-filter: none !important; }
+  }
   .team-pill{display:inline-flex;align-items:center;gap:0.4rem;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--accent);border-radius:20px;padding:0.3rem 0.9rem;font-size:0.82rem;font-family:'Tajawal',sans-serif;font-weight:600}
   .team-pill.admin-pill{background:rgba(255,71,87,0.1);border-color:rgba(255,71,87,0.3);color:var(--danger)}
   .btn-logout{padding:0.3rem 0.8rem;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Cairo',sans-serif;font-size:0.78rem;cursor:pointer;transition:all 0.2s}
@@ -4053,6 +4065,7 @@ ${(()=>{
   // ─── Excel Export via SheetJS (xlsx-js-style) ──────────
   function exportExcel() {
     if (records.length === 0) { showToast(t('toastNoData'), 'error'); return; }
+    if (!window.XLSX) { loadXlsx(() => exportExcel()); return; }
 
     const MAX_FEEDERS = 8;
 
