@@ -1472,13 +1472,16 @@
         <select id="filterTeam" onchange="currentPage=1;renderTable()" style="display:none">
           <option value="">👥 All Teams</option>
         </select>
-        <select id="stationFilter" onchange="currentPage=1;renderTable()">
+        <select id="stationFilter" onchange="currentPage=1;updateHvFeederFilter();renderTable()">
           <option value="">🏭 كل المحطات</option>
         </select>
         <select id="filterType" onchange="currentPage=1;renderTable()">
           <option value="">🔧 كل الأنواع</option>
           <option value="Ground">أرضي</option>
           <option value="Pole">معلق</option>
+        </select>
+        <select id="filterHvFeeder" onchange="currentPage=1;renderTable()">
+          <option value="">🔌 كل فيدرات HV</option>
         </select>
         <select id="filterCapacity" onchange="currentPage=1;renderTable()">
           <option value="">⚡ كل السعات</option>
@@ -1898,6 +1901,8 @@
     sel.innerHTML = `<option value="">${t('allStations')}</option>` +
       stations.map(s => `<option value="${s}" ${s===current?'selected':''}>${s}</option>`).join('');
 
+    updateHvFeederFilter();
+
     const capSel = document.getElementById('filterCapacity');
     if (capSel) {
       const currentCap = capSel.value;
@@ -1917,6 +1922,19 @@
     }
   }
 
+  function updateHvFeederFilter() {
+    const hvSel = document.getElementById('filterHvFeeder');
+    if (!hvSel) return;
+    const selectedStation = document.getElementById('stationFilter')?.value || '';
+    const currentHv = hvSel.value;
+    const source = selectedStation ? records.filter(r => r.station === selectedStation) : records;
+    const hvFeeders = [...new Set(source.map(r => String(r.hvFeeder || '').trim()).filter(Boolean))]
+      .sort((a, b) => Number(a) - Number(b));
+    hvSel.innerHTML = `<option value="">🔌 كل فيدرات HV</option>` +
+      hvFeeders.map(h => `<option value="${h}" ${h===currentHv?'selected':''}>${h}</option>`).join('');
+    if (!hvFeeders.includes(currentHv)) hvSel.value = '';
+  }
+
   function matchesSearch(rec, query, mode) {
     if (!query) return true;
     const q        = query.trim().toLowerCase();
@@ -1932,19 +1950,21 @@
   }
 
   function getFilteredTransformers() {
-    const stationFilter  = document.getElementById('stationFilter')?.value  || '';
-    const typeFilter     = document.getElementById('filterType')?.value     || '';
-    const capacityFilter = document.getElementById('filterCapacity')?.value || '';
-    const teamFilter     = document.getElementById('filterTeam')?.value     || '';
-    const searchQuery    = document.getElementById('searchInput')?.value    || '';
+    const stationFilter   = document.getElementById('stationFilter')?.value   || '';
+    const typeFilter      = document.getElementById('filterType')?.value      || '';
+    const hvFeederFilter  = document.getElementById('filterHvFeeder')?.value  || '';
+    const capacityFilter  = document.getElementById('filterCapacity')?.value  || '';
+    const teamFilter      = document.getElementById('filterTeam')?.value      || '';
+    const searchQuery     = document.getElementById('searchInput')?.value     || '';
     return records.filter(rec => {
       const capacity = String(rec.capacity || '').replace(/,/g, '');
-      const okStation  = !stationFilter  || rec.station === stationFilter;
-      const okType     = !typeFilter     || rec.type    === typeFilter;
-      const okCapacity = !capacityFilter || capacity    === capacityFilter;
-      const okTeam     = !teamFilter     || rec.team    === teamFilter;
-      const okSearch   = !searchQuery || String(rec.id || '').includes(searchQuery.trim());
-      return okStation && okType && okCapacity && okTeam && okSearch;
+      const okStation   = !stationFilter   || rec.station === stationFilter;
+      const okType      = !typeFilter      || rec.type    === typeFilter;
+      const okHvFeeder  = !hvFeederFilter  || String(rec.hvFeeder || '').trim() === hvFeederFilter;
+      const okCapacity  = !capacityFilter  || capacity    === capacityFilter;
+      const okTeam      = !teamFilter      || rec.team    === teamFilter;
+      const okSearch    = !searchQuery || String(rec.id || '').includes(searchQuery.trim());
+      return okStation && okType && okHvFeeder && okCapacity && okTeam && okSearch;
     });
   }
 
