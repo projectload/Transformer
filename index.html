@@ -1687,7 +1687,8 @@
         <span style="position:absolute;right:0.6rem;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:0.85rem;pointer-events:none">🔍</span>
         <input id="mapSearchInput" type="text" placeholder="ابحث برقم المحول..." oninput="mapFilterRender()" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.4rem 2rem 0.4rem 0.7rem;color:var(--text);font-family:'Tajawal',sans-serif;font-size:0.85rem;outline:none;direction:rtl"/>
       </div>
-      <select id="mapStationFilter" onchange="mapFilterRender()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.7rem;color:var(--text);font-family:'Tajawal',sans-serif;font-size:0.85rem;outline:none;min-width:130px"></select>
+      <select id="mapStationFilter" onchange="updateMapFeederFilter();mapFilterRender()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.7rem;color:var(--text);font-family:'Tajawal',sans-serif;font-size:0.85rem;outline:none;min-width:130px"></select>
+      <select id="mapFeederFilter" onchange="mapFilterRender()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.7rem;color:var(--text);font-family:'Tajawal',sans-serif;font-size:0.85rem;outline:none;min-width:130px"></select>
       <div style="display:flex;gap:0.35rem;flex-wrap:wrap">
         <button onclick="mapSetFilter('all')"    id="mf-all"     style="font-size:0.75rem;padding:0.3rem 0.7rem;border-radius:20px;border:1px solid var(--border);background:var(--accent);color:#fff;cursor:pointer;font-family:'Tajawal',sans-serif">الكل</button>
         <button onclick="mapSetFilter('ok')"     id="mf-ok"      style="font-size:0.75rem;padding:0.3rem 0.7rem;border-radius:20px;border:1px solid rgba(34,197,94,0.4);background:transparent;color:#22c55e;cursor:pointer;font-family:'Tajawal',sans-serif">🟢 طبيعي</button>
@@ -5146,6 +5147,9 @@ ${(()=>{
     staSel.innerHTML = `<option value="">${isAr?'🏭 كل المحطات':'🏭 All Stations'}</option>` +
       stations.map(s=>`<option value="${s}">${s}</option>`).join('');
 
+    // Fill HV feeder dropdown
+    updateMapFeederFilter();
+
     if (_mapViewInstance) { _mapViewInstance.remove(); _mapViewInstance = null; }
     _mapMarkers = [];
 
@@ -5196,6 +5200,21 @@ ${(()=>{
     }, 300);
   }
 
+  function updateMapFeederFilter() {
+    const fdSel = document.getElementById('mapFeederFilter');
+    if (!fdSel) return;
+    const isAr = lang === 'ar';
+    const selectedStation = document.getElementById('mapStationFilter')?.value || '';
+    const currentFd = fdSel.value;
+    const source = records.filter(r => r.lat && r.lng)
+      .filter(r => !selectedStation || r.station === selectedStation);
+    const feeders = [...new Set(source.map(r => String(r.hvFeeder || '').trim()).filter(Boolean))]
+      .sort((a, b) => Number(a) - Number(b));
+    fdSel.innerHTML = `<option value="">${isAr?'⚡ كل فيدرات HV':'⚡ All HV Feeders'}</option>` +
+      feeders.map(h => `<option value="${h}" ${h===currentFd?'selected':''}>${formatHvFeeder(h)}</option>`).join('');
+    if (!feeders.includes(currentFd)) fdSel.value = '';
+  }
+
   function mapSetFilter(f) {
     _mapFilter = f;
     ['all','ok','warning','danger','nodata'].forEach(k => {
@@ -5211,12 +5230,14 @@ ${(()=>{
     if (!_mapViewInstance) return;
     const q = (document.getElementById('mapSearchInput').value||'').trim().toLowerCase();
     const sta = (document.getElementById('mapStationFilter').value||'');
+    const fd = (document.getElementById('mapFeederFilter')?.value||'');
     let shown = 0;
     _mapMarkers.forEach(({marker, r, level}) => {
       const matchFilter = _mapFilter==='all' || level===_mapFilter;
       const matchSearch = !q || r.id.toLowerCase().includes(q);
       const matchStation = !sta || r.station === sta;
-      if (matchFilter && matchSearch && matchStation) { marker.addTo(_mapViewInstance); shown++; }
+      const matchFeeder = !fd || String(r.hvFeeder || '').trim() === fd;
+      if (matchFilter && matchSearch && matchStation && matchFeeder) { marker.addTo(_mapViewInstance); shown++; }
       else { marker.remove(); }
     });
     const isAr = lang==='ar';
@@ -5227,7 +5248,8 @@ ${(()=>{
       const match = _mapMarkers.find(({r,level}) => {
         const mf = _mapFilter==='all'||level===_mapFilter;
         const ms = !sta || r.station===sta;
-        return mf && ms && r.id.toLowerCase().includes(q);
+        const mfd = !fd || String(r.hvFeeder || '').trim() === fd;
+        return mf && ms && mfd && r.id.toLowerCase().includes(q);
       });
       if (match) { _mapViewInstance.flyTo([match.r.lat, match.r.lng], 16); match.marker.openPopup(); }
     }
