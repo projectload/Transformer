@@ -26,6 +26,7 @@ CREATE TABLE public.loadings (
   pf NUMERIC DEFAULT 0.9,
   volt_saved_at TIMESTAMPTZ,
   feeders JSONB DEFAULT '[]',
+  tap_no TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (uid, reading_round),
@@ -38,6 +39,7 @@ CREATE TABLE public.loadings (
 -- ALTER TABLE public.loadings ADD COLUMN reading_round INTEGER NOT NULL DEFAULT 1;
 -- ALTER TABLE public.loadings DROP CONSTRAINT loadings_pkey;
 -- ALTER TABLE public.loadings ADD PRIMARY KEY (uid, reading_round);
+-- ALTER TABLE public.loadings ADD COLUMN tap_no TEXT;
 
 -- 3. CREATE INDEXES FOR BETTER PERFORMANCE
 CREATE INDEX idx_transformers_team ON transformers(team);

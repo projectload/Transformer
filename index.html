@@ -4746,7 +4746,7 @@ ${(()=>{
           if (!_allRoundsMap[r.uid]) _allRoundsMap[r.uid] = {};
           _allRoundsMap[r.uid]._txLocation = rawVolt._loc;
         }
-        _allRoundsMap[r.uid][round] = {volt:cleanVolt,pf:r.pf||'0.9',voltSavedAt:r.volt_saved_at,feeders:r.feeders||[]};
+        _allRoundsMap[r.uid][round] = {volt:cleanVolt,pf:r.pf||'0.9',voltSavedAt:r.volt_saved_at,feeders:r.feeders||[],tapNo:r.tap_no||''};
       });
       Object.keys(_allRoundsMap).forEach(uid => {
         const rounds = _allRoundsMap[uid];
@@ -4778,7 +4778,7 @@ ${(()=>{
     const ld=loadings[uid]; if(!ld) return;
     const team=records.find(r=>r.uid===uid)?.team||currentTeam;
     const voltToSave = ld.location ? {...ld.volt, _loc: ld.location} : {...ld.volt};
-    const row={uid,team,volt:voltToSave,pf:ld.pf,volt_saved_at:ld.voltSavedAt||null,feeders:ld.feeders,reading_round:ld._round||1,updated_at:new Date().toISOString()};
+    const row={uid,team,volt:voltToSave,pf:ld.pf,volt_saved_at:ld.voltSavedAt||null,feeders:ld.feeders,tap_no:ld.tapNo||null,reading_round:ld._round||1,updated_at:new Date().toISOString()};
     await supa.upsert('loadings', row);
   }
 
