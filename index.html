@@ -4160,12 +4160,17 @@ ${(()=>{
     const row1 = [];
     const row2 = [];
 
-    const totalCols = 6 + 2 + 6 + MAX_FEEDERS * 4 + 4 + 5; // A..BC = 55
+    const totalCols = 6 + 2 + 6 + MAX_FEEDERS * 4 + 4 + 5 + 1; // A..BD = 56
 
     /* helper to colour a header column */
     function hdr(val, bg) { return { v: val || '', t: 's', s: hdrStyle(bg) }; }
 
-    /* A-B: first two base columns */
+    /* A: Team Name */
+    row0.push(hdr('Team Name', CLR_BASE));
+    row1.push(hdr('', CLR_BASE));
+    row2.push(hdr('', CLR_BASE));
+
+    /* B-C: first two base columns */
     const firstBase = ['Primary Substation', 'H.T Feeder No.'];
     for (let i = 0; i < 2; i++) {
       row0.push(hdr(firstBase[i], CLR_BASE));
@@ -4294,7 +4299,10 @@ ${(()=>{
           ? new Date(latestDate).toLocaleString('en-GB', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
           : '';
 
-        /* A-B */
+        /* A: Team Name */
+        row.push(dCell(rec.team || ''));
+
+        /* B-C */
         row.push(dCell(rec.station || ''));
         row.push(dCell(formatHvFeeder(rec.hvFeeder)));
 
@@ -4330,10 +4338,10 @@ ${(()=>{
         });
 
         /* AU-AX: Total formulas */
-        const rCols = [14, 18, 22, 26, 30, 34, 38, 42];
-        const yCols = [15, 19, 23, 27, 31, 35, 39, 43];
-        const bCols = [16, 20, 24, 28, 32, 36, 40, 44];
-        const nCols = [17, 21, 25, 29, 33, 37, 41, 45];
+        const rCols = [15, 19, 23, 27, 31, 35, 39, 43];
+        const yCols = [16, 20, 24, 28, 32, 36, 40, 44];
+        const bCols = [17, 21, 25, 29, 33, 37, 41, 45];
+        const nCols = [18, 22, 26, 30, 34, 38, 42, 46];
 
         const sumFormula = (cols) => 'SUM(' + cols.map(c => colLetter(c) + exRow).join(',') + ')';
         row.push(fCell(sumFormula(rCols)));
@@ -4341,22 +4349,22 @@ ${(()=>{
         row.push(fCell(sumFormula(bCols)));
         row.push(fCell(sumFormula(nCols)));
 
-        /* AY: MAX */
-        row.push(fCell('MAX(AU' + exRow + ':AW' + exRow + ')'));
+        /* AZ: MAX */
+        row.push(fCell('MAX(AV' + exRow + ':AX' + exRow + ')'));
 
-        /* AZ: MIN */
-        row.push(fCell('MIN(AU' + exRow + ':AW' + exRow + ')'));
+        /* BA: MIN */
+        row.push(fCell('MIN(AV' + exRow + ':AX' + exRow + ')'));
 
-        /* BA: Load % */
-        const vllF = `IF(L${exRow}>0,L${exRow},IF(M${exRow}>0,M${exRow},IF(N${exRow}>0,N${exRow},415)))`;
-        row.push({ f: `IF(F${exRow}>0,(AY${exRow}*SQRT(3)*${vllF}/(F${exRow}*1000))*100,0)`, t: 'n', z: '0.00', s: ds });
+        /* BB: Load % */
+        const vllF = `IF(M${exRow}>0,M${exRow},IF(N${exRow}>0,N${exRow},IF(O${exRow}>0,O${exRow},415)))`;
+        row.push({ f: `IF(G${exRow}>0,(AZ${exRow}*SQRT(3)*${vllF}/(G${exRow}*1000))*100,0)`, t: 'n', z: '0.00', s: ds });
 
-        /* BB: Action Upgrade */
-        row.push({ f: `IF(BA${exRow}>70,"Upgrade","OK - No Upgrade")`, t: 's', s: ds });
+        /* BC: Action Upgrade */
+        row.push({ f: `IF(BB${exRow}>70,"Upgrade","OK - No Upgrade")`, t: 's', s: ds });
 
-        /* BC: Action Balance */
-        const avgF = `AVERAGE(AU${exRow}:AW${exRow})`;
-        const imbF = `IF(${avgF}>0,((AY${exRow}-${avgF})/${avgF})*100,0)`;
+        /* BD: Action Balance */
+        const avgF = `AVERAGE(AV${exRow}:AX${exRow})`;
+        const imbF = `IF(${avgF}>0,((AZ${exRow}-${avgF})/${avgF})*100,0)`;
         row.push({ f: `IF(${imbF}>10,"Need to Balance","OK - Balanced")`, t: 's', s: ds });
 
         aoa.push(row);
@@ -4370,39 +4378,41 @@ ${(()=>{
     /* ── Merges ── */
     function rng(s) { return XLSX.utils.decode_range(s); }
     ws['!merges'] = [
-      /* A1:A3, B1:B3 */
-      rng('A1:A3'), rng('B1:B3'),
-      /* C: Location (rows 1-2 merged, row 3 separate) */
-      rng('C1:C2'),
-      /* D-I: base + Reading No. */
-      rng('D1:D3'), rng('E1:E3'), rng('F1:F3'), rng('G1:G3'), rng('H1:H3'), rng('I1:I3'),
-      /* J-O: Voltage */
-      rng('J1:O1'),
-      rng('J2:L2'),
-      rng('M2:O2'),
-      /* P-AT: Feeders row 1 */
-      rng('P1:S1'), rng('T1:W1'), rng('X1:AA1'), rng('AB1:AE1'),
-      rng('AF1:AI1'), rng('AJ1:AM1'), rng('AN1:AQ1'), rng('AR1:AU1'),
-      /* AV-AX: Total Load */
-      rng('AV1:AY1'),
+      /* A1:A3: Team Name */
+      rng('A1:A3'),
+      /* B1:B3, C1:C3 */
+      rng('B1:B3'), rng('C1:C3'),
+      /* D: Location (rows 1-2 merged, row 3 separate) */
+      rng('D1:D2'),
+      /* E-J: base + Reading No. */
+      rng('E1:E3'), rng('F1:F3'), rng('G1:G3'), rng('H1:H3'), rng('I1:I3'), rng('J1:J3'),
+      /* K-P: Voltage */
+      rng('K1:P1'),
+      rng('K2:M2'),
+      rng('N2:P2'),
+      /* Q-AV: Feeders row 1 */
+      rng('Q1:T1'), rng('U1:X1'), rng('Y1:AB1'), rng('AC1:AF1'),
+      rng('AG1:AJ1'), rng('AK1:AN1'), rng('AO1:AR1'), rng('AS1:AV1'),
+      /* AW-AZ: Total Load */
+      rng('AW1:AZ1'),
       /* Single-col merges row 1-3 */
-      rng('AZ1:AZ3'), rng('BA1:BA3'), rng('BB1:BB3'), rng('BC1:BC3'),
+      rng('BA1:BA3'), rng('BB1:BB3'), rng('BC1:BC3'), rng('BD1:BD3'),
     ];
 
     /* ── Column widths ── */
     const colWidths = [];
     const widthMap = {
-      0: 14, 1: 9, 2: 20, 3: 8, 4: 5, 5: 9, 6: 10, 7: 5, 8: 7,
+      0: 12, 1: 14, 2: 9, 3: 20, 4: 8, 5: 5, 6: 9, 7: 10, 8: 5, 9: 7,
     };
     for (let c = 0; c < totalCols; c++) {
       let w = 5;
       if (c in widthMap) w = widthMap[c];
-      else if (c >= 9 && c <= 14) w = 6;   // J-O (Voltage)
-      else if (c >= 15 && c <= 46) w = 6;  // P-AU (Feeders)
-      else if (c >= 47 && c <= 50) w = 6;  // AV-AY (Total Load)
-      else if (c === 51 || c === 52) w = 7; // AZ-BA (MAX-MIN)
-      else if (c === 53) w = 9;            // BB (Load%)
-      else if (c === 54 || c === 55) w = 24; // BC (Actions) — safety
+      else if (c >= 10 && c <= 15) w = 6;   // K-P (Voltage)
+      else if (c >= 16 && c <= 47) w = 6;  // Q-AV (Feeders)
+      else if (c >= 48 && c <= 51) w = 6;  // AW-AZ (Total Load)
+      else if (c === 52 || c === 53) w = 7; // BA-BB (MAX-MIN)
+      else if (c === 54) w = 9;            // BC (Load%)
+      else if (c === 55 || c === 56) w = 24; // BD (Actions) — safety
       colWidths.push({ wch: w });
     }
     ws['!cols'] = colWidths;
@@ -4416,11 +4426,11 @@ ${(()=>{
     }
 
     /* ── Freeze panes at G4 (row 3, col 6 in 0-based) ── */
-    ws['!freeze'] = { xSplit: 6, ySplit: 3, topLeftCell: 'G4', state: 'frozen' };
+    ws['!freeze'] = { xSplit: 7, ySplit: 3, topLeftCell: 'H4', state: 'frozen' };
 
     /* Also set via views for broader compatibility */
     if (!ws['!views']) ws['!views'] = [{}];
-    ws['!views'][0] = { state: 'frozen', xSplit: 6, ySplit: 3 };
+    ws['!views'][0] = { state: 'frozen', xSplit: 7, ySplit: 3 };
 
       return ws;
     } // end buildSheet
