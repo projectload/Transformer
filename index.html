@@ -1338,6 +1338,7 @@
     <div class="admin-actions">
       <button id="themeToggleBtn" onclick="toggleTheme()" style="padding:0.3rem 0.8rem;border-radius:8px;border:1px solid rgba(217,119,6,0.5);background:transparent;color:#D97706;font-family:'Cairo',sans-serif;font-size:0.78rem;cursor:pointer;font-weight:600;transition:all 0.2s" title="Sun Mode (Outdoor)">☀️</button>
       <button class="btn-admin" id="langBtn" onclick="toggleLang()" style="padding:0.3rem 0.8rem;border-radius:8px;border:1px solid rgba(167,139,250,0.4);background:transparent;color:#a78bfa;font-family:'Cairo',sans-serif;font-size:0.78rem;cursor:pointer">🌐 EN</button>
+      <button id="importExcelTopBtn" onclick="importExcel()" style="display:none;padding:0.3rem 0.8rem;border-radius:8px;border:1px solid rgba(0,255,157,0.4);background:transparent;color:var(--accent3);font-family:'Cairo',sans-serif;font-size:0.78rem;cursor:pointer">📥 استيراد</button>
       <button class="btn-logout" onclick="doLogout()">خروج</button>
     </div>
     <span id="adminBadge" class="admin-badge" style="display:none">🔴 وضع الأدمن</span>
@@ -1494,6 +1495,7 @@
         </div>
         <button id="summaryReportBtn" class="btn btn-secondary" onclick="generateSummaryReport()" style="border-color:rgba(167,139,250,0.4);color:#a78bfa">📄 تقرير مختصر</button>
         <button id="exportExcelBtn" class="btn btn-secondary" onclick="exportExcel()" title="ينزل CSV — افتحه بـ Excel" style="border-color:rgba(0,255,157,0.4);color:var(--accent3)">📊 تصدير Excel</button>
+        <input type="file" id="importExcelInput" accept=".xlsx,.xls" style="display:none" onchange="handleImportExcel(this)">
         <button id="mapViewBtn" class="btn btn-secondary" onclick="openMapView()" style="border-color:rgba(251,191,36,0.4);color:#fbbf24">🗺️ <span id="mapViewBtnLabel">مواقع المحولات</span></button>
       </div>
     </div>
@@ -4465,6 +4467,147 @@ ${(()=>{
     showToast(lang === 'ar' ? '📊 تم تصدير ملف Excel بنفس تنسيق التقرير' : '📊 Excel report exported with template styling', 'success');
   }
 
+  // ─── Excel Import ──────────────────────────────────
+  function importExcel() {
+    document.getElementById('importExcelInput').click();
+  }
+
+  function handleImportExcel(input) {
+    const file = input.files[0];
+    if (!file) return;
+    input.value = '';
+    if (!window.XLSX) { loadXlsx(() => handleImportExcel({ files: [file] })); return; }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array' });
+        let newRecs = 0, newRounds = 0;
+        const newRecsArr = [];
+        const affectedUids = new Set();
+
+        wb.SheetNames.forEach(sheetName => {
+          const ws = wb.Sheets[sheetName];
+          const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+          for (let r = 3; r < aoa.length; r++) {
+            const row = aoa[r];
+            if (!row || row.length < 5) continue;
+
+            const team     = String(row[0] || '').trim();
+            const station  = String(row[1] || '').trim();
+            const hvFeeder = String(row[2] || '').trim();
+            const locStr   = String(row[3] || '').trim();
+            const txId     = String(row[4] || '').trim();
+            const tapNo    = String(row[5] || '').trim();
+            const capacity = Number(row[6]) || 0;
+            // row[7] = time & date (skip), row[8] = reading no (we auto-increment)
+
+            if (!txId || !station) continue;
+
+            const volt = {
+              vL1N:  row[9]  !== '' ? String(row[9])  : '',
+              vL2N:  row[10] !== '' ? String(row[10]) : '',
+              vL3N:  row[11] !== '' ? String(row[11]) : '',
+              vL1L2: row[12] !== '' ? String(row[12]) : '',
+              vL1L3: row[13] !== '' ? String(row[13]) : '',
+              vL2L3: row[14] !== '' ? String(row[14]) : '',
+            };
+
+            const feeders = [];
+            for (let fn = 0; fn < 8; fn++) {
+              const base = 15 + fn * 4;
+              const iL1 = row[base]     !== '' ? String(row[base])     : '';
+              const iL2 = row[base + 1] !== '' ? String(row[base + 1]) : '';
+              const iL3 = row[base + 2] !== '' ? String(row[base + 2]) : '';
+              const iN  = row[base + 3] !== '' ? String(row[base + 3]) : '';
+              if (iL1 || iL2 || iL3 || iN) {
+                feeders.push({ num: fn + 1, iL1, iL2, iL3, iN });
+              }
+            }
+
+            let location = null;
+            if (locStr && locStr.includes(',')) {
+              const parts = locStr.split(',');
+              const lat = parseFloat(parts[0]);
+              const lng = parseFloat(parts[1]);
+              if (!isNaN(lat) && !isNaN(lng)) location = { lat, lng };
+            }
+
+            let rec = records.find(rx => rx.id === txId && rx.station === station);
+
+            if (!rec) {
+              const uid = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+              rec = {
+                uid,
+                team: team || currentTeam || '',
+                type: 'Ground',
+                id: txId,
+                station,
+                hvFeeder,
+                capacity,
+                outputs: feeders.length || 1,
+                ...(location ? { lat: location.lat, lng: location.lng } : {})
+              };
+              records.push(rec);
+              newRecsArr.push(rec);
+              newRecs++;
+            }
+
+            const uid = rec.uid;
+            if (!loadings[uid]) loadings[uid] = { volt: {}, feeders: [], _round: 0, _allRounds: {} };
+            const ld = loadings[uid];
+            if (!ld._allRounds) ld._allRounds = {};
+
+            const existingRounds = Object.keys(ld._allRounds).map(Number);
+            const nextRound = existingRounds.length > 0 ? Math.max(...existingRounds) + 1 : 1;
+
+            ld._allRounds[nextRound] = {
+              volt, pf: ld.pf || '0.9', tapNo, feeders,
+              voltSavedAt: new Date().toISOString(),
+              ...(location ? { location } : {})
+            };
+            ld._round = nextRound;
+            ld.volt = volt;
+            ld.feeders = feeders;
+            ld.tapNo = tapNo;
+            if (location) ld.location = location;
+
+            affectedUids.add(uid);
+            newRounds++;
+          }
+        });
+
+        if (newRounds === 0) {
+          showToast(lang === 'ar' ? '⚠️ لم يُعثر على بيانات صالحة' : '⚠️ No valid data found', 'warning');
+          return;
+        }
+
+        localStorage.setItem('transformers', JSON.stringify(records));
+        localStorage.setItem('loadings', JSON.stringify(loadings));
+        updateStationFilter();
+        renderTable();
+        showToast(
+          lang === 'ar'
+            ? `✅ تم الاستيراد: ${newRecs} محوّل جديد، ${newRounds} قراءة مضافة`
+            : `✅ Imported: ${newRecs} new transformers, ${newRounds} readings added`,
+          'success'
+        );
+
+        for (const rec of newRecsArr) {
+          pushTransformer(rec, false).catch(() => {});
+        }
+        for (const uid of affectedUids) {
+          pushLoadingData(uid).catch(() => {});
+        }
+
+      } catch (err) {
+        showToast('❌ ' + (lang === 'ar' ? 'خطأ في قراءة الملف: ' : 'Error reading file: ') + err.message, 'error');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
   // ══════════════════════════════════════════════════
   // AUTH
   // ══════════════════════════════════════════════════
@@ -4913,6 +5056,8 @@ ${(()=>{
     const thTeam=document.getElementById('thTeam'); if(thTeam) thTeam.style.display=isAdmin?'':'none';
     // Show/hide form and admin panels based on role
     document.getElementById('formSection').style.display = (isAdmin || isViewer) ? 'none' : '';
+    const importBtn = document.getElementById('importExcelTopBtn');
+    if (importBtn) importBtn.style.display = isAdmin ? '' : 'none';
     if(isAdmin){
       document.getElementById('adminResetPanel').style.display='block';
       loadResetRequests();
