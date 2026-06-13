@@ -4092,7 +4092,7 @@ ${(()=>{
     if (records.length === 0) { showToast(t('toastNoData'), 'error'); return; }
     if (!window.XLSX) { loadXlsx(() => exportExcel()); return; }
 
-    const FEEDER_START = 15; // first feeder col index (0-based)
+    const FEEDER_START = 16; // first feeder col index (0-based) — shifted by Type col
 
     /* ── helper: column letter from 0-based index ── */
     function colLetter(c) {
@@ -4185,9 +4185,11 @@ ${(()=>{
       const CLR_LOC = 'E8F5E9';
       row0.push(hdr('Location', CLR_LOC)); row1.push(hdr('Lat, Lng', CLR_LOC)); row2.push(hdr('', CLR_LOC));
 
-      /* E-H: base */
-      ['Tx. No.', 'Tap No.', 'Capacity', 'Time & Date'].forEach(h => {
-        row0.push(hdr(h, CLR_BASE)); row1.push(hdr('', CLR_BASE)); row2.push(hdr('', CLR_BASE));
+      /* E-I: base (Tx. No., Type, Tap No., Capacity, Time & Date) */
+      const CLR_TYPE = 'EDE9FE';
+      ['Tx. No.', 'Type', 'Tap No.', 'Capacity', 'Time & Date'].forEach((h, i) => {
+        const clr = i === 1 ? CLR_TYPE : CLR_BASE;
+        row0.push(hdr(h, clr)); row1.push(hdr('', clr)); row2.push(hdr('', clr));
       });
 
       /* I: Reading No. */
@@ -4270,6 +4272,8 @@ ${(()=>{
           const loc = rd.location || ld.location || (rec.lat ? { lat: rec.lat, lng: rec.lng } : null);
           row.push(dCell(loc && loc.lat ? `${loc.lat}, ${loc.lng}` : ''));
           row.push(dCell(rec.id || ''));
+          const txType = (rec.type === 'Ground' || rec.type === 'أرضي') ? 'Ground (GMT)' : (rec.type === 'Pole' || rec.type === 'معلق') ? 'Pole (PMT)' : (rec.type || '');
+          row.push(dCell(txType));
           row.push(dCell(rd.tapNo || ''));
           row.push(dCell(Number(rec.capacity) || ''));
           row.push(dCell(timeAndDateForExcel));
@@ -4307,9 +4311,9 @@ ${(()=>{
           row.push(fCell(`MAX(${totRLtr}${exRow}:${totBLtr}${exRow})`));
           row.push(fCell(`MIN(${totRLtr}${exRow}:${totBLtr}${exRow})`));
 
-          /* Load % */
-          const vllF = `IF(M${exRow}>0,M${exRow},IF(N${exRow}>0,N${exRow},IF(O${exRow}>0,O${exRow},415)))`;
-          row.push({ f: `IF(G${exRow}>0,(${maxLtr}${exRow}*SQRT(3)*${vllF}/(G${exRow}*1000))*100,0)`, t: 'n', z: '0.00', s: ds });
+          /* Load % — Capacity=H, Line Voltage=N,O,P */
+          const vllF = `IF(N${exRow}>0,N${exRow},IF(O${exRow}>0,O${exRow},IF(P${exRow}>0,P${exRow},415)))`;
+          row.push({ f: `IF(H${exRow}>0,(${maxLtr}${exRow}*SQRT(3)*${vllF}/(H${exRow}*1000))*100,0)`, t: 'n', z: '0.00', s: ds });
 
           /* Action Upgrade */
           row.push({ f: `IF(${loadLtr}${exRow}>70,"Upgrade","OK - No Upgrade")`, t: 's', s: ds });
@@ -4331,8 +4335,8 @@ ${(()=>{
       function rng(s) { return XLSX.utils.decode_range(s); }
       const merges = [
         rng('A1:A3'), rng('B1:B3'), rng('C1:C3'), rng('D1:D2'),
-        rng('E1:E3'), rng('F1:F3'), rng('G1:G3'), rng('H1:H3'), rng('I1:I3'),
-        rng('J1:O1'), rng('J2:L2'), rng('M2:O2'),
+        rng('E1:E3'), rng('F1:F3'), rng('G1:G3'), rng('H1:H3'), rng('I1:I3'), rng('J1:J3'),
+        rng('K1:P1'), rng('K2:M2'), rng('N2:P2'),
       ];
 
       /* feeder merges (row1 title + rows 2-3 per sub-col) */
@@ -4355,11 +4359,11 @@ ${(()=>{
       ws['!merges'] = merges;
 
       /* ── Column widths ── */
-      const widthMap = { 0:12, 1:14, 2:9, 3:20, 4:8, 5:5, 6:9, 7:10, 8:5, 9:7 };
+      const widthMap = { 0:12, 1:14, 2:9, 3:20, 4:8, 5:10, 6:5, 7:9, 8:10, 9:5, 10:7 };
       ws['!cols'] = Array.from({length: totalCols}, (_, c) => {
         let w = 5;
         if (c in widthMap)                          w = widthMap[c];
-        else if (c >= 9 && c < FEEDER_START)        w = 6;
+        else if (c >= 10 && c < FEEDER_START)       w = 6;  // K-P (Voltage)
         else if (c >= FEEDER_START && c < TAIL)     w = (c - FEEDER_START) % 5 === 0 ? 8 : 6;
         else if (c >= TAIL && c < TAIL + 4)         w = 6;
         else if (c === TAIL+4 || c === TAIL+5)      w = 7;
