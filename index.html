@@ -4092,7 +4092,7 @@ ${(()=>{
     if (records.length === 0) { showToast(t('toastNoData'), 'error'); return; }
     if (!window.XLSX) { loadXlsx(() => exportExcel()); return; }
 
-    const MAX_FEEDERS = 8;
+    const FEEDER_START = 15; // first feeder col index (0-based)
 
     /* ── helper: column letter from 0-based index ── */
     function colLetter(c) {
@@ -4156,303 +4156,244 @@ ${(()=>{
     }
 
     /* ── build one worksheet from a list of records ── */
-    function buildSheet(sheetRecords) {
-    /* ── Build header rows (3 rows) ── */
-    const row0 = [];
-    const row1 = [];
-    const row2 = [];
+    function buildSheet(sheetRecords, maxFeeders) {
+      const TAIL      = FEEDER_START + maxFeeders * 5;
+      const totalCols = TAIL + 9; // 4 totals + MAX + MIN + Load% + Upgrade + Balance
 
-    const totalCols = 6 + 2 + 6 + MAX_FEEDERS * 5 + 4 + 5 + 1; // A..BL = 64
+      /* ── pre-compute tail column letters ── */
+      const totRLtr  = colLetter(TAIL);
+      const totBLtr  = colLetter(TAIL + 2);
+      const maxLtr   = colLetter(TAIL + 4);
+      const loadLtr  = colLetter(TAIL + 6);
 
-    /* helper to colour a header column */
-    function hdr(val, bg) { return { v: val || '', t: 's', s: hdrStyle(bg) }; }
+      /* ── Build header rows (3 rows) ── */
+      const row0 = [];
+      const row1 = [];
+      const row2 = [];
 
-    /* A: Team Name */
-    row0.push(hdr('Team Name', CLR_BASE));
-    row1.push(hdr('', CLR_BASE));
-    row2.push(hdr('', CLR_BASE));
+      function hdr(val, bg) { return { v: val || '', t: 's', s: hdrStyle(bg) }; }
 
-    /* B-C: first two base columns */
-    const firstBase = ['Primary Substation', 'H.T Feeder No.'];
-    for (let i = 0; i < 2; i++) {
-      row0.push(hdr(firstBase[i], CLR_BASE));
-      row1.push(hdr('', CLR_BASE));
-      row2.push(hdr('', CLR_BASE));
-    }
+      /* A: Team Name */
+      row0.push(hdr('Team Name', CLR_BASE)); row1.push(hdr('', CLR_BASE)); row2.push(hdr('', CLR_BASE));
 
-    /* C: Location */
-    const CLR_LOC = 'E8F5E9';
-    row0.push(hdr('Location', CLR_LOC));
-    row1.push(hdr('Lat, Lng', CLR_LOC));
-    row2.push(hdr('', CLR_LOC));
-
-    /* D-H: remaining base columns */
-    const restBase = ['Tx. No.', 'Tap No.', 'Capacity', 'Time & Date'];
-    for (let i = 0; i < 4; i++) {
-      row0.push(hdr(restBase[i], CLR_BASE));
-      row1.push(hdr('', CLR_BASE));
-      row2.push(hdr('', CLR_BASE));
-    }
-
-    /* I: Reading No. */
-    const CLR_READING = 'D4EDDA';
-    row0.push(hdr('Reading No.', CLR_READING));
-    row1.push(hdr('', CLR_READING));
-    row2.push(hdr('', CLR_READING));
-
-    /* J-O: Voltage */
-    row0.push(hdr('Voltage Value', CLR_VOLT));
-    for (let i = 1; i < 6; i++) row0.push(hdr('', CLR_VOLT));
-    row1.push(hdr('Phase Voltage', CLR_VOLT));
-    row1.push(hdr('', CLR_VOLT));
-    row1.push(hdr('', CLR_VOLT));
-    row1.push(hdr('Line Voltage', CLR_VOLT));
-    row1.push(hdr('', CLR_VOLT));
-    row1.push(hdr('', CLR_VOLT));
-    const voltR2   = ['R/N',   'Y/N',   'B/N',   'R/Y',   'R/B',   'Y/B'  ];
-    const voltClrs = [CLR_VRN, CLR_VYN, CLR_VBN, CLR_VRY, CLR_VRB, CLR_VYB];
-    for (let i = 0; i < 6; i++) row2.push(hdr(voltR2[i], voltClrs[i]));
-
-    /* P-BC: Feeders (5 cols each: Cable mm², R, Y, B, N) */
-    const CLR_CABLE_HDR = 'D1FAE5';
-    for (let fn = 1; fn <= MAX_FEEDERS; fn++) {
-      /* row0: feeder name merged over 5 cols — thick border on first and last */
-      row0.push({ v: 'Feeder ' + fn, t: 's', s: feederHdrStyle(CLR_FTITLE, true,  false) });
-      row0.push({ v: '',             t: 's', s: feederHdrStyle(CLR_FTITLE, false, false) });
-      row0.push({ v: '',             t: 's', s: feederHdrStyle(CLR_FTITLE, false, false) });
-      row0.push({ v: '',             t: 's', s: feederHdrStyle(CLR_FTITLE, false, false) });
-      row0.push({ v: '',             t: 's', s: feederHdrStyle(CLR_FTITLE, false, true)  });
-      /* row1: Cable mm², R, Y, B, N — row2: empty cable cell */
-      row1.push({ v: 'Cable mm²', t: 's', s: feederHdrStyle(CLR_CABLE_HDR, true, false) });
-      row2.push({ v: '',          t: 's', s: feederHdrStyle(CLR_CABLE_HDR, true, false) });
-      const phases = ['R', 'Y', 'B', 'N'];
-      for (let p = 0; p < 4; p++) {
-        const isL = p === 3;
-        row1.push({ v: phases[p], t: 's', s: feederHdrStyle(feederClrs[p], false, isL) });
-        row2.push({ v: phases[p], t: 's', s: feederHdrStyle(feederClrs[p], false, isL) });
-      }
-    }
-
-    /* AS-AV: Total Load */
-    row0.push(hdr('Total Load', CLR_TOTAL));
-    row0.push(hdr('', CLR_TOTAL));
-    row0.push(hdr('', CLR_TOTAL));
-    row0.push(hdr('', CLR_TOTAL));
-    const totPhases = ['R', 'Y', 'B', 'N'];
-    for (let p = 0; p < 4; p++) {
-      row1.push(hdr(totPhases[p], CLR_TOTAL));
-      row2.push(hdr(totPhases[p], CLR_TOTAL));
-    }
-
-    /* AW: MAX */
-    row0.push(hdr('MAX Value', CLR_VOLT));
-    row1.push(hdr('', CLR_VOLT));
-    row2.push(hdr('', CLR_VOLT));
-
-    /* AX: MIN */
-    row0.push(hdr('MIN Value', CLR_VOLT));
-    row1.push(hdr('', CLR_VOLT));
-    row2.push(hdr('', CLR_VOLT));
-
-    /* AY: Load % */
-    row0.push(hdr('Load %', CLR_LOADPCT));
-    row1.push(hdr('', CLR_LOADPCT));
-    row2.push(hdr('', CLR_LOADPCT));
-
-    /* AZ: Action Upgrade */
-    row0.push(hdr('Action (Upgrade)', CLR_ACTION));
-    row1.push(hdr('', CLR_ACTION));
-    row2.push(hdr('', CLR_ACTION));
-
-    /* BA: Action Balance */
-    row0.push(hdr('Action (Balance)', CLR_ACTION));
-    row1.push(hdr('', CLR_ACTION));
-    row2.push(hdr('', CLR_ACTION));
-
-    const aoa = [row0, row1, row2];
-
-    /* ── Data rows (starting at Excel row 4) ── */
-    let dataRowIdx = 0;
-    sheetRecords.slice().reverse().forEach((rec) => {
-      const uid = rec.uid;
-      const ld  = loadings[uid] || {};
-
-      // Collect all rounds; fall back to single entry from current loadings
-      const allRounds = (ld._allRounds && Object.keys(ld._allRounds).length > 0)
-        ? ld._allRounds
-        : { [ld._round || 1]: { volt: ld.volt || {}, pf: ld.pf, feeders: ld.feeders || [], voltSavedAt: ld.voltSavedAt, tapNo: ld.tapNo } };
-
-      const sortedRoundNums = Object.keys(allRounds).map(Number).sort((a, b) => a - b);
-      const hasMultiple = sortedRoundNums.length > 1;
-
-      sortedRoundNums.forEach(roundNum => {
-        const rd  = allRounds[roundNum] || {};
-        const v   = rd.volt || {};
-        const fds = [...(rd.feeders || [])].sort((a, b) => (a.num || 0) - (b.num || 0));
-        while (fds.length < MAX_FEEDERS) fds.push({ iL1: '', iL2: '', iL3: '', iN: '' });
-
-        const xlRow = dataRowIdx + 3;
-        const exRow = xlRow + 1;
-
-        const row = [];
-        const ds = dataStyle();
-
-        const dCell = (val) => ({ v: val, t: typeof val === 'number' ? 'n' : 's', s: ds });
-        const fCell = (formula) => ({ f: formula, t: 'n', s: ds });
-
-        const latestDate = fds.map(f => f.savedAt).filter(Boolean).sort().pop();
-        const timeAndDateForExcel = latestDate
-          ? new Date(latestDate).toLocaleString('en-GB', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
-          : '';
-
-        /* A: Team Name */
-        row.push(dCell(rec.team || ''));
-
-        /* B-C */
-        row.push(dCell(rec.station || ''));
-        row.push(dCell(formatHvFeeder(rec.hvFeeder)));
-
-        /* C: Location */
-        const loc = rd.location || ld.location || (rec.lat ? { lat: rec.lat, lng: rec.lng } : null);
-        row.push(dCell(loc && loc.lat ? `${loc.lat}, ${loc.lng}` : ''));
-
-        /* D-H */
-        row.push(dCell(rec.id || ''));
-        row.push(dCell(rd.tapNo || ''));
-        row.push(dCell(Number(rec.capacity) || ''));
-        row.push(dCell(timeAndDateForExcel));
-
-        /* I: Reading No. */
-        row.push(dCell(roundNum));
-
-        /* J-O voltage */
-        row.push(dCell(v.vL1N ? Number(v.vL1N) : ''));
-        row.push(dCell(v.vL2N ? Number(v.vL2N) : ''));
-        row.push(dCell(v.vL3N ? Number(v.vL3N) : ''));
-        row.push(dCell(v.vL1L2 ? Number(v.vL1L2) : ''));
-        row.push(dCell(v.vL1L3 ? Number(v.vL1L3) : ''));
-        row.push(dCell(v.vL2L3 ? Number(v.vL2L3) : ''));
-
-        /* P-BC feeders (Cable mm², R, Y, B, N) */
-        fds.slice(0, MAX_FEEDERS).forEach((f, fi) => {
-          const cableVal = f.name ? f.name + ' mm²' : '';
-          row.push({ v: cableVal, t: 's', s: feederDsStyle(true, false, fi) });
-          const fVals = [f.iL1, f.iL2, f.iL3, f.iN];
-          fVals.forEach((val, p) => {
-            const isL = p === 3;
-            const fv = val ? Number(val) : '';
-            row.push({ v: fv, t: typeof fv === 'number' ? 'n' : 's', s: feederDsStyle(false, isL, fi) });
-          });
-        });
-
-        /* BD-BG: Total formulas (R cols skip cable col — every 5th starting at 16) */
-        const rCols = [16, 21, 26, 31, 36, 41, 46, 51];
-        const yCols = [17, 22, 27, 32, 37, 42, 47, 52];
-        const bCols = [18, 23, 28, 33, 38, 43, 48, 53];
-        const nCols = [19, 24, 29, 34, 39, 44, 49, 54];
-
-        const sumFormula = (cols) => 'SUM(' + cols.map(c => colLetter(c) + exRow).join(',') + ')';
-        row.push(fCell(sumFormula(rCols)));
-        row.push(fCell(sumFormula(yCols)));
-        row.push(fCell(sumFormula(bCols)));
-        row.push(fCell(sumFormula(nCols)));
-
-        /* BH: MAX */
-        row.push(fCell('MAX(BD' + exRow + ':BF' + exRow + ')'));
-
-        /* BI: MIN */
-        row.push(fCell('MIN(BD' + exRow + ':BF' + exRow + ')'));
-
-        /* BJ: Load % */
-        const vllF = `IF(M${exRow}>0,M${exRow},IF(N${exRow}>0,N${exRow},IF(O${exRow}>0,O${exRow},415)))`;
-        row.push({ f: `IF(G${exRow}>0,(BH${exRow}*SQRT(3)*${vllF}/(G${exRow}*1000))*100,0)`, t: 'n', z: '0.00', s: ds });
-
-        /* BK: Action Upgrade */
-        row.push({ f: `IF(BJ${exRow}>70,"Upgrade","OK - No Upgrade")`, t: 's', s: ds });
-
-        /* BL: Action Balance */
-        const avgF = `AVERAGE(BD${exRow}:BF${exRow})`;
-        const imbF = `IF(${avgF}>0,((BH${exRow}-${avgF})/${avgF})*100,0)`;
-        row.push({ f: `IF(${imbF}>10,"Need to Balance","OK - Balanced")`, t: 's', s: ds });
-
-        aoa.push(row);
-        dataRowIdx++;
+      /* B-C */
+      ['Primary Substation', 'H.T Feeder No.'].forEach(h => {
+        row0.push(hdr(h, CLR_BASE)); row1.push(hdr('', CLR_BASE)); row2.push(hdr('', CLR_BASE));
       });
-    });
 
-    /* ── Create worksheet ── */
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
+      /* D: Location */
+      const CLR_LOC = 'E8F5E9';
+      row0.push(hdr('Location', CLR_LOC)); row1.push(hdr('Lat, Lng', CLR_LOC)); row2.push(hdr('', CLR_LOC));
 
-    /* ── Merges ── */
-    function rng(s) { return XLSX.utils.decode_range(s); }
-    ws['!merges'] = [
-      /* A1:A3: Team Name */
-      rng('A1:A3'),
-      /* B1:B3, C1:C3 */
-      rng('B1:B3'), rng('C1:C3'),
-      /* D: Location (rows 1-2 merged, row 3 separate) */
-      rng('D1:D2'),
-      /* E-I: base + Reading No. */
-      rng('E1:E3'), rng('F1:F3'), rng('G1:G3'), rng('H1:H3'), rng('I1:I3'),
+      /* E-H: base */
+      ['Tx. No.', 'Tap No.', 'Capacity', 'Time & Date'].forEach(h => {
+        row0.push(hdr(h, CLR_BASE)); row1.push(hdr('', CLR_BASE)); row2.push(hdr('', CLR_BASE));
+      });
+
+      /* I: Reading No. */
+      const CLR_READING = 'D4EDDA';
+      row0.push(hdr('Reading No.', CLR_READING)); row1.push(hdr('', CLR_READING)); row2.push(hdr('', CLR_READING));
+
       /* J-O: Voltage */
-      rng('J1:O1'),
-      rng('J2:L2'),
-      rng('M2:O2'),
-      /* P-BC: Feeders row 1 (5 cols each) */
-      rng('P1:T1'), rng('U1:Y1'), rng('Z1:AD1'), rng('AE1:AI1'),
-      rng('AJ1:AN1'), rng('AO1:AS1'), rng('AT1:AX1'), rng('AY1:BC1'),
-      /* BD-BG: Total Load */
-      rng('BD1:BG1'),
-      /* Single-col merges row 1-3 */
-      rng('BH1:BH3'), rng('BI1:BI3'), rng('BJ1:BJ3'), rng('BK1:BK3'), rng('BL1:BL3'),
-      /* Feeder sub-cols: merge rows 2-3 for Cable + each phase (5 cols × 8 feeders) */
-      ...Array.from({ length: MAX_FEEDERS }, (_, fi) =>
-        Array.from({ length: 5 }, (__, ci) => {
-          const c = 15 + fi * 5 + ci;
-          return rng(colLetter(c) + '2:' + colLetter(c) + '3');
-        })
-      ).flat(),
-      /* Total Load sub-cols: merge rows 2-3 */
-      rng('BD2:BD3'), rng('BE2:BE3'), rng('BF2:BF3'), rng('BG2:BG3'),
-    ];
+      row0.push(hdr('Voltage Value', CLR_VOLT));
+      for (let i = 1; i < 6; i++) row0.push(hdr('', CLR_VOLT));
+      row1.push(hdr('Phase Voltage', CLR_VOLT)); row1.push(hdr('', CLR_VOLT)); row1.push(hdr('', CLR_VOLT));
+      row1.push(hdr('Line Voltage',  CLR_VOLT)); row1.push(hdr('', CLR_VOLT)); row1.push(hdr('', CLR_VOLT));
+      ['R/N','Y/N','B/N','R/Y','R/B','Y/B'].forEach((lbl, i) =>
+        row2.push(hdr(lbl, [CLR_VRN,CLR_VYN,CLR_VBN,CLR_VRY,CLR_VRB,CLR_VYB][i]))
+      );
 
-    /* ── Column widths ── */
-    const colWidths = [];
-    const widthMap = {
-      0: 12, 1: 14, 2: 9, 3: 20, 4: 8, 5: 5, 6: 9, 7: 10, 8: 5, 9: 7,
-    };
-    for (let c = 0; c < totalCols; c++) {
-      let w = 5;
-      if (c in widthMap) w = widthMap[c];
-      else if (c >= 9 && c <= 14) w = 6;    // J-O (Voltage)
-      else if (c >= 15 && c <= 54) {         // P-BC (Feeders)
-        w = (c - 15) % 5 === 0 ? 8 : 6;     // cable col = 8, phase cols = 6
+      /* Feeders (5 cols each: Cable mm², R, Y, B, N) */
+      const CLR_CABLE_HDR = 'D1FAE5';
+      for (let fn = 1; fn <= maxFeeders; fn++) {
+        row0.push({ v: 'Feeder ' + fn, t: 's', s: feederHdrStyle(CLR_FTITLE, true,  false) });
+        row0.push({ v: '',             t: 's', s: feederHdrStyle(CLR_FTITLE, false, false) });
+        row0.push({ v: '',             t: 's', s: feederHdrStyle(CLR_FTITLE, false, false) });
+        row0.push({ v: '',             t: 's', s: feederHdrStyle(CLR_FTITLE, false, false) });
+        row0.push({ v: '',             t: 's', s: feederHdrStyle(CLR_FTITLE, false, true)  });
+        row1.push({ v: 'Cable mm²', t: 's', s: feederHdrStyle(CLR_CABLE_HDR, true, false) });
+        row2.push({ v: '',          t: 's', s: feederHdrStyle(CLR_CABLE_HDR, true, false) });
+        ['R','Y','B','N'].forEach((ph, p) => {
+          row1.push({ v: ph, t: 's', s: feederHdrStyle(feederClrs[p], false, p === 3) });
+          row2.push({ v: ph, t: 's', s: feederHdrStyle(feederClrs[p], false, p === 3) });
+        });
       }
-      else if (c >= 55 && c <= 58) w = 6;   // BD-BG (Total Load)
-      else if (c === 59 || c === 60) w = 7;  // BH-BI (MAX-MIN)
-      else if (c === 61) w = 9;              // BJ (Load%)
-      else if (c === 62 || c === 63) w = 24; // BK-BL (Actions)
-      colWidths.push({ wch: w });
-    }
-    ws['!cols'] = colWidths;
 
-    /* ── Row heights ── */
-    ws['!rows'] = [
-      { hpt: 19.5 }, { hpt: 19.5 }, { hpt: 19.5 },
-    ];
-    for (let r = 3; r < aoa.length; r++) {
-      ws['!rows'].push({ hpt: 15.75 });
-    }
+      /* Total Load */
+      row0.push(hdr('Total Load', CLR_TOTAL));
+      for (let i = 1; i < 4; i++) row0.push(hdr('', CLR_TOTAL));
+      ['R','Y','B','N'].forEach(ph => {
+        row1.push(hdr(ph, CLR_TOTAL)); row2.push(hdr(ph, CLR_TOTAL));
+      });
 
-    /* ── Freeze panes at G4 (row 3, col 6 in 0-based) ── */
-    ws['!freeze'] = { xSplit: 7, ySplit: 3, topLeftCell: 'H4', state: 'frozen' };
+      /* MAX, MIN, Load%, Upgrade, Balance */
+      [['MAX Value',CLR_VOLT],['MIN Value',CLR_VOLT],['Load %',CLR_LOADPCT],
+       ['Action (Upgrade)',CLR_ACTION],['Action (Balance)',CLR_ACTION]].forEach(([lbl,clr]) => {
+        row0.push(hdr(lbl, clr)); row1.push(hdr('', clr)); row2.push(hdr('', clr));
+      });
 
-    /* Also set via views for broader compatibility */
-    if (!ws['!views']) ws['!views'] = [{}];
-    ws['!views'][0] = { state: 'frozen', xSplit: 7, ySplit: 3 };
+      const aoa = [row0, row1, row2];
+
+      /* ── Data rows ── */
+      let dataRowIdx = 0;
+      sheetRecords.slice().reverse().forEach((rec) => {
+        const uid = rec.uid;
+        const ld  = loadings[uid] || {};
+
+        const allRounds = (ld._allRounds && Object.keys(ld._allRounds).length > 0)
+          ? ld._allRounds
+          : { [ld._round || 1]: { volt: ld.volt || {}, pf: ld.pf, feeders: ld.feeders || [], voltSavedAt: ld.voltSavedAt, tapNo: ld.tapNo } };
+
+        Object.keys(allRounds).map(Number).sort((a, b) => a - b).forEach(roundNum => {
+          const rd  = allRounds[roundNum] || {};
+          const v   = rd.volt || {};
+
+          /* feeder map: num → feeder object */
+          const fdMap = {};
+          (rd.feeders || []).forEach(f => { if (f.num) fdMap[Number(f.num)] = f; });
+
+          const xlRow = dataRowIdx + 3;
+          const exRow = xlRow + 1;
+          const row   = [];
+          const ds    = dataStyle();
+          const dCell = (val) => ({ v: val, t: typeof val === 'number' ? 'n' : 's', s: ds });
+          const fCell = (formula) => ({ f: formula, t: 'n', s: ds });
+
+          const latestDate = Object.values(fdMap).map(f => f.savedAt).filter(Boolean).sort().pop();
+          const timeAndDateForExcel = latestDate
+            ? new Date(latestDate).toLocaleString('en-GB', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
+            : '';
+
+          row.push(dCell(rec.team || ''));
+          row.push(dCell(rec.station || ''));
+          row.push(dCell(formatHvFeeder(rec.hvFeeder)));
+          const loc = rd.location || ld.location || (rec.lat ? { lat: rec.lat, lng: rec.lng } : null);
+          row.push(dCell(loc && loc.lat ? `${loc.lat}, ${loc.lng}` : ''));
+          row.push(dCell(rec.id || ''));
+          row.push(dCell(rd.tapNo || ''));
+          row.push(dCell(Number(rec.capacity) || ''));
+          row.push(dCell(timeAndDateForExcel));
+          row.push(dCell(roundNum));
+          row.push(dCell(v.vL1N  ? Number(v.vL1N)  : ''));
+          row.push(dCell(v.vL2N  ? Number(v.vL2N)  : ''));
+          row.push(dCell(v.vL3N  ? Number(v.vL3N)  : ''));
+          row.push(dCell(v.vL1L2 ? Number(v.vL1L2) : ''));
+          row.push(dCell(v.vL1L3 ? Number(v.vL1L3) : ''));
+          row.push(dCell(v.vL2L3 ? Number(v.vL2L3) : ''));
+
+          /* feeders by number — empty slot if feeder not present */
+          for (let fn = 1; fn <= maxFeeders; fn++) {
+            const f  = fdMap[fn] || {};
+            const fi = fn - 1;
+            row.push({ v: f.name ? f.name + ' mm²' : '', t: 's', s: feederDsStyle(true, false, fi) });
+            [f.iL1, f.iL2, f.iL3, f.iN].forEach((val, p) => {
+              const fv = val ? Number(val) : '';
+              row.push({ v: fv, t: typeof fv === 'number' ? 'n' : 's', s: feederDsStyle(false, p === 3, fi) });
+            });
+          }
+
+          /* Total Load formulas */
+          const rCols = Array.from({length: maxFeeders}, (_, fi) => FEEDER_START + fi*5 + 1);
+          const yCols = Array.from({length: maxFeeders}, (_, fi) => FEEDER_START + fi*5 + 2);
+          const bCols = Array.from({length: maxFeeders}, (_, fi) => FEEDER_START + fi*5 + 3);
+          const nCols = Array.from({length: maxFeeders}, (_, fi) => FEEDER_START + fi*5 + 4);
+          const sumF  = (cols) => 'SUM(' + cols.map(c => colLetter(c) + exRow).join(',') + ')';
+          row.push(fCell(sumF(rCols)));
+          row.push(fCell(sumF(yCols)));
+          row.push(fCell(sumF(bCols)));
+          row.push(fCell(sumF(nCols)));
+
+          /* MAX, MIN */
+          row.push(fCell(`MAX(${totRLtr}${exRow}:${totBLtr}${exRow})`));
+          row.push(fCell(`MIN(${totRLtr}${exRow}:${totBLtr}${exRow})`));
+
+          /* Load % */
+          const vllF = `IF(M${exRow}>0,M${exRow},IF(N${exRow}>0,N${exRow},IF(O${exRow}>0,O${exRow},415)))`;
+          row.push({ f: `IF(G${exRow}>0,(${maxLtr}${exRow}*SQRT(3)*${vllF}/(G${exRow}*1000))*100,0)`, t: 'n', z: '0.00', s: ds });
+
+          /* Action Upgrade */
+          row.push({ f: `IF(${loadLtr}${exRow}>70,"Upgrade","OK - No Upgrade")`, t: 's', s: ds });
+
+          /* Action Balance */
+          const avgF = `AVERAGE(${totRLtr}${exRow}:${totBLtr}${exRow})`;
+          const imbF = `IF(${avgF}>0,((${maxLtr}${exRow}-${avgF})/${avgF})*100,0)`;
+          row.push({ f: `IF(${imbF}>10,"Need to Balance","OK - Balanced")`, t: 's', s: ds });
+
+          aoa.push(row);
+          dataRowIdx++;
+        });
+      });
+
+      /* ── Create worksheet ── */
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+      /* ── Merges ── */
+      function rng(s) { return XLSX.utils.decode_range(s); }
+      const merges = [
+        rng('A1:A3'), rng('B1:B3'), rng('C1:C3'), rng('D1:D2'),
+        rng('E1:E3'), rng('F1:F3'), rng('G1:G3'), rng('H1:H3'), rng('I1:I3'),
+        rng('J1:O1'), rng('J2:L2'), rng('M2:O2'),
+      ];
+
+      /* feeder merges (row1 title + rows 2-3 per sub-col) */
+      for (let fn = 1; fn <= maxFeeders; fn++) {
+        const fc = FEEDER_START + (fn - 1) * 5;
+        merges.push(rng(colLetter(fc) + '1:' + colLetter(fc + 4) + '1'));
+        for (let ci = 0; ci < 5; ci++)
+          merges.push(rng(colLetter(fc + ci) + '2:' + colLetter(fc + ci) + '3'));
+      }
+
+      /* Total Load row1 merge + rows 2-3 per col */
+      merges.push(rng(colLetter(TAIL) + '1:' + colLetter(TAIL + 3) + '1'));
+      for (let ci = 0; ci < 4; ci++)
+        merges.push(rng(colLetter(TAIL + ci) + '2:' + colLetter(TAIL + ci) + '3'));
+
+      /* tail single-col merges rows 1-3 (MAX, MIN, Load%, Upgrade, Balance) */
+      for (let ci = 4; ci < 9; ci++)
+        merges.push(rng(colLetter(TAIL + ci) + '1:' + colLetter(TAIL + ci) + '3'));
+
+      ws['!merges'] = merges;
+
+      /* ── Column widths ── */
+      const widthMap = { 0:12, 1:14, 2:9, 3:20, 4:8, 5:5, 6:9, 7:10, 8:5, 9:7 };
+      ws['!cols'] = Array.from({length: totalCols}, (_, c) => {
+        let w = 5;
+        if (c in widthMap)                          w = widthMap[c];
+        else if (c >= 9 && c < FEEDER_START)        w = 6;
+        else if (c >= FEEDER_START && c < TAIL)     w = (c - FEEDER_START) % 5 === 0 ? 8 : 6;
+        else if (c >= TAIL && c < TAIL + 4)         w = 6;
+        else if (c === TAIL+4 || c === TAIL+5)      w = 7;
+        else if (c === TAIL+6)                      w = 9;
+        else if (c === TAIL+7 || c === TAIL+8)      w = 24;
+        return { wch: w };
+      });
+
+      /* ── Row heights ── */
+      ws['!rows'] = [{ hpt:19.5 }, { hpt:19.5 }, { hpt:19.5 },
+        ...Array.from({length: aoa.length - 3}, () => ({ hpt: 15.75 }))];
+
+      /* ── Freeze panes ── */
+      ws['!freeze'] = { xSplit: 7, ySplit: 3, topLeftCell: 'H4', state: 'frozen' };
+      if (!ws['!views']) ws['!views'] = [{}];
+      ws['!views'][0] = { state: 'frozen', xSplit: 7, ySplit: 3 };
 
       return ws;
     } // end buildSheet
+
+    /* ── helper: max feeder number across all rounds of all records in a station ── */
+    function getMaxFeederNum(stationRecords) {
+      let max = 1;
+      stationRecords.forEach(rec => {
+        const ld = loadings[rec.uid] || {};
+        const allRounds = (ld._allRounds && Object.keys(ld._allRounds).length > 0)
+          ? ld._allRounds
+          : { 1: { feeders: ld.feeders || [] } };
+        Object.values(allRounds).forEach(rd => {
+          (rd.feeders || []).forEach(f => { if (Number(f.num) > max) max = Number(f.num); });
+        });
+      });
+      return max;
+    }
 
     /* ── Group records by station ── */
     const grouped = {};
@@ -4474,7 +4415,7 @@ ${(()=>{
         sheetName = `${sheetName} ${i}`;
       }
       usedNames.add(sheetName);
-      XLSX.utils.book_append_sheet(wb, buildSheet(stationRecords), sheetName);
+      XLSX.utils.book_append_sheet(wb, buildSheet(stationRecords, getMaxFeederNum(stationRecords)), sheetName);
     });
 
     const d     = new Date();
