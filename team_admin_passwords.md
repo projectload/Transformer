@@ -40,3 +40,9 @@ SELECT public.verify_team_role('اسم_الفريق', 'الكلمة_الجديد
 > `Ibri` · `Wadi Alain` · `Araqi` · `Hijermat` · `Dank` · `Yanqul` · `Hamra AlDaroo` · `Masrooq`
 
 _آخر تحديث: 2026-05-21_
+main admin
+
+
+UPDATE public.team_auth
+SET password_hash = extensions.crypt('كلمة_السر_الجديدة', extensions.gen_salt('bf'))
+WHERE team_name = '__admin__';
