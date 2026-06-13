@@ -48,6 +48,17 @@
       return text ? JSON.parse(text) : null;
     },
     get: (p) => supa.req('GET', p),
+    getAll: async function(p) {
+      const size = 1000; let from = 0, all = [];
+      while (true) {
+        const chunk = await supa.req('GET', p, null, {headers:{'Range-Unit':'items','Range':`${from}-${from+size-1}`}});
+        if (!chunk || !chunk.length) break;
+        all = all.concat(chunk);
+        if (chunk.length < size) break;
+        from += size;
+      }
+      return all;
+    },
     post: (p,b,h) => supa.req('POST', p, b, {headers:{'Prefer':'return=minimal',...(h||{})}}),
     patch: (p,b) => supa.req('PATCH', p, b, {headers:{'Prefer':'return=minimal'}}),
     delete: (p) => supa.req('DELETE', p),
@@ -4848,7 +4859,7 @@ ${(()=>{
       let tq='transformers?order=created_at.asc';
       let lq='loadings?select=*';
       if (!isAdmin) { tq+=`&team=eq.${encodeURIComponent(currentTeam)}`; lq+=`&team=eq.${encodeURIComponent(currentTeam)}`; }
-      const [tData, lData] = await Promise.all([supa.get(tq), supa.get(lq)]);
+      const [tData, lData] = await Promise.all([supa.getAll(tq), supa.getAll(lq)]);
       records = (tData||[]).map(r=>({uid:r.uid,team:r.team,type:r.type,id:r.tx_id,station:r.station,hvFeeder:r.hv_feeder,capacity:r.capacity,outputs:r.outputs,lat:r.lat||null,lng:r.lng||null}));
       loadings = {};
       const _allRoundsMap = {};
