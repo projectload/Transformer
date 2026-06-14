@@ -701,6 +701,11 @@
 
   .modal-overlay.active .modal { transform: translateY(0); }
 
+  .modal.modal-edit {
+    width: 560px;
+    max-width: 95vw;
+  }
+
   .modal-icon {
     font-size: 2.5rem;
     text-align: center;
@@ -1663,6 +1668,56 @@
   </div>
 </div>
 
+<!-- Edit Transformer Modal -->
+<div class="modal-overlay" id="editTransformerModal" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal modal-edit">
+    <button class="btn-close-modal" onclick="closeEditModal()">✕</button>
+    <span class="modal-icon">✏️</span>
+    <h2 style="margin-bottom:1.2rem">تعديل المحول</h2>
+    <div class="form-grid" style="margin-bottom:0.8rem">
+      <div class="form-group">
+        <label>اسم المحطة</label>
+        <select id="mfStation"></select>
+      </div>
+      <div class="form-group">
+        <label>رقم فيدر HV</label>
+        <input type="text" id="mfHvFeeder" inputmode="numeric" pattern="[0-9]*"
+          oninput="this.value=this.value.replace(/[^0-9]/g,'')" />
+      </div>
+    </div>
+    <div style="height:1px;background:var(--border);margin-bottom:0.8rem;opacity:0.5"></div>
+    <div class="form-grid" style="margin-bottom:1rem">
+      <div class="form-group">
+        <label>نوع المحول</label>
+        <select id="mfType" onchange="updateModalCapacityOptions()">
+          <option value="">-- اختر النوع --</option>
+          <option value="Ground">أرضي</option>
+          <option value="Pole">معلق</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>رقم المحول</label>
+        <input type="text" id="mfId" inputmode="numeric" pattern="[0-9]*"
+          oninput="this.value=this.value.replace(/[^0-9]/g,'')" />
+      </div>
+      <div class="form-group">
+        <label>السعة (KVA)</label>
+        <select id="mfCapacity" onchange="updateModalLvFeeders()">
+          <option value="">-- اختر السعة --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>عدد مخارج LV</label>
+        <input type="text" id="mfOutputs" placeholder="—" readonly style="opacity:0.7;cursor:default" />
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveEditRecord()">💾 حفظ التعديلات</button>
+      <button class="btn btn-secondary" onclick="closeEditModal()">✕ إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -2449,20 +2504,97 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
   }
 
   function editRecord(uid) {
+    openEditModal(uid);
+  }
+
+  async function openEditModal(uid) {
     if (blockIfViewer()) return;
     const r = records.find(r => r.uid === uid);
     if (!r) return;
-    populateStationDropdown(r.station || '');
-    document.getElementById('fHvFeeder').value = String(r.hvFeeder || '').replace(/[^0-9]/g, '');
-    document.getElementById('fId').value       = r.id;
-    document.getElementById('fType').value     = r.type;
-    updateCapacityOptions();
-    document.getElementById('fCapacity').value = r.capacity;
-    updateLvFeeders();
-    document.getElementById('fOutputs').value = r.outputs;
     editId = uid;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    showToast(t('toastEditing'));
+    await populateEditModalStations(r.station || '');
+    document.getElementById('mfHvFeeder').value = String(r.hvFeeder || '').replace(/[^0-9]/g, '');
+    document.getElementById('mfId').value        = r.id;
+    document.getElementById('mfType').value      = r.type;
+    updateModalCapacityOptions();
+    document.getElementById('mfCapacity').value  = r.capacity;
+    updateModalLvFeeders();
+    document.getElementById('mfOutputs').value   = r.outputs;
+    document.getElementById('editTransformerModal').classList.add('active');
+  }
+
+  function closeEditModal() {
+    document.getElementById('editTransformerModal').classList.remove('active');
+    editId = null;
+  }
+
+  async function populateEditModalStations(preselect) {
+    const sel = document.getElementById('mfStation');
+    if (!sel) return;
+    try {
+      const data = await supa.get(
+        `stations?team=eq.${encodeURIComponent(currentTeam)}&is_active=eq.true&order=name.asc&select=name`
+      );
+      sel.innerHTML = `<option value="">${lang==='ar'?'-- اختر المحطة --':'-- Select Station --'}</option>` +
+        (data||[]).map(s=>`<option value="${s.name}" ${s.name===preselect?'selected':''}>${s.name}</option>`).join('');
+    } catch {
+      sel.innerHTML = `<option value="">-- خطأ في تحميل المحطات --</option>`;
+    }
+  }
+
+  function updateModalCapacityOptions() {
+    const type = document.getElementById('mfType').value;
+    const sel  = document.getElementById('mfCapacity');
+    sel.innerHTML = '<option value="">' + t('fCapacityDefault') + '</option>';
+    (capacityOptionsByType[type] || []).forEach(function(v) {
+      var opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v;
+      sel.appendChild(opt);
+    });
+    updateModalLvFeeders();
+  }
+
+  function updateModalLvFeeders() {
+    const type     = document.getElementById('mfType').value;
+    const capacity = Number(document.getElementById('mfCapacity').value);
+    const map      = lvFeedersByTypeAndCapacity[type] || {};
+    document.getElementById('mfOutputs').value = map[capacity] !== undefined ? map[capacity] : '';
+  }
+
+  async function saveEditRecord() {
+    if (blockIfViewer()) return;
+    const type     = document.getElementById('mfType').value.trim();
+    const id       = document.getElementById('mfId').value.trim();
+    const station  = document.getElementById('mfStation').value.trim();
+    const hvFeeder = document.getElementById('mfHvFeeder').value.trim();
+    const capacity = Number(document.getElementById('mfCapacity').value);
+    const map      = lvFeedersByTypeAndCapacity[type] || {};
+    const outputs  = map[capacity] !== undefined ? map[capacity] : 0;
+
+    if (!type || !id || !station || !hvFeeder || !capacity || !outputs) {
+      showToast(t('toastFill'), 'error'); return;
+    }
+    if (!/^[0-9]+$/.test(id)) {
+      showToast('رقم المحول يجب أن يكون أرقامًا فقط', 'error'); return;
+    }
+    if (!isAdmin && station) {
+      const check = await supa.get(
+        `stations?team=eq.${encodeURIComponent(currentTeam)}&name=eq.${encodeURIComponent(station)}&is_active=eq.true&select=id`
+      ).catch(()=>[]);
+      if (!check?.length) { showToast('⚠️ المحطة غير صالحة لفريقك', 'error'); return; }
+    }
+    const idx = records.findIndex(r => r.uid === editId);
+    if (idx === -1) { showToast('خطأ: المحول غير موجود', 'error'); return; }
+    const rec = records[idx];
+    try {
+      records[idx] = { uid: editId, team: rec.team, type, id, station, hvFeeder, capacity, outputs, lat: rec.lat||null, lng: rec.lng||null };
+      await pushTransformer(records[idx], true);
+      closeEditModal();
+      updateStationFilter();
+      renderTable();
+      showToast(t('toastUpdated'), 'success');
+    } catch(e) { showToast('❌ ' + e.message, 'error'); }
   }
 
   async function deleteRecord(uid) {
