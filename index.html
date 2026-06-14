@@ -704,6 +704,48 @@
   .modal.modal-edit {
     width: 560px;
     max-width: 95vw;
+    max-height: 90dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .edit-modal-handle {
+    display: none;
+    width: 40px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 1rem;
+  }
+
+  @media (max-width: 540px) {
+    .edit-modal-handle { display: block; }
+    #editTransformerModal {
+      align-items: flex-end;
+    }
+    .modal.modal-edit {
+      width: 100%;
+      max-width: 100%;
+      max-height: 92dvh;
+      border-radius: 20px 20px 0 0;
+      padding: 1.5rem 1.2rem;
+      padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+    }
+    .modal.modal-edit .btn-row {
+      flex-direction: column;
+    }
+    .modal.modal-edit .btn-row .btn {
+      width: 100%;
+      min-height: 44px;
+      justify-content: center;
+    }
+    .modal.modal-edit .form-grid {
+      grid-template-columns: 1fr;
+    }
+    .modal.modal-edit input,
+    .modal.modal-edit select {
+      font-size: 16px;
+    }
   }
 
   .modal-icon {
@@ -1671,6 +1713,7 @@
 <!-- Edit Transformer Modal -->
 <div class="modal-overlay" id="editTransformerModal" onclick="if(event.target===this)closeEditModal()">
   <div class="modal modal-edit">
+    <div class="edit-modal-handle"></div>
     <button class="btn-close-modal" onclick="closeEditModal()">✕</button>
     <span class="modal-icon">✏️</span>
     <h2 style="margin-bottom:1.2rem">تعديل المحول</h2>
