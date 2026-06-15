@@ -66,8 +66,8 @@
   };
   var lang = localStorage.getItem('lang') || 'ar';
   var i18n = {
-    ar:{ editModalTitle:'تعديل المحول', btnSaveEdit:'💾 حفظ التعديلات', title:'سجل المحولات الكهربائية', filterAll:'🏭 كل المحطات', red:'أحمر', yellow:'أصفر', blue:'أزرق', neutral:'نيوترال', kva:'KVA', feederUnit:'فيدر', lmFeeder:'فيدر', lmFeederNum:'رقم الفيدر (من اليسار لليمين)', lmFeederName:'حجم الكيبل', lmVoltage:'قراءات الفولتيج (V)', lmCurrent:'قراءات التيار (A)', btnSaveFeeder:'💾 حفظ الفيدر', btnClearFeeder:'✕ مسح', summaryTitle:'📊 ملخص جميع القراءات', summaryFeederNum:'رقم الفيدر', summaryFeederName:'حجم الكيبل', summaryDate:'التاريخ والوقت', lastSaved:'آخر حفظ', notSaved:'لم يُحفظ بعد', toastFeederSaved:'✅ تم حفظ قراءات', lmTitle:'⚡ قراءات الأحمال', lmStation:'اسم المحطة', lmId:'رقم المحول', lmType:'نوع المحول', lmCapacity:'السعة', lmOutputs:'عدد مخارج LV', fHvFeederLabel:'رقم فيدر HV', fHvFeederPh:'', colHvFeeder:'رقم فيدر HV', subtitle:'إدارة وتتبع بيانات المحولات', statTotal:'إجمالي المحولات', statCapacity:'إجمالي السعة (KVA)', statOutputs:'إجمالي مخارج LV', statTypes:'عدد المحولات', formTitle:'إضافة / تعديل محول', fHvFeederPh:'', fStationLabel:'اسم المحطة', fStationPh:'مثال: محطة الشمال', fTypeLabel:'نوع المحول', fTypeDefault:'-- اختر النوع --', typeGround:'أرضي', typePole:'معلق', fIdLabel:'رقم المحول', fIdPh:'', fCapacityLabel:'السعة (KVA)', fCapacityDefault:'-- اختر السعة --', fCapacityPh:'مثال: 500', fOutputsLabel:'عدد مخارج LV', fOutputsPh:'مثال: 4', btnSave:'💾 حفظ', btnClear:'✕ مسح', tableTitle:'📋 قائمة المحولات', searchPh:'بحث...', btnExport:'⬇ تصدير CSV', colTeam:'الفريق', colStation:'اسم المحطة', colType:'نوع المحول', colId:'رقم المحول', colCapacity:'السعة (KVA)', colOutputs:'عدد مخارج LV', colActions:'الإجراءات', createdBy:'تم إنشاء هذا النظام بواسطة أحمد محمد الهنائي', emptyMsg:'لا توجد بيانات. أضف محولاً باستخدام النموذج أعلاه.', records:'سجل', adminMode:'🔴 وضع الأدمن', adminLogin:'🔐 تسجيل دخول الأدمن', adminLogout:'🔓 تسجيل الخروج', toastSaved:'✅ تم إضافة المحول بنجاح', toastUpdated:'✅ تم تحديث البيانات بنجاح', toastDeleted:'🗑️ تم الحذف', toastFill:'⚠️ يرجى ملء جميع الحقول', toastDup:'⚠️ رقم المحول موجود مسبقاً', toastExport:'⬇️ تم تصدير الملف بنجاح', toastNoData:'⚠️ لا توجد بيانات للتصدير', toastAdmin:'✅ مرحباً بك يا أدمن!', toastLogout:'👋 تم تسجيل الخروج', toastWrongPw:'❌ كلمة المرور غير صحيحة', toastEditing:'✏️ جاري التعديل - عدّل البيانات واضغط حفظ', confirmDelete:'هل أنت متأكد من حذف هذا المحول؟', editTitle:'✏️', delTitle:'حذف', loadTitle:'قراءات الأحمال', lockTitle:'يتطلب صلاحية الأدمن', adminModalTitle:'دخول الأدمن', adminModalDesc:'أدخل كلمة المرور للوصول إلى صلاحيات الحذف', pwLabel:'كلمة المرور', btnLogin:'دخول', allStations:'🏭 كل المحطات', allTypes:'🔧 كل الأنواع', allCapacities:'⚡ كل السعات', allHvFeeders:'🔌 كل فيدرات HV', searchGeneral:'بحث عام', searchStation:'اسم المحطة', searchTxNo:'رقم المحول', searchCapacity:'السعة', searchLvFeeders:'عدد مخارج LV', searchPlaceholder:'بحث...', summaryReport:'📄 تقرير مختصر', exportExcel:'📊 تصدير Excel', normal:'تحميل طبيعي', severeImbalance:'عدم توازن شديد', moderateImbalance:'توازن متوسط', txOverload:'المحول محمّل زيادة', txWarning:'تحذير: التحميل', overcurrent:'تجاوز التيار', nearMax:'قريب من الحد الأقصى', highestCurrent:'أعلى تيار', feeders:'مخارج', max:'الأعلى', voltageShared:'الفولتيج (V)', phaseToNeutral:'فاز — نيوترال', phaseToPhase:'فاز — فاز', currentSection:'التيار (A)', fcImbalance:'عدم التوازن', feederLoad:'حمل الكيبل' },
-    en:{ editModalTitle:'Edit Transformer', btnSaveEdit:'💾 Save Changes', title:'Transformer Registry', filterAll:'🏭 All Stations', red:'Red', yellow:'Yellow', blue:'Blue', neutral:'Neutral', kva:'KVA', feederUnit:'Feeder', lmFeeder:'Feeder', lmFeederNum:'Feeder No. (left to right)', lmFeederName:'Size of LV Cable', lmVoltage:'Voltage Readings (V)', lmCurrent:'Current Readings (A)', btnSaveFeeder:'💾 Save Feeder', btnClearFeeder:'✕ Clear', summaryTitle:'📊 All Readings Summary', summaryFeederNum:'Feeder No.', summaryFeederName:'Size of cable', summaryDate:'Date & Time', lastSaved:'Last saved', notSaved:'Not saved yet', toastFeederSaved:'✅ Saved readings for', lmTitle:'⚡ Load Readings', lmStation:'Station', lmId:'Transformer No.', lmType:'Type', lmCapacity:'Capacity', lmOutputs:'LV Feeders', fHvFeederLabel:'HV Feeder No.', fHvFeederPh:'', colHvFeeder:'HV Feeder No.', subtitle:'Manage and track transformer data', statTotal:'Total Transformers', statCapacity:'Total Capacity (KVA)', statOutputs:'Total LV Feeders', statTypes:'No. of Transformers', formTitle:'Add / Edit Transformer', fHvFeederPh:'', fStationLabel:'Station Name', fStationPh:'e.g. North Station', fTypeLabel:'Transformer Type', fTypeDefault:'-- Select Type --', typeGround:'Ground', typePole:'Pole', fIdLabel:'Transformer No.', fIdPh:'', fCapacityLabel:'Capacity (KVA)', fCapacityDefault:'-- Select Capacity --', fCapacityPh:'e.g. 500', fOutputsLabel:'No. of LV Feeders', fOutputsPh:'e.g. 4', btnSave:'💾 Save', btnClear:'✕ Clear', tableTitle:'📋 Transformer List', searchPh:'Search...', btnExport:'⬇ Export CSV', colTeam:'Team', colStation:'Station Name', colType:'Type', colId:'Transformer No.', colCapacity:'Capacity (KVA)', colOutputs:'No. of LV Feeders', colActions:'Actions', createdBy:'This system was created by Ahmed Mohammed Al-Hinai', emptyMsg:'No data found. Add a transformer using the form above.', records:'records', adminMode:'🔴 Admin Mode', adminLogin:'🔐 Admin Login', adminLogout:'🔓 Logout', toastSaved:'✅ Transformer added successfully', toastUpdated:'✅ Data updated successfully', toastDeleted:'🗑️ Deleted', toastFill:'⚠️ Please fill all fields', toastDup:'⚠️ Transformer number already exists', toastExport:'⬇️ File exported successfully', toastNoData:'⚠️ No data to export', toastAdmin:'✅ Welcome, Admin!', toastLogout:'👋 Logged out', toastWrongPw:'❌ Incorrect password', toastEditing:'✏️ Editing — update data and press Save', confirmDelete:'Are you sure you want to delete this transformer?', editTitle:'✏️', delTitle:'Delete', loadTitle:'Load Readings', lockTitle:'Requires admin access', adminModalTitle:'Admin Login', adminModalDesc:'Enter password to access delete permissions', pwLabel:'Password', btnLogin:'Login', allStations:'🏭 All Stations', allTypes:'🔧 All Types', allCapacities:'⚡ All Capacities', allHvFeeders:'🔌 All HV Feeders', searchGeneral:'General Search', searchStation:'Station Name', searchTxNo:'Transformer No.', searchCapacity:'Capacity', searchLvFeeders:'No. of LV Feeders', searchPlaceholder:'Search...', summaryReport:'📄 Summary Report', exportExcel:'📊 Export Excel', normal:'Normal loading', severeImbalance:'Severe imbalance', moderateImbalance:'Moderate imbalance', txOverload:'Transformer overloaded', txWarning:'Warning: Loading', overcurrent:'Overcurrent', nearMax:'Near max current', highestCurrent:'Highest current', feeders:'feeders', max:'Max', voltageShared:'Voltage (V)', phaseToNeutral:'Phase to Neutral', phaseToPhase:'Phase to Phase', currentSection:'Current (A)', fcImbalance:'Imbalance', feederLoad:'Cable Load' }
+    ar:{ editModalTitle:'تعديل المحول', btnSaveEdit:'💾 حفظ التعديلات', title:'سجل المحولات الكهربائية', filterAll:'🏭 كل المحطات', red:'أحمر', yellow:'أصفر', blue:'أزرق', neutral:'نيوترال', kva:'KVA', feederUnit:'فيدر', lmFeeder:'فيدر', lmFeederNum:'رقم الفيدر (من اليسار لليمين)', lmFeederName:'حجم الكيبل', lmCableType:'نوع الكيبل', lmVoltage:'قراءات الفولتيج (V)', lmCurrent:'قراءات التيار (A)', btnSaveFeeder:'💾 حفظ الفيدر', btnClearFeeder:'✕ مسح', summaryTitle:'📊 ملخص جميع القراءات', summaryFeederNum:'رقم الفيدر', summaryFeederName:'حجم الكيبل', summaryDate:'التاريخ والوقت', lastSaved:'آخر حفظ', notSaved:'لم يُحفظ بعد', toastFeederSaved:'✅ تم حفظ قراءات', lmTitle:'⚡ قراءات الأحمال', lmStation:'اسم المحطة', lmId:'رقم المحول', lmType:'نوع المحول', lmCapacity:'السعة', lmOutputs:'عدد مخارج LV', fHvFeederLabel:'رقم فيدر HV', fHvFeederPh:'', colHvFeeder:'رقم فيدر HV', subtitle:'إدارة وتتبع بيانات المحولات', statTotal:'إجمالي المحولات', statCapacity:'إجمالي السعة (KVA)', statOutputs:'إجمالي مخارج LV', statTypes:'عدد المحولات', formTitle:'إضافة / تعديل محول', fHvFeederPh:'', fStationLabel:'اسم المحطة', fStationPh:'مثال: محطة الشمال', fTypeLabel:'نوع المحول', fTypeDefault:'-- اختر النوع --', typeGround:'أرضي', typePole:'معلق', fIdLabel:'رقم المحول', fIdPh:'', fCapacityLabel:'السعة (KVA)', fCapacityDefault:'-- اختر السعة --', fCapacityPh:'مثال: 500', fOutputsLabel:'عدد مخارج LV', fOutputsPh:'مثال: 4', btnSave:'💾 حفظ', btnClear:'✕ مسح', tableTitle:'📋 قائمة المحولات', searchPh:'بحث...', btnExport:'⬇ تصدير CSV', colTeam:'الفريق', colStation:'اسم المحطة', colType:'نوع المحول', colId:'رقم المحول', colCapacity:'السعة (KVA)', colOutputs:'عدد مخارج LV', colActions:'الإجراءات', createdBy:'تم إنشاء هذا النظام بواسطة أحمد محمد الهنائي', emptyMsg:'لا توجد بيانات. أضف محولاً باستخدام النموذج أعلاه.', records:'سجل', adminMode:'🔴 وضع الأدمن', adminLogin:'🔐 تسجيل دخول الأدمن', adminLogout:'🔓 تسجيل الخروج', toastSaved:'✅ تم إضافة المحول بنجاح', toastUpdated:'✅ تم تحديث البيانات بنجاح', toastDeleted:'🗑️ تم الحذف', toastFill:'⚠️ يرجى ملء جميع الحقول', toastDup:'⚠️ رقم المحول موجود مسبقاً', toastExport:'⬇️ تم تصدير الملف بنجاح', toastNoData:'⚠️ لا توجد بيانات للتصدير', toastAdmin:'✅ مرحباً بك يا أدمن!', toastLogout:'👋 تم تسجيل الخروج', toastWrongPw:'❌ كلمة المرور غير صحيحة', toastEditing:'✏️ جاري التعديل - عدّل البيانات واضغط حفظ', confirmDelete:'هل أنت متأكد من حذف هذا المحول؟', editTitle:'✏️', delTitle:'حذف', loadTitle:'قراءات الأحمال', lockTitle:'يتطلب صلاحية الأدمن', adminModalTitle:'دخول الأدمن', adminModalDesc:'أدخل كلمة المرور للوصول إلى صلاحيات الحذف', pwLabel:'كلمة المرور', btnLogin:'دخول', allStations:'🏭 كل المحطات', allTypes:'🔧 كل الأنواع', allCapacities:'⚡ كل السعات', allHvFeeders:'🔌 كل فيدرات HV', searchGeneral:'بحث عام', searchStation:'اسم المحطة', searchTxNo:'رقم المحول', searchCapacity:'السعة', searchLvFeeders:'عدد مخارج LV', searchPlaceholder:'بحث...', summaryReport:'📄 تقرير مختصر', exportExcel:'📊 تصدير Excel', normal:'تحميل طبيعي', severeImbalance:'عدم توازن شديد', moderateImbalance:'توازن متوسط', txOverload:'المحول محمّل زيادة', txWarning:'تحذير: التحميل', overcurrent:'تجاوز التيار', nearMax:'قريب من الحد الأقصى', highestCurrent:'أعلى تيار', feeders:'مخارج', max:'الأعلى', voltageShared:'الفولتيج (V)', phaseToNeutral:'فاز — نيوترال', phaseToPhase:'فاز — فاز', currentSection:'التيار (A)', fcImbalance:'عدم التوازن', feederLoad:'حمل الكيبل' },
+    en:{ editModalTitle:'Edit Transformer', btnSaveEdit:'💾 Save Changes', title:'Transformer Registry', filterAll:'🏭 All Stations', red:'Red', yellow:'Yellow', blue:'Blue', neutral:'Neutral', kva:'KVA', feederUnit:'Feeder', lmFeeder:'Feeder', lmFeederNum:'Feeder No. (left to right)', lmFeederName:'Size of LV Cable', lmCableType:'Cable Type', lmVoltage:'Voltage Readings (V)', lmCurrent:'Current Readings (A)', btnSaveFeeder:'💾 Save Feeder', btnClearFeeder:'✕ Clear', summaryTitle:'📊 All Readings Summary', summaryFeederNum:'Feeder No.', summaryFeederName:'Size of cable', summaryDate:'Date & Time', lastSaved:'Last saved', notSaved:'Not saved yet', toastFeederSaved:'✅ Saved readings for', lmTitle:'⚡ Load Readings', lmStation:'Station', lmId:'Transformer No.', lmType:'Type', lmCapacity:'Capacity', lmOutputs:'LV Feeders', fHvFeederLabel:'HV Feeder No.', fHvFeederPh:'', colHvFeeder:'HV Feeder No.', subtitle:'Manage and track transformer data', statTotal:'Total Transformers', statCapacity:'Total Capacity (KVA)', statOutputs:'Total LV Feeders', statTypes:'No. of Transformers', formTitle:'Add / Edit Transformer', fHvFeederPh:'', fStationLabel:'Station Name', fStationPh:'e.g. North Station', fTypeLabel:'Transformer Type', fTypeDefault:'-- Select Type --', typeGround:'Ground', typePole:'Pole', fIdLabel:'Transformer No.', fIdPh:'', fCapacityLabel:'Capacity (KVA)', fCapacityDefault:'-- Select Capacity --', fCapacityPh:'e.g. 500', fOutputsLabel:'No. of LV Feeders', fOutputsPh:'e.g. 4', btnSave:'💾 Save', btnClear:'✕ Clear', tableTitle:'📋 Transformer List', searchPh:'Search...', btnExport:'⬇ Export CSV', colTeam:'Team', colStation:'Station Name', colType:'Type', colId:'Transformer No.', colCapacity:'Capacity (KVA)', colOutputs:'No. of LV Feeders', colActions:'Actions', createdBy:'This system was created by Ahmed Mohammed Al-Hinai', emptyMsg:'No data found. Add a transformer using the form above.', records:'records', adminMode:'🔴 Admin Mode', adminLogin:'🔐 Admin Login', adminLogout:'🔓 Logout', toastSaved:'✅ Transformer added successfully', toastUpdated:'✅ Data updated successfully', toastDeleted:'🗑️ Deleted', toastFill:'⚠️ Please fill all fields', toastDup:'⚠️ Transformer number already exists', toastExport:'⬇️ File exported successfully', toastNoData:'⚠️ No data to export', toastAdmin:'✅ Welcome, Admin!', toastLogout:'👋 Logged out', toastWrongPw:'❌ Incorrect password', toastEditing:'✏️ Editing — update data and press Save', confirmDelete:'Are you sure you want to delete this transformer?', editTitle:'✏️', delTitle:'Delete', loadTitle:'Load Readings', lockTitle:'Requires admin access', adminModalTitle:'Admin Login', adminModalDesc:'Enter password to access delete permissions', pwLabel:'Password', btnLogin:'Login', allStations:'🏭 All Stations', allTypes:'🔧 All Types', allCapacities:'⚡ All Capacities', allHvFeeders:'🔌 All HV Feeders', searchGeneral:'General Search', searchStation:'Station Name', searchTxNo:'Transformer No.', searchCapacity:'Capacity', searchLvFeeders:'No. of LV Feeders', searchPlaceholder:'Search...', summaryReport:'📄 Summary Report', exportExcel:'📊 Export Excel', normal:'Normal loading', severeImbalance:'Severe imbalance', moderateImbalance:'Moderate imbalance', txOverload:'Transformer overloaded', txWarning:'Warning: Loading', overcurrent:'Overcurrent', nearMax:'Near max current', highestCurrent:'Highest current', feeders:'feeders', max:'Max', voltageShared:'Voltage (V)', phaseToNeutral:'Phase to Neutral', phaseToPhase:'Phase to Phase', currentSection:'Current (A)', fcImbalance:'Imbalance', feederLoad:'Cable Load' }
   };
   function t(k){ return (i18n[lang]&&i18n[lang][k]) || (i18n['ar']&&i18n['ar'][k]) || k; }
   function toggleLang(){
@@ -3308,6 +3308,15 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
               ${[50,70,120,185,240,300].map(s=>`<option value="${s}" ${f.name==s?'selected':''}>${s} mm² (${CABLE_AMPACITY[s]}A)</option>`).join('')}
             </select>
           </div>
+          <div style="display:flex;flex-direction:column;gap:0.3rem">
+            <label style="font-size:0.73rem;color:var(--text-muted);font-family:'Tajawal',sans-serif">${t('lmCableType')}</label>
+            <select onchange="updateFeederCableType(${i},this.value)"
+              style="background:var(--surface2);border:1px solid rgba(167,139,250,0.4);border-radius:8px;color:var(--text);font-family:'Cairo',sans-serif;font-size:0.88rem;padding:0.5rem 0.8rem;outline:none;cursor:pointer;width:auto;height:2.5rem;box-sizing:border-box;${lang==='en'?'direction:ltr;text-align:left;':''}">
+              <option value="">${lang==='ar'?'-- اختر --':'-- Select --'}</option>
+              <option value="Cu" ${f.cableType==='Cu'?'selected':''}>Cu ${lang==='ar'?'(نحاس)':'(Copper)'}</option>
+              <option value="Al" ${f.cableType==='Al'?'selected':''}>Al ${lang==='ar'?'(ألمنيوم)':'(Aluminium)'}</option>
+            </select>
+          </div>
           ${(()=>{
             const cs = cableStatus(f);
             if (!cs || cs.level === 'nodata') return '';
@@ -3373,6 +3382,11 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
     buildFeederTabs(currentLoadUid);
   }
 
+  function updateFeederCableType(fi, val) {
+    if (!currentLoadUid) return;
+    loadings[currentLoadUid].feeders[fi].cableType = val;
+  }
+
   function updateFeederNum(fi, num) {
     if (!currentLoadUid) return;
     loadings[currentLoadUid].feeders[fi].num = Number(num);
@@ -3418,6 +3432,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
   function clearFeeder(fi) {
     const f = loadings[currentLoadUid].feeders[fi];
     ['iL1','iL2','iL3','iN'].forEach(k => f[k]='');
+    f.cableType = '';
     f.savedAt = null;
     buildFeederForms(currentLoadUid);
     buildFeederTabs(currentLoadUid);
@@ -4347,7 +4362,7 @@ ${(()=>{
 
     /* ── build one worksheet from a list of records ── */
     function buildSheet(sheetRecords, maxFeeders) {
-      const TAIL      = FEEDER_START + maxFeeders * 5;
+      const TAIL      = FEEDER_START + maxFeeders * 6;
       const totalCols = TAIL + 9; // 4 totals + MAX + MIN + Load% + Upgrade + Balance
 
       /* ── pre-compute tail column letters ── */
@@ -4395,16 +4410,20 @@ ${(()=>{
         row2.push(hdr(lbl, [CLR_VRN,CLR_VYN,CLR_VBN,CLR_VRY,CLR_VRB,CLR_VYB][i]))
       );
 
-      /* Feeders (5 cols each: Cable mm², R, Y, B, N) */
+      /* Feeders (6 cols each: Cable mm², Type, R, Y, B, N) */
       const CLR_CABLE_HDR = 'D1FAE5';
+      const CLR_TYPE_HDR  = 'EDE9FE';
       for (let fn = 1; fn <= maxFeeders; fn++) {
         row0.push({ v: 'Feeder ' + fn, t: 's', s: feederHdrStyle(CLR_FTITLE, true,  false) });
         row0.push({ v: '',             t: 's', s: feederHdrStyle(CLR_FTITLE, false, false) });
         row0.push({ v: '',             t: 's', s: feederHdrStyle(CLR_FTITLE, false, false) });
         row0.push({ v: '',             t: 's', s: feederHdrStyle(CLR_FTITLE, false, false) });
+        row0.push({ v: '',             t: 's', s: feederHdrStyle(CLR_FTITLE, false, false) });
         row0.push({ v: '',             t: 's', s: feederHdrStyle(CLR_FTITLE, false, true)  });
-        row1.push({ v: 'Cable mm²', t: 's', s: feederHdrStyle(CLR_CABLE_HDR, true, false) });
-        row2.push({ v: '',          t: 's', s: feederHdrStyle(CLR_CABLE_HDR, true, false) });
+        row1.push({ v: 'Cable mm²', t: 's', s: feederHdrStyle(CLR_CABLE_HDR, true,  false) });
+        row2.push({ v: '',          t: 's', s: feederHdrStyle(CLR_CABLE_HDR, true,  false) });
+        row1.push({ v: 'Type',      t: 's', s: feederHdrStyle(CLR_TYPE_HDR,  false, false) });
+        row2.push({ v: '',          t: 's', s: feederHdrStyle(CLR_TYPE_HDR,  false, false) });
         ['R','Y','B','N'].forEach((ph, p) => {
           row1.push({ v: ph, t: 's', s: feederHdrStyle(feederClrs[p], false, p === 3) });
           row2.push({ v: ph, t: 's', s: feederHdrStyle(feederClrs[p], false, p === 3) });
@@ -4479,18 +4498,19 @@ ${(()=>{
           for (let fn = 1; fn <= maxFeeders; fn++) {
             const f  = fdMap[fn] || {};
             const fi = fn - 1;
-            row.push({ v: f.name ? f.name + ' mm²' : '', t: 's', s: feederDsStyle(true, false, fi) });
+            row.push({ v: f.name ? f.name + ' mm²' : '', t: 's', s: feederDsStyle(true,  false, fi) });
+            row.push({ v: f.cableType || '',              t: 's', s: feederDsStyle(false, false, fi) });
             [f.iL1, f.iL2, f.iL3, f.iN].forEach((val, p) => {
               const fv = val ? Number(val) : '';
               row.push({ v: fv, t: typeof fv === 'number' ? 'n' : 's', s: feederDsStyle(false, p === 3, fi) });
             });
           }
 
-          /* Total Load formulas */
-          const rCols = Array.from({length: maxFeeders}, (_, fi) => FEEDER_START + fi*5 + 1);
-          const yCols = Array.from({length: maxFeeders}, (_, fi) => FEEDER_START + fi*5 + 2);
-          const bCols = Array.from({length: maxFeeders}, (_, fi) => FEEDER_START + fi*5 + 3);
-          const nCols = Array.from({length: maxFeeders}, (_, fi) => FEEDER_START + fi*5 + 4);
+          /* Total Load formulas — 6 cols per feeder: Cable mm², Type, R, Y, B, N */
+          const rCols = Array.from({length: maxFeeders}, (_, fi) => FEEDER_START + fi*6 + 2);
+          const yCols = Array.from({length: maxFeeders}, (_, fi) => FEEDER_START + fi*6 + 3);
+          const bCols = Array.from({length: maxFeeders}, (_, fi) => FEEDER_START + fi*6 + 4);
+          const nCols = Array.from({length: maxFeeders}, (_, fi) => FEEDER_START + fi*6 + 5);
           const sumF  = (cols) => 'SUM(' + cols.map(c => colLetter(c) + exRow).join(',') + ')';
           row.push(fCell(sumF(rCols)));
           row.push(fCell(sumF(yCols)));
@@ -4529,11 +4549,11 @@ ${(()=>{
         rng('K1:P1'), rng('K2:M2'), rng('N2:P2'),
       ];
 
-      /* feeder merges (row1 title + rows 2-3 per sub-col) */
+      /* feeder merges (row1 title spans 6 cols + rows 2-3 per sub-col) */
       for (let fn = 1; fn <= maxFeeders; fn++) {
-        const fc = FEEDER_START + (fn - 1) * 5;
-        merges.push(rng(colLetter(fc) + '1:' + colLetter(fc + 4) + '1'));
-        for (let ci = 0; ci < 5; ci++)
+        const fc = FEEDER_START + (fn - 1) * 6;
+        merges.push(rng(colLetter(fc) + '1:' + colLetter(fc + 5) + '1'));
+        for (let ci = 0; ci < 6; ci++)
           merges.push(rng(colLetter(fc + ci) + '2:' + colLetter(fc + ci) + '3'));
       }
 
@@ -4554,7 +4574,10 @@ ${(()=>{
         let w = 5;
         if (c in widthMap)                          w = widthMap[c];
         else if (c >= 10 && c < FEEDER_START)       w = 6;  // K-P (Voltage)
-        else if (c >= FEEDER_START && c < TAIL)     w = (c - FEEDER_START) % 5 === 0 ? 8 : 6;
+        else if (c >= FEEDER_START && c < TAIL) {
+          const off = (c - FEEDER_START) % 6;
+          w = off === 0 ? 8 : off === 1 ? 5 : 6; // Cable mm²:8, Type:5, R/Y/B/N:6
+        }
         else if (c >= TAIL && c < TAIL + 4)         w = 6;
         else if (c === TAIL+4 || c === TAIL+5)      w = 7;
         else if (c === TAIL+6)                      w = 9;
