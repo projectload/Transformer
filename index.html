@@ -4432,7 +4432,9 @@ ${(()=>{
     document.body.style.overflow = 'hidden';
   }
 
+  var _returnToAlerts = false;
   function closeReportPage() {
+    if (_returnToAlerts) { _returnToAlerts = false; openAlerts(); return; }
     const ov = document.getElementById('reportOverlay');
     if (ov) ov.style.display = 'none';
     document.body.style.overflow = '';
@@ -5961,7 +5963,7 @@ ${(()=>{
     function colorFor(p){return p>=100?'#dc2626':'#ea580c';}
     var TEAM_CLR={'Ibri':'#3B82F6','Wadi Alain':'#10B981','Araqi':'#F59E0B','Hijermat':'#EF4444','Dank':'#8B5CF6','Yanqul':'#06B6D4','Hamra AlDaroo':'#F97316','Masrooq':'#EC4899'};
     function teamClr(t){return TEAM_CLR[t]||'#64748b';}
-    function goTo(uid){parent.closeReportPage();parent.openReport(uid);};
+    function goTo(uid){parent._returnToAlerts=true;parent.openReport(uid);};
     var teamSel=document.getElementById('fTeam'),stSel=document.getElementById('fStation'),fdSel=document.getElementById('fFeeder');
     function tval(){return teamSel?teamSel.value:'';}
     function fill(sel,vals,allLabel){var cur=sel.value;var h='<option value="">'+allLabel+'</option>';vals.forEach(function(v){h+='<option value="'+v+'">'+v+'</option>';});sel.innerHTML=h;if(vals.indexOf(cur)>-1)sel.value=cur;}
