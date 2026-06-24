@@ -5851,12 +5851,14 @@ ${(()=>{
 
     const TX = tx.map(a => ({
       uid: a.rec.uid, id: a.rec.id, team: a.rec.team || '', station: stationOf(a.rec), hv: hvOf(a.rec),
-      load: `${(a.cap*a.pct/100).toFixed(1)} / ${a.cap.toLocaleString()} KVA`, pct: Math.round(a.pct)
+      load: `${(a.cap*a.pct/100).toFixed(1)} / ${a.cap.toLocaleString()} KVA`, pct: Math.round(a.pct),
+      lat: a.rec.lat || null, lng: a.rec.lng || null
     }));
     const CB = cables.map(a => ({
       uid: a.rec.uid, id: a.rec.id, team: a.rec.team || '', station: stationOf(a.rec), hv: hvOf(a.rec),
       feeder: `${isAr?'ف':'F'}${a.feederNum||'?'}`,
-      cur: `${a.name?a.name+' mm² · ':''}${a.maxI.toFixed(1)} / ${a.ampacity} A`, pct: Math.round(a.pct)
+      cur: `${a.name?a.name+' mm² · ':''}${a.maxI.toFixed(1)} / ${a.ampacity} A`, pct: Math.round(a.pct),
+      lat: a.rec.lat || null, lng: a.rec.lng || null
     }));
 
     const L = {
@@ -5933,7 +5935,7 @@ ${(()=>{
     }
     @media print{body{background:#fff;padding:0}.filters{display:none}.sec,.head{box-shadow:none}.head{border:1px solid #e5e7eb}.tbl-wrap{overflow:visible}table{min-width:0}}
     </style></head><body><div class="page">
-      <div class="head"><h1>🔔 ${L.title}</h1><div class="date">${dateStr}</div></div>
+      <div class="head"><h1>🔔 ${L.title}</h1><div class="date">${dateStr}</div><button onclick="shareAlerts()" style="margin-top:0.5rem;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.35);color:#fff;border-radius:10px;padding:0.4rem 1rem;font-family:'Cairo',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer">📤 ${isAr?'مشاركة':'Share'}</button></div>
       <div class="filters">
         ${isAdmin ? '<select id="fTeam"></select>' : ''}
         <select id="fStation"></select>
@@ -5975,10 +5977,39 @@ ${(()=>{
       fill(fdSel,uniq(ALL.filter(function(x){return (!t||x.team===t)&&(!s||x.station===s);}).map(function(x){return x.hv;})),L.feeder);
       render();
     }
+    var txf=[],cbf=[];
+    function shareAlerts(){
+      var isAr=${isAr?'true':'false'};
+      var lines=[];
+      var dt=new Date().toLocaleString(isAr?'ar-OM':'en-GB');
+      lines.push('🔔 '+L.title);
+      lines.push('📅 '+dt);
+      if(txf.length){
+        lines.push('');
+        lines.push('⚡ '+L.txH+' ('+txf.length+'):');
+        txf.forEach(function(a,i){
+          lines.push((i+1)+'. (Tx:'+a.id+') — '+a.station+(a.hv?' ['+a.hv+']':'')+(a.team?' | '+a.team:''));
+          lines.push('   '+(isAr?'الحمل':'Load')+': '+a.load+' ('+a.pct+'%)');
+          if(a.lat&&a.lng) lines.push('   📍 https://maps.google.com/?q='+a.lat+','+a.lng);
+        });
+      }
+      if(cbf.length){
+        lines.push('');
+        lines.push('🔌 '+L.cbH+' ('+cbf.length+'):');
+        cbf.forEach(function(a,i){
+          lines.push((i+1)+'. (Tx:'+a.id+') '+a.feeder+' — '+a.station+(a.hv?' ['+a.hv+']':'')+(a.team?' | '+a.team:''));
+          lines.push('   '+(isAr?'التيار':'Current')+': '+a.cur+' ('+a.pct+'%)');
+          if(a.lat&&a.lng) lines.push('   📍 https://maps.google.com/?q='+a.lat+','+a.lng);
+        });
+      }
+      var text=lines.join('\\n');
+      if(navigator.share){navigator.share({title:'🔔 '+L.title,text:text}).catch(function(){});}
+      else{navigator.clipboard.writeText(text).then(function(){alert(isAr?'✅ تم النسخ!':'✅ Copied to clipboard!');});}
+    }
     function render(){
       var t=tval(),s=stSel.value,h=fdSel.value;
       function flt(x){return (!t||x.team===t)&&(!s||x.station===s)&&(!h||x.hv===h);}
-      var txf=TX.filter(flt),cbf=CB.filter(flt);
+      txf=TX.filter(flt);cbf=CB.filter(flt);
       var COLS=ADM?7:6;
       document.getElementById('txCount').textContent=txf.length;
       document.getElementById('cbCount').textContent=cbf.length;
