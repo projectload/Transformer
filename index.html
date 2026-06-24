@@ -5980,31 +5980,46 @@ ${(()=>{
     var txf=[],cbf=[];
     function shareAlerts(){
       var isAr=${isAr?'true':'false'};
+      var NL=String.fromCharCode(10);
+      var BIG='▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬';
+      var DOT='  · · · · · · · ·';
       var lines=[];
-      var dt=new Date().toLocaleString(isAr?'ar-OM':'en-GB');
+      var dt=new Date().toLocaleString(isAr?'ar-OM':'en-GB',{dateStyle:'short',timeStyle:'short'});
       lines.push('🔔 '+L.title);
       lines.push('📅 '+dt);
       if(txf.length){
         lines.push('');
-        lines.push('⚡ '+L.txH+' ('+txf.length+'):');
+        lines.push(BIG);
+        lines.push('  ⚡ '+L.txH+' ('+txf.length+')');
+        lines.push(BIG);
         txf.forEach(function(a,i){
-          lines.push((i+1)+'. (Tx:'+a.id+') — '+a.station+(a.hv?' ['+a.hv+']':'')+(a.team?' | '+a.team:''));
-          lines.push('   '+(isAr?'الحمل':'Load')+': '+a.load+' ('+a.pct+'%)');
+          if(i>0){lines.push('');lines.push(DOT);}
+          lines.push('');
+          lines.push((i+1)+'. 🔧 Tx: '+a.id);
+          lines.push('   🏭 '+a.station+(a.hv?'  |  🔌 '+a.hv:''));
+          if(ADM&&a.team) lines.push('   👥 '+a.team);
+          lines.push('   📊 '+a.load+' - '+a.pct+'%');
           if(a.lat&&a.lng) lines.push('   📍 https://maps.google.com/?q='+a.lat+','+a.lng);
         });
       }
       if(cbf.length){
         lines.push('');
-        lines.push('🔌 '+L.cbH+' ('+cbf.length+'):');
+        lines.push(BIG);
+        lines.push('  🔌 '+L.cbH+' ('+cbf.length+')');
+        lines.push(BIG);
         cbf.forEach(function(a,i){
-          lines.push((i+1)+'. (Tx:'+a.id+') '+a.feeder+' — '+a.station+(a.hv?' ['+a.hv+']':'')+(a.team?' | '+a.team:''));
-          lines.push('   '+(isAr?'التيار':'Current')+': '+a.cur+' ('+a.pct+'%)');
+          if(i>0){lines.push('');lines.push(DOT);}
+          lines.push('');
+          lines.push((i+1)+'. 🔧 Tx: '+a.id+'  |  '+a.feeder);
+          lines.push('   🏭 '+a.station+(a.hv?'  |  🔌 '+a.hv:''));
+          if(ADM&&a.team) lines.push('   👥 '+a.team);
+          lines.push('   ⚡ '+a.cur+' - '+a.pct+'%');
           if(a.lat&&a.lng) lines.push('   📍 https://maps.google.com/?q='+a.lat+','+a.lng);
         });
       }
-      var text=lines.join('\\n');
+      var text=lines.join(NL);
       if(navigator.share){navigator.share({title:'🔔 '+L.title,text:text}).catch(function(){});}
-      else{navigator.clipboard.writeText(text).then(function(){alert(isAr?'✅ تم النسخ!':'✅ Copied to clipboard!');});}
+      else{navigator.clipboard.writeText(text).then(function(){alert(isAr?'✅ تم النسخ!':'✅ Copied!');});}
     }
     function render(){
       var t=tval(),s=stSel.value,h=fdSel.value;
