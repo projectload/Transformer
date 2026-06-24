@@ -1448,7 +1448,6 @@
     <div class="login-err" id="loginErr"></div>
     <div class="guide-link"><a href="user-guide.html" target="_blank">📖 User Guide</a></div>
     <div class="forgot-link"><button onclick="showForgotPanel()">🔑 Forgot password?</button></div>
-    <div class="admin-toggle"><button onclick="showAdminLogin()">🔐 Admin Login</button></div>
 
     <!-- Forgot Password Panel -->
     <div id="forgotPanel">
@@ -4953,6 +4952,12 @@ ${(()=>{
       btn.onclick = () => { grid.querySelectorAll('.team-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); };
       grid.appendChild(btn);
     });
+    // زر الأدمن الموحّد (دائماً ظاهر بعرض كامل أسفل الفرق)
+    const ab = document.createElement('button');
+    ab.className='team-btn'; ab.dataset.team='__admin__'; ab.style.gridColumn='1/-1';
+    ab.textContent = '🔐 Admin';
+    ab.onclick = () => { grid.querySelectorAll('.team-btn').forEach(b=>b.classList.remove('selected')); ab.classList.add('selected'); };
+    grid.appendChild(ab);
   }
 
   function showAdminLogin() {
