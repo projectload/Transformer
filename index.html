@@ -1307,7 +1307,55 @@
     .filters-toggle-btn { display: inline-flex; }
     #filtersCollapse { display: none; }
     #filtersCollapse.open { display: block; }
+
+    /* ── على الهاتف: إخفاء الجدول وإظهار البطاقات ── */
+    .table-wrapper > div[style*="overflow-x"] { display: none !important; }
+    .tx-card-list { display: block !important; }
   }
+
+  /* ── بطاقات المحولات (الهاتف) ── */
+  .tx-card-list { display: none; padding: 0.6rem; }
+  .tx-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 0.7rem;
+    overflow: hidden;
+    transition: border-color 0.15s;
+    direction: ltr;
+  }
+  .tx-card.open { border-color: rgba(0,212,255,0.45); }
+  .tx-card-head {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.9rem 1rem;
+    cursor: pointer;
+  }
+  .tx-card-num { color: var(--text-muted); font-size: 0.95rem; font-weight: 600; min-width: 1.2rem; text-align: center; }
+  .tx-card-main { min-width: 0; }
+  .tx-card-station {
+    font-family: 'Cairo', sans-serif; font-weight: 800; font-size: 1.02rem; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .tx-card-team { color: var(--accent2); font-size: 0.82rem; font-weight: 700; }
+  .tx-card-feeder { font-family: monospace; color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem; }
+  .tx-card-id {
+    display: flex; align-items: center; gap: 0.35rem;
+    color: var(--accent); font-weight: 800; font-size: 1.35rem; font-family: monospace; white-space: nowrap;
+  }
+  .tx-card-chevron { color: var(--text-muted); font-size: 1.1rem; transition: transform 0.2s; }
+  .tx-card.open .tx-card-chevron { transform: rotate(90deg); }
+  .tx-card-body { display: none; padding: 0 1rem 0.9rem; }
+  .tx-card.open .tx-card-body { display: block; }
+  .tx-card-row {
+    display: flex; align-items: center; gap: 0.8rem;
+    padding: 0.55rem 0; border-top: 1px dashed var(--border); font-size: 0.92rem;
+  }
+  .tx-card-row .lbl { font-weight: 700; color: var(--text-muted); font-size: 0.82rem; font-family: 'Tajawal', sans-serif; margin-inline-end: auto; }
+  .tx-card-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.5rem; padding-top: 0.8rem; margin-top: 0.4rem; border-top: 1px solid var(--border); }
+  .tx-card-actions .btn-icon { padding: 0.45rem 0.7rem; font-size: 1.05rem; }
 
   /* ── Summary Report ── */
   .summary-report-table { width: 100%; border-collapse: collapse; }
@@ -1612,6 +1660,7 @@
         <tbody id="tableBody"></tbody>
       </table>
     </div>
+    <div id="cardList" class="tx-card-list"></div>
     <div id="emptyState" class="empty-state" style="display:none">
       <div class="empty-icon">🔌</div>
       <p data-i18n="emptyMsg">لا توجد بيانات. أضف محولاً باستخدام النموذج أعلاه.</p>
@@ -2149,6 +2198,8 @@
 
     if (totalRecords === 0) {
       tbody.innerHTML = '';
+      const cl = document.getElementById('cardList');
+      if (cl) cl.innerHTML = '';
       empty.style.display = 'block';
       count.textContent = '0 ' + t('records');
       document.getElementById('paginationControls').innerHTML = '';
@@ -2158,9 +2209,18 @@
       count.textContent = isAll
         ? `${totalRecords} ${t('records')}`
         : `${startIndex + 1}–${showEnd} ${lang==='ar'?'من':'of'} ${totalRecords} ${t('records')}`;
-      tbody.innerHTML = paginated.map((r, i) => {
+      const rowsHtml = [];
+      const cardsHtml = [];
+      paginated.forEach((r, i) => {
         const rowNum = startIndex + i + 1;
-        return `
+        const actionsHtml = `
+                <button class="btn-icon edit" title="${t('editTitle')}" onclick="editRecord('${r.uid}')">✏️</button>
+                <button class="btn-icon" title="${t('loadTitle')}" onclick="openLoadModal('${r.uid}')" style="border-color:rgba(0,255,157,0.3);color:var(--accent3)">📊</button>
+                <button class="btn-icon" title="${lang==='ar'?'تقرير':'Report'}" onclick="openReport('${r.uid}')" style="border-color:rgba(167,139,250,0.4);color:#a78bfa">📄</button>
+                <button class="btn-icon" title="${r.lat ? (lang==='ar'?'تعديل الموقع':'Edit Location') : (lang==='ar'?'تحديد الموقع':'Set Location')}" onclick="openLocationModal('${r.uid}')" style="border-color:${r.lat?'rgba(251,191,36,0.4)':'rgba(107,127,163,0.25)'};color:${r.lat?'#fbbf24':'var(--text-muted)'};opacity:${r.lat?'1':'0.5'}">📍</button>
+                ${(isAdmin || isViewer || isTeamAdmin) ? `<button class="btn-icon del" title="${t('delTitle')}" onclick="deleteRecord('${r.uid}')" data-uid="${r.uid}">🗑️</button>` : ''}`;
+
+        rowsHtml.push(`
           <tr>
             <td style="color:var(--text-muted);font-size:0.8rem;text-align:center">${rowNum}</td>
             <td class="team-col-cell" style="font-size:0.8rem;text-align:center;display:${isAdmin?'':'none'}">${r.team || '—'}</td>
@@ -2171,16 +2231,33 @@
             <td style="font-weight:600;text-align:center">${String(r.capacity || '').replace(/,/g, '')}</td>
             <td class="col-outputs" style="font-weight:600;color:var(--accent3);text-align:center">${r.outputs} <span style="color:var(--text-muted);font-size:0.78rem;font-weight:400">(${usedFeeders(r.uid)})</span></td>
             <td style="text-align:center;white-space:nowrap;min-width:200px">
-              <div class="actions" style="justify-content:center;flex-wrap:nowrap">
-                <button class="btn-icon edit" title="${t('editTitle')}" onclick="editRecord('${r.uid}')">✏️</button>
-                <button class="btn-icon" title="${t('loadTitle')}" onclick="openLoadModal('${r.uid}')" style="border-color:rgba(0,255,157,0.3);color:var(--accent3)">📊</button>
-                <button class="btn-icon" title="${lang==='ar'?'تقرير':'Report'}" onclick="openReport('${r.uid}')" style="border-color:rgba(167,139,250,0.4);color:#a78bfa">📄</button>
-                <button class="btn-icon" title="${r.lat ? (lang==='ar'?'تعديل الموقع':'Edit Location') : (lang==='ar'?'تحديد الموقع':'Set Location')}" onclick="openLocationModal('${r.uid}')" style="border-color:${r.lat?'rgba(251,191,36,0.4)':'rgba(107,127,163,0.25)'};color:${r.lat?'#fbbf24':'var(--text-muted)'};opacity:${r.lat?'1':'0.5'}">📍</button>
-                ${(isAdmin || isViewer || isTeamAdmin) ? `<button class="btn-icon del" title="${t('delTitle')}" onclick="deleteRecord('${r.uid}')" data-uid="${r.uid}">🗑️</button>` : ''}
+              <div class="actions" style="justify-content:center;flex-wrap:nowrap">${actionsHtml}
               </div>
             </td>
-          </tr>`;
-      }).join('');
+          </tr>`);
+
+        cardsHtml.push(`
+          <div class="tx-card">
+            <div class="tx-card-head" onclick="this.parentElement.classList.toggle('open')">
+              <div class="tx-card-num">${rowNum}</div>
+              <div class="tx-card-main">
+                <div class="tx-card-station">${r.station || '—'}${(isAdmin && r.team) ? ` <span class="tx-card-team">(${r.team})</span>` : ''}</div>
+                <div class="tx-card-feeder">${formatHvFeeder(r.hvFeeder)}</div>
+              </div>
+              <div class="tx-card-id">${r.id} <span class="tx-card-chevron">›</span></div>
+            </div>
+            <div class="tx-card-body">
+              <div class="tx-card-row"><span class="lbl">${t('colType')}</span><span class="badge ${typeColor(r.type)}">${translateType(r.type)}</span></div>
+              <div class="tx-card-row"><span class="lbl">${t('colCapacity')}</span><span>${String(r.capacity || '').replace(/,/g, '')} KVA</span></div>
+              <div class="tx-card-row"><span class="lbl">${t('colOutputs')}</span><span>${r.outputs} (${usedFeeders(r.uid)})</span></div>
+              <div class="tx-card-actions">${actionsHtml}
+              </div>
+            </div>
+          </div>`);
+      });
+      tbody.innerHTML = rowsHtml.join('');
+      const cardList = document.getElementById('cardList');
+      if (cardList) cardList.innerHTML = cardsHtml.join('');
       renderPagination(totalRecords, totalPages);
     }
 
