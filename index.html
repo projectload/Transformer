@@ -1410,6 +1410,8 @@
 
   <!-- Admin Reset Requests Panel -->
   <div id="adminResetPanel">
+    <button id="adminPanelsToggle" onclick="toggleAdminPanels()" class="arp-btn" style="border-color:rgba(0,212,255,0.4);color:#00d4ff;font-size:0.82rem;font-weight:700;padding:0.5rem 1rem;margin-bottom:1rem">🛠️ <span id="adminPanelsToggleLabel">أدوات الأدمن</span> ▾</button>
+    <div id="adminPanelsBody" style="display:none">
     <div class="arp-card">
       <div class="arp-header">
         <div class="arp-title">🔐 Password Reset Requests <span class="arp-badge" id="arpBadge">0</span></div>
@@ -1447,6 +1449,7 @@
         </div>
       </div>
       <div id="smList"><div class="arp-empty" id="smEmptyMsg">اختر فريقاً لعرض محطاته</div></div>
+    </div>
     </div>
   </div>
 
@@ -1537,14 +1540,12 @@
         <select id="filterTeam" onchange="currentPage=1;renderTable()" style="display:none">
           <option value="">👥 All Teams</option>
         </select>
-        <div style="display:flex;flex-direction:column;gap:0.35rem">
-          <select id="stationFilter" onchange="currentPage=1;updateHvFeederFilter();renderTable()">
-            <option value="">🏭 كل المحطات</option>
-          </select>
-          <select id="filterHvFeeder" onchange="currentPage=1;renderTable()">
-            <option value=""></option>
-          </select>
-        </div>
+        <select id="stationFilter" onchange="currentPage=1;updateHvFeederFilter();renderTable()">
+          <option value="">🏭 كل المحطات</option>
+        </select>
+        <select id="filterHvFeeder" onchange="currentPage=1;renderTable()">
+          <option value=""></option>
+        </select>
         <select id="filterType" onchange="currentPage=1;renderTable()">
           <option value="">🔧 كل الأنواع</option>
           <option value="Ground">أرضي</option>
@@ -1894,6 +1895,8 @@
     const mapViewBtnLabel = document.getElementById('mapViewBtnLabel');
     if (mapViewBtnLabel) mapViewBtnLabel.textContent = isAr ? 'مواقع المحولات' : 'Map View';
 
+    const adminPanelsToggleLabel = document.getElementById('adminPanelsToggleLabel');
+    if (adminPanelsToggleLabel) adminPanelsToggleLabel.textContent = isAr ? 'أدوات الأدمن' : 'Admin Tools';
     const smTitle = document.getElementById('smTitle');
     if (smTitle) smTitle.textContent = isAr ? '🏭 إدارة المحطات' : '🏭 Station Management';
     const smRefreshBtn = document.getElementById('smRefreshBtn');
@@ -4933,6 +4936,15 @@ ${(()=>{
     document.getElementById('loginModal').classList.add('active');
     document.getElementById('pwInput').value = '';
     document.getElementById('loginError').textContent = '';
+  }
+
+  function toggleAdminPanels() {
+    const body = document.getElementById('adminPanelsBody');
+    const btn  = document.getElementById('adminPanelsToggle');
+    if (!body) return;
+    const show = body.style.display === 'none';
+    body.style.display = show ? 'block' : 'none';
+    if (btn) btn.innerHTML = btn.innerHTML.replace(show ? '▾' : '▴', show ? '▴' : '▾');
   }
 
   async function loadResetRequests() {
