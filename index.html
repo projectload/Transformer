@@ -5848,11 +5848,11 @@ ${(()=>{
     const hvOf = r => { const v = formatHvFeeder(r.hvFeeder); return v === '—' ? '' : v; };
 
     const TX = tx.map(a => ({
-      id: a.rec.id, team: a.rec.team || '', station: stationOf(a.rec), hv: hvOf(a.rec),
+      uid: a.rec.uid, id: a.rec.id, team: a.rec.team || '', station: stationOf(a.rec), hv: hvOf(a.rec),
       load: `${(a.cap*a.pct/100).toFixed(1)} / ${a.cap.toLocaleString()} KVA`, pct: Math.round(a.pct)
     }));
     const CB = cables.map(a => ({
-      id: a.rec.id, team: a.rec.team || '', station: stationOf(a.rec), hv: hvOf(a.rec),
+      uid: a.rec.uid, id: a.rec.id, team: a.rec.team || '', station: stationOf(a.rec), hv: hvOf(a.rec),
       feeder: `${isAr?'ف':'F'}${a.feederNum||'?'}`,
       cur: `${a.name?a.name+' mm² · ':''}${a.maxI.toFixed(1)} / ${a.ampacity} A`, pct: Math.round(a.pct)
     }));
@@ -5959,6 +5959,9 @@ ${(()=>{
     var TX=${J(TX)},CB=${J(CB)},L=${J(L)},ALL=TX.concat(CB),ADM=${isAdmin ? 'true' : 'false'};
     function uniq(a){return [...new Set(a.filter(Boolean))].sort();}
     function colorFor(p){return p>=100?'#dc2626':'#ea580c';}
+    var TEAM_CLR={'Ibri':'#3B82F6','Wadi Alain':'#10B981','Araqi':'#F59E0B','Hijermat':'#EF4444','Dank':'#8B5CF6','Yanqul':'#06B6D4','Hamra AlDaroo':'#F97316','Masrooq':'#EC4899'};
+    function teamClr(t){return TEAM_CLR[t]||'#64748b';}
+    function goTo(uid){parent.closeReportPage();parent.openReport(uid);};
     var teamSel=document.getElementById('fTeam'),stSel=document.getElementById('fStation'),fdSel=document.getElementById('fFeeder');
     function tval(){return teamSel?teamSel.value:'';}
     function fill(sel,vals,allLabel){var cur=sel.value;var h='<option value="">'+allLabel+'</option>';vals.forEach(function(v){h+='<option value="'+v+'">'+v+'</option>';});sel.innerHTML=h;if(vals.indexOf(cur)>-1)sel.value=cur;}
@@ -5977,10 +5980,10 @@ ${(()=>{
       var COLS=ADM?7:6;
       document.getElementById('txCount').textContent=txf.length;
       document.getElementById('cbCount').textContent=cbf.length;
-      document.getElementById('txBody').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold">'+a.id+'</td>'+(ADM?'<td class="muted">'+(a.team||'—')+'</td>':'')+'<td>'+a.station+'</td><td>'+(a.hv||'—')+'</td><td class="muted">'+a.load+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'</td></tr>';}).join('') : '<tr><td colspan="'+COLS+'" class="empty">'+L.none+'</td></tr>';
-      document.getElementById('cbBody').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold">'+a.id+'</td><td><span class="chip">'+a.feeder+'</span></td>'+(ADM?'<td class="muted">'+(a.team||'—')+'</td>':'')+'<td>'+a.station+'</td><td class="muted">'+a.cur+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'</td></tr>';}).join('') : '<tr><td colspan="'+COLS+'" class="empty">'+L.none+'</td></tr>';
-      document.getElementById('txCards').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<div class="item" style="border-inline-start:4px solid '+c+'"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id">'+a.id+(a.station?' <span class="sub">'+a.station+'</span>':'')+'</div><div class="meta">'+(ADM&&a.team?a.team+' · ':'')+(a.hv?'HV '+a.hv+' · ':'')+a.load+'</div></div><div class="p" style="color:'+c+'">'+a.pct+'%<div class="pbar"><i style="width:'+Math.min(100,a.pct)+'%;background:'+c+'"></i></div></div></div>';}).join('') : '<div class="empty">'+L.none+'</div>';
-      document.getElementById('cbCards').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<div class="item" style="border-inline-start:4px solid '+c+'"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id">'+a.id+' <span class="chip">'+a.feeder+'</span>'+(a.station?' <span class="sub">'+a.station+'</span>':'')+'</div><div class="meta">'+(ADM&&a.team?a.team+' · ':'')+a.cur+'</div></div><div class="p" style="color:'+c+'">'+a.pct+'%<div class="pbar"><i style="width:'+Math.min(100,a.pct)+'%;background:'+c+'"></i></div></div></div>';}).join('') : '<div class="empty">'+L.none+'</div>';
+      document.getElementById('txBody').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span></td>'+(ADM?'<td style="color:'+teamClr(a.team)+';font-weight:700">'+(a.team||'—')+'</td>':'')+'<td>'+a.station+(a.hv?' <span class="chip">'+a.hv+'</span>':'')+'</td><td>'+(a.hv||'—')+'</td><td class="muted">'+a.load+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'</td></tr>';}).join('') : '<tr><td colspan="'+COLS+'" class="empty">'+L.none+'</td></tr>';
+      document.getElementById('cbBody').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span></td><td><span class="chip">'+a.feeder+'</span></td>'+(ADM?'<td style="color:'+teamClr(a.team)+';font-weight:700">'+(a.team||'—')+'</td>':'')+'<td>'+a.station+(a.hv?' <span class="chip">'+a.hv+'</span>':'')+'</td><td class="muted">'+a.cur+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'</td></tr>';}).join('') : '<tr><td colspan="'+COLS+'" class="empty">'+L.none+'</td></tr>';
+      document.getElementById('txCards').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<div class="item" style="border-inline-start:4px solid '+c+'"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span>'+(a.station?' <span class="sub">'+a.station+(a.hv?' · '+a.hv:'')+'</span>':'')+'</div><div class="meta">'+(ADM&&a.team?'<span style="color:'+teamClr(a.team)+';font-weight:700">'+a.team+'</span> · ':'')+a.load+'</div></div><div class="p" style="color:'+c+'">'+a.pct+'%<div class="pbar"><i style="width:'+Math.min(100,a.pct)+'%;background:'+c+'"></i></div></div></div>';}).join('') : '<div class="empty">'+L.none+'</div>';
+      document.getElementById('cbCards').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<div class="item" style="border-inline-start:4px solid '+c+'"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span> <span class="chip">'+a.feeder+'</span>'+(a.station?' <span class="sub">'+a.station+(a.hv?' · '+a.hv:'')+'</span>':'')+'</div><div class="meta">'+(ADM&&a.team?'<span style="color:'+teamClr(a.team)+';font-weight:700">'+a.team+'</span> · ':'')+a.cur+'</div></div><div class="p" style="color:'+c+'">'+a.pct+'%<div class="pbar"><i style="width:'+Math.min(100,a.pct)+'%;background:'+c+'"></i></div></div></div>';}).join('') : '<div class="empty">'+L.none+'</div>';
     }
     if(teamSel){fill(teamSel,uniq(ALL.map(function(x){return x.team;})),L.team);teamSel.onchange=rebuild;}
     stSel.onchange=rebuild;fdSel.onchange=render;
