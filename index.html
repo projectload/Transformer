@@ -5928,7 +5928,7 @@ ${(()=>{
     </style></head><body><div class="page">
       <div class="head"><h1>🔔 ${L.title}</h1><div class="date">${dateStr}</div></div>
       <div class="filters">
-        <select id="fTeam"></select>
+        ${isAdmin ? '<select id="fTeam"></select>' : ''}
         <select id="fStation"></select>
         <select id="fFeeder"></select>
         <button id="fReset" type="button">✕ ${L.reset}</button>
@@ -5936,7 +5936,7 @@ ${(()=>{
       <div class="sec">
         <h2>⚡ ${L.txH} <span class="count c-tx" id="txCount">0</span></h2>
         <div class="tbl-wrap"><table>
-          <thead><tr><th>#</th><th>${L.transformer}</th><th>${L.teamCol}</th><th>${L.stationCol}</th><th>${L.feederCol} HV</th><th>${L.loadCol}</th><th>%</th></tr></thead>
+          <thead><tr><th>#</th><th>${L.transformer}</th>${isAdmin?`<th>${L.teamCol}</th>`:''}<th>${L.stationCol}</th><th>${L.feederCol} HV</th><th>${L.loadCol}</th><th>%</th></tr></thead>
           <tbody id="txBody"></tbody>
         </table></div>
         <div class="cards" id="txCards"></div>
@@ -5944,40 +5944,42 @@ ${(()=>{
       <div class="sec">
         <h2>🔌 ${L.cbH} <span class="count c-cb" id="cbCount">0</span></h2>
         <div class="tbl-wrap"><table>
-          <thead><tr><th>#</th><th>${L.transformer}</th><th>${L.feederCol}</th><th>${L.teamCol}</th><th>${L.stationCol}</th><th>${L.currentCol}</th><th>%</th></tr></thead>
+          <thead><tr><th>#</th><th>${L.transformer}</th><th>${L.feederCol}</th>${isAdmin?`<th>${L.teamCol}</th>`:''}<th>${L.stationCol}</th><th>${L.currentCol}</th><th>%</th></tr></thead>
           <tbody id="cbBody"></tbody>
         </table></div>
         <div class="cards" id="cbCards"></div>
       </div>
     </div>
     <script>
-    var TX=${J(TX)},CB=${J(CB)},L=${J(L)},ALL=TX.concat(CB);
+    var TX=${J(TX)},CB=${J(CB)},L=${J(L)},ALL=TX.concat(CB),ADM=${isAdmin ? 'true' : 'false'};
     function uniq(a){return [...new Set(a.filter(Boolean))].sort();}
     function colorFor(p){return p>=100?'#dc2626':'#ea580c';}
     var teamSel=document.getElementById('fTeam'),stSel=document.getElementById('fStation'),fdSel=document.getElementById('fFeeder');
+    function tval(){return teamSel?teamSel.value:'';}
     function fill(sel,vals,allLabel){var cur=sel.value;var h='<option value="">'+allLabel+'</option>';vals.forEach(function(v){h+='<option value="'+v+'">'+v+'</option>';});sel.innerHTML=h;if(vals.indexOf(cur)>-1)sel.value=cur;}
     function bar(p){var c=colorFor(p);return '<div class="bar"><i style="width:'+Math.min(100,p)+'%;background:'+c+'"></i></div>';}
     function rebuild(){
-      var t=teamSel.value;
+      var t=tval();
       fill(stSel,uniq(ALL.filter(function(x){return !t||x.team===t;}).map(function(x){return x.station;})),L.station);
       var s=stSel.value;
       fill(fdSel,uniq(ALL.filter(function(x){return (!t||x.team===t)&&(!s||x.station===s);}).map(function(x){return x.hv;})),L.feeder);
       render();
     }
     function render(){
-      var t=teamSel.value,s=stSel.value,h=fdSel.value;
+      var t=tval(),s=stSel.value,h=fdSel.value;
       function flt(x){return (!t||x.team===t)&&(!s||x.station===s)&&(!h||x.hv===h);}
       var txf=TX.filter(flt),cbf=CB.filter(flt);
+      var COLS=ADM?7:6;
       document.getElementById('txCount').textContent=txf.length;
       document.getElementById('cbCount').textContent=cbf.length;
-      document.getElementById('txBody').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold">'+a.id+'</td><td class="muted">'+(a.team||'—')+'</td><td>'+a.station+'</td><td>'+(a.hv||'—')+'</td><td class="muted">'+a.load+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'</td></tr>';}).join('') : '<tr><td colspan="7" class="empty">'+L.none+'</td></tr>';
-      document.getElementById('cbBody').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold">'+a.id+'</td><td><span class="chip">'+a.feeder+'</span></td><td class="muted">'+(a.team||'—')+'</td><td>'+a.station+'</td><td class="muted">'+a.cur+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'</td></tr>';}).join('') : '<tr><td colspan="7" class="empty">'+L.none+'</td></tr>';
-      document.getElementById('txCards').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<div class="item" style="border-inline-start:4px solid '+c+'"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id">'+a.id+(a.station?' <span class="sub">'+a.station+'</span>':'')+'</div><div class="meta">'+(a.team?a.team+' · ':'')+(a.hv?'HV '+a.hv+' · ':'')+a.load+'</div></div><div class="p" style="color:'+c+'">'+a.pct+'%<div class="pbar"><i style="width:'+Math.min(100,a.pct)+'%;background:'+c+'"></i></div></div></div>';}).join('') : '<div class="empty">'+L.none+'</div>';
-      document.getElementById('cbCards').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<div class="item" style="border-inline-start:4px solid '+c+'"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id">'+a.id+' <span class="chip">'+a.feeder+'</span>'+(a.station?' <span class="sub">'+a.station+'</span>':'')+'</div><div class="meta">'+(a.team?a.team+' · ':'')+a.cur+'</div></div><div class="p" style="color:'+c+'">'+a.pct+'%<div class="pbar"><i style="width:'+Math.min(100,a.pct)+'%;background:'+c+'"></i></div></div></div>';}).join('') : '<div class="empty">'+L.none+'</div>';
+      document.getElementById('txBody').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold">'+a.id+'</td>'+(ADM?'<td class="muted">'+(a.team||'—')+'</td>':'')+'<td>'+a.station+'</td><td>'+(a.hv||'—')+'</td><td class="muted">'+a.load+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'</td></tr>';}).join('') : '<tr><td colspan="'+COLS+'" class="empty">'+L.none+'</td></tr>';
+      document.getElementById('cbBody').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold">'+a.id+'</td><td><span class="chip">'+a.feeder+'</span></td>'+(ADM?'<td class="muted">'+(a.team||'—')+'</td>':'')+'<td>'+a.station+'</td><td class="muted">'+a.cur+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'</td></tr>';}).join('') : '<tr><td colspan="'+COLS+'" class="empty">'+L.none+'</td></tr>';
+      document.getElementById('txCards').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<div class="item" style="border-inline-start:4px solid '+c+'"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id">'+a.id+(a.station?' <span class="sub">'+a.station+'</span>':'')+'</div><div class="meta">'+(ADM&&a.team?a.team+' · ':'')+(a.hv?'HV '+a.hv+' · ':'')+a.load+'</div></div><div class="p" style="color:'+c+'">'+a.pct+'%<div class="pbar"><i style="width:'+Math.min(100,a.pct)+'%;background:'+c+'"></i></div></div></div>';}).join('') : '<div class="empty">'+L.none+'</div>';
+      document.getElementById('cbCards').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<div class="item" style="border-inline-start:4px solid '+c+'"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id">'+a.id+' <span class="chip">'+a.feeder+'</span>'+(a.station?' <span class="sub">'+a.station+'</span>':'')+'</div><div class="meta">'+(ADM&&a.team?a.team+' · ':'')+a.cur+'</div></div><div class="p" style="color:'+c+'">'+a.pct+'%<div class="pbar"><i style="width:'+Math.min(100,a.pct)+'%;background:'+c+'"></i></div></div></div>';}).join('') : '<div class="empty">'+L.none+'</div>';
     }
-    fill(teamSel,uniq(ALL.map(function(x){return x.team;})),L.team);
-    teamSel.onchange=rebuild;stSel.onchange=rebuild;fdSel.onchange=render;
-    document.getElementById('fReset').onclick=function(){teamSel.value='';stSel.value='';fdSel.value='';rebuild();};
+    if(teamSel){fill(teamSel,uniq(ALL.map(function(x){return x.team;})),L.team);teamSel.onchange=rebuild;}
+    stSel.onchange=rebuild;fdSel.onchange=render;
+    document.getElementById('fReset').onclick=function(){if(teamSel)teamSel.value='';stSel.value='';fdSel.value='';rebuild();};
     rebuild();
     <\/script></body></html>`;
 
