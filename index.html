@@ -1679,6 +1679,7 @@
       <div id="paginationControls" class="pg-controls"></div>
     </div>
     <div class="list-actions-bar" style="display:flex;flex-wrap:wrap;gap:0.6rem;justify-content:center;padding:0.9rem 1.2rem;border-top:1px solid var(--border)">
+      <button id="alertsBtn" class="btn btn-secondary" onclick="openAlerts()" style="border-color:rgba(255,71,87,0.45);color:var(--danger);position:relative">🔔 <span id="alertsBtnLabel">تنبيهات</span><span id="alertsBadge" style="display:none;background:var(--danger);color:#fff;font-size:0.7rem;font-weight:800;min-width:18px;height:18px;border-radius:9px;padding:0 5px;align-items:center;justify-content:center;margin-inline-start:0.3rem"></span></button>
       <button id="summaryReportBtn" class="btn btn-secondary" onclick="generateSummaryReport()" style="border-color:rgba(167,139,250,0.4);color:#a78bfa">📄 تقرير مختصر</button>
       <button id="exportExcelBtn" class="btn btn-secondary" onclick="exportExcel()" title="ينزل CSV — افتحه بـ Excel" style="border-color:rgba(0,255,157,0.4);color:var(--accent3)">📊 تصدير Excel</button>
       <button id="mapViewBtn" class="btn btn-secondary" onclick="openMapView()" style="border-color:rgba(251,191,36,0.4);color:#fbbf24">🗺️ <span id="mapViewBtnLabel">مواقع المحولات</span></button>
@@ -1977,6 +1978,8 @@
 
     const filtersToggleLabel = document.getElementById('filtersToggleLabel');
     if (filtersToggleLabel) filtersToggleLabel.textContent = isAr ? 'الفلاتر' : 'Filters';
+    const alertsBtnLabel = document.getElementById('alertsBtnLabel');
+    if (alertsBtnLabel) alertsBtnLabel.textContent = isAr ? 'تنبيهات' : 'Alerts';
     const adminPanelsToggleLabel = document.getElementById('adminPanelsToggleLabel');
     if (adminPanelsToggleLabel) adminPanelsToggleLabel.textContent = isAr ? 'أدوات الأدمن' : 'Admin Tools';
     const smTitle = document.getElementById('smTitle');
@@ -2263,6 +2266,7 @@
 
     updateStats();
     fixTableDir();
+    updateAlertsBadge();
   }
 
   function renderPagination(totalRecords, totalPages) {
@@ -4403,7 +4407,7 @@ ${(()=>{
     showReportPage(html, isAr);
   }
 
-  function showReportPage(html, isAr) {
+  function showReportPage(html, isAr, title) {
     let ov = document.getElementById('reportOverlay');
     if (!ov) {
       ov = document.createElement('div');
@@ -4420,7 +4424,7 @@ ${(()=>{
     ov.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding:0.6rem 0.8rem;background:#111827;color:#fff;direction:${dir};flex:0 0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.25)">
         <button onclick="closeReportPage()" style="${btnStyle};display:flex;align-items:center;gap:0.4rem">↩ ${isAr?'رجوع':'Back'}</button>
-        <span style="flex:1 1 auto;min-width:0;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Cairo',sans-serif;font-weight:700;font-size:0.9rem">${isAr?'تقرير المحول':'Transformer Report'}</span>
+        <span style="flex:1 1 auto;min-width:0;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Cairo',sans-serif;font-weight:700;font-size:0.9rem">${title || (isAr?'تقرير المحول':'Transformer Report')}</span>
         <button onclick="document.getElementById('reportFrame').contentWindow.print()" style="${btnStyle}">🖨️ ${isAr?'طباعة':'Print'}</button>
       </div>
       <iframe id="reportFrame" style="flex:1 1 auto;width:100%;border:none;background:#fff"></iframe>`;
@@ -5755,6 +5759,108 @@ ${(()=>{
     if (e.target === this) closeMapView();
   });
 
+  // ─── تنبيهات التحميل (محول ≥80% + كيبل ≥80%) ───
+  function getAlertsData() {
+    const SQRT3 = Math.sqrt(3);
+    const tx = [], cables = [];
+    records.forEach(rec => {
+      const bd = getBestRoundData(rec.uid);
+      const fds = (bd?.feeders || []).filter(hasData);
+      if (!fds.length) return;
+      const capKVA = Number(rec.capacity);
+      if (capKVA > 0) {
+        const rated = (capKVA * 1000) / (SQRT3 * 415);
+        const totR = fds.reduce((s,f)=>s+(parseFloat(f.iL1)||0),0);
+        const totY = fds.reduce((s,f)=>s+(parseFloat(f.iL2)||0),0);
+        const totB = fds.reduce((s,f)=>s+(parseFloat(f.iL3)||0),0);
+        const pct = rated > 0 ? (Math.max(totR,totY,totB) / rated) * 100 : 0;
+        if (pct >= 80) tx.push({ rec, pct, cap: capKVA });
+      }
+      fds.forEach(f => {
+        const cs = cableStatus(f);
+        if (cs && cs.pct >= 80) cables.push({ rec, feederNum: f.num, name: f.name, maxI: cs.maxI, ampacity: cs.ampacity, pct: cs.pct });
+      });
+    });
+    tx.sort((a,b)=>b.pct-a.pct);
+    cables.sort((a,b)=>b.pct-a.pct);
+    return { tx, cables };
+  }
+
+  function updateAlertsBadge() {
+    const badge = document.getElementById('alertsBadge');
+    if (!badge) return;
+    const { tx, cables } = getAlertsData();
+    const n = tx.length + cables.length;
+    if (n > 0) { badge.textContent = n; badge.style.display = 'inline-flex'; }
+    else { badge.style.display = 'none'; }
+  }
+
+  function openAlerts() {
+    const isAr = lang === 'ar';
+    const dir  = isAr ? 'rtl' : 'ltr';
+    const { tx, cables } = getAlertsData();
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB') + ' — ' + now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    const col = p => p >= 100 ? '#dc2626' : '#ea580c';
+    const stationOf = r => r.station || (isAr ? 'غير محدد' : 'N/A');
+
+    const txRows = tx.length === 0
+      ? `<tr><td colspan="5" class="empty">${isAr?'لا يوجد محولات فوق 80%':'No transformers above 80%'}</td></tr>`
+      : tx.map((a,i) => {
+          const c = col(a.pct);
+          return `<tr>
+            <td>${i+1}</td>
+            <td class="bold">${a.rec.id}</td>
+            <td>${stationOf(a.rec)}</td>
+            <td>${(a.cap*a.pct/100).toFixed(1)} / ${a.cap.toLocaleString()} KVA</td>
+            <td class="pct" style="color:${c}">${a.pct.toFixed(0)}%</td>
+          </tr>`;
+        }).join('');
+
+    const cbRows = cables.length === 0
+      ? `<tr><td colspan="6" class="empty">${isAr?'لا يوجد كيبلات فوق 80%':'No cables above 80%'}</td></tr>`
+      : cables.map((a,i) => {
+          const c = col(a.pct);
+          return `<tr>
+            <td>${i+1}</td>
+            <td class="bold">${a.rec.id}</td>
+            <td>${isAr?'ف':'F'}${a.feederNum||'?'}</td>
+            <td>${stationOf(a.rec)}</td>
+            <td>${a.name?a.name+' mm² · ':''}${a.maxI.toFixed(1)} / ${a.ampacity} A</td>
+            <td class="pct" style="color:${c}">${a.pct.toFixed(0)}%</td>
+          </tr>`;
+        }).join('');
+
+    const html = `<!DOCTYPE html><html lang="${lang}" dir="${dir}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>${isAr?'تنبيهات التحميل':'Load Alerts'}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#fff;color:#111827;font-family:'Cairo',sans-serif;padding:1.5rem;direction:${dir}}
+    .page{max-width:900px;margin:0 auto}
+    h1{font-size:1.3rem;color:#dc2626;margin-bottom:0.3rem;text-align:center}
+    .date{text-align:center;color:#6b7280;font-size:0.85rem;font-family:'Tajawal',sans-serif;margin-bottom:1.5rem}
+    h2{font-size:1rem;margin:1.5rem 0 0.6rem;display:flex;align-items:center;gap:0.5rem}
+    .count{background:#dc2626;color:#fff;border-radius:10px;font-size:0.75rem;padding:1px 9px}
+    table{width:100%;border-collapse:collapse;font-size:0.85rem;margin-bottom:0.5rem}
+    thead th{background:#f3f4f6;color:#374151;padding:0.6rem;text-align:center;font-size:0.78rem;border:1px solid #e5e7eb;font-family:'Tajawal',sans-serif}
+    td{padding:0.55rem 0.6rem;text-align:center;border:1px solid #e5e7eb}
+    .bold{font-weight:800}
+    .pct{font-weight:900;font-family:monospace;font-size:1rem}
+    .empty{color:#9ca3af;padding:1.2rem;font-family:'Tajawal',sans-serif}
+    tbody tr:nth-child(even){background:#fafafa}
+    @media print{body{padding:0}}
+    </style></head><body><div class="page">
+      <h1>🔔 ${isAr?'تنبيهات التحميل (80% فأعلى)':'Load Alerts (80%+)'}</h1>
+      <div class="date">${dateStr}</div>
+      <h2>⚡ ${isAr?'محولات محمّلة':'Overloaded Transformers'} <span class="count">${tx.length}</span></h2>
+      <table><thead><tr><th>#</th><th>${isAr?'رقم المحول':'Transformer'}</th><th>${isAr?'المحطة':'Station'}</th><th>${isAr?'الحمل':'Load'}</th><th>%</th></tr></thead><tbody>${txRows}</tbody></table>
+      <h2>🔌 ${isAr?'كيبلات محمّلة':'Overloaded Cables'} <span class="count">${cables.length}</span></h2>
+      <table><thead><tr><th>#</th><th>${isAr?'رقم المحول':'Transformer'}</th><th>${isAr?'الفيدر':'Feeder'}</th><th>${isAr?'المحطة':'Station'}</th><th>${isAr?'التيار':'Current'}</th><th>%</th></tr></thead><tbody>${cbRows}</tbody></table>
+    </div></body></html>`;
+
+    showReportPage(html, isAr, isAr ? 'تنبيهات التحميل' : 'Load Alerts');
+  }
 
 </script>
 </body>
