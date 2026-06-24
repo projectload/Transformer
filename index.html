@@ -4276,20 +4276,40 @@ ${(()=>{
 <div class="footer">${isAr?`تم إنشاء هذا التقرير في ${dateStr}`:`Report generated on ${dateStr}`}</div>
 <\/div><\/body><\/html>`;
 
-    const w = window.open('', '_blank');
-    if (w) {
-      w.document.write(html);
-      w.document.close();
-    } else {
-      const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
-      const url  = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `report_${rec.id}_${new Date().toISOString().slice(0,10)}.html`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-      showToast(lang==='ar'?'📄 تم تنزيل التقرير (popup محجوب)':'📄 Report downloaded (popup blocked)','success');
+    // ─── عرض التقرير داخل صفحة داخلية (overlay) مع زر رجوع بدل فتح تبويب خارجي ───
+    showReportPage(html, isAr);
+  }
+
+  function showReportPage(html, isAr) {
+    let ov = document.getElementById('reportOverlay');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.id = 'reportOverlay';
+      ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#fff;display:none;flex-direction:column';
+      document.body.appendChild(ov);
+      // إغلاق بزر Escape
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && ov.style.display !== 'none') closeReportPage();
+      });
     }
+    const dir = isAr ? 'rtl' : 'ltr';
+    const btnStyle = "padding:0.45rem 1.1rem;border-radius:8px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.08);color:#fff;font-family:'Cairo',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer";
+    ov.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding:0.6rem 1rem;background:#111827;color:#fff;direction:${dir};flex:0 0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.25)">
+        <button onclick="closeReportPage()" style="${btnStyle};display:flex;align-items:center;gap:0.4rem">↩ ${isAr?'رجوع':'Back'}</button>
+        <span style="font-family:'Cairo',sans-serif;font-weight:700;font-size:0.95rem">${isAr?'تقرير المحول':'Transformer Report'}</span>
+        <button onclick="document.getElementById('reportFrame').contentWindow.print()" style="${btnStyle}">🖨️ ${isAr?'طباعة':'Print'}</button>
+      </div>
+      <iframe id="reportFrame" style="flex:1 1 auto;width:100%;border:none;background:#fff"></iframe>`;
+    ov.querySelector('#reportFrame').srcdoc = html;
+    ov.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeReportPage() {
+    const ov = document.getElementById('reportOverlay');
+    if (ov) ov.style.display = 'none';
+    document.body.style.overflow = '';
   }
 
   // ─── Excel Export via SheetJS (xlsx-js-style) ──────────
