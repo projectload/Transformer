@@ -5801,63 +5801,117 @@ ${(()=>{
     const { tx, cables } = getAlertsData();
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-GB') + ' — ' + now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-    const col = p => p >= 100 ? '#dc2626' : '#ea580c';
     const stationOf = r => r.station || (isAr ? 'غير محدد' : 'N/A');
+    const hvOf = r => { const v = formatHvFeeder(r.hvFeeder); return v === '—' ? '' : v; };
 
-    const txRows = tx.length === 0
-      ? `<tr><td colspan="5" class="empty">${isAr?'لا يوجد محولات فوق 80%':'No transformers above 80%'}</td></tr>`
-      : tx.map((a,i) => {
-          const c = col(a.pct);
-          return `<tr>
-            <td>${i+1}</td>
-            <td class="bold">${a.rec.id}</td>
-            <td>${stationOf(a.rec)}</td>
-            <td>${(a.cap*a.pct/100).toFixed(1)} / ${a.cap.toLocaleString()} KVA</td>
-            <td class="pct" style="color:${c}">${a.pct.toFixed(0)}%</td>
-          </tr>`;
-        }).join('');
+    const TX = tx.map(a => ({
+      id: a.rec.id, team: a.rec.team || '', station: stationOf(a.rec), hv: hvOf(a.rec),
+      load: `${(a.cap*a.pct/100).toFixed(1)} / ${a.cap.toLocaleString()} KVA`, pct: Math.round(a.pct)
+    }));
+    const CB = cables.map(a => ({
+      id: a.rec.id, team: a.rec.team || '', station: stationOf(a.rec), hv: hvOf(a.rec),
+      feeder: `${isAr?'ف':'F'}${a.feederNum||'?'}`,
+      cur: `${a.name?a.name+' mm² · ':''}${a.maxI.toFixed(1)} / ${a.ampacity} A`, pct: Math.round(a.pct)
+    }));
 
-    const cbRows = cables.length === 0
-      ? `<tr><td colspan="6" class="empty">${isAr?'لا يوجد كيبلات فوق 80%':'No cables above 80%'}</td></tr>`
-      : cables.map((a,i) => {
-          const c = col(a.pct);
-          return `<tr>
-            <td>${i+1}</td>
-            <td class="bold">${a.rec.id}</td>
-            <td>${isAr?'ف':'F'}${a.feederNum||'?'}</td>
-            <td>${stationOf(a.rec)}</td>
-            <td>${a.name?a.name+' mm² · ':''}${a.maxI.toFixed(1)} / ${a.ampacity} A</td>
-            <td class="pct" style="color:${c}">${a.pct.toFixed(0)}%</td>
-          </tr>`;
-        }).join('');
+    const L = {
+      title:    isAr?'تنبيهات التحميل (80% فأعلى)':'Load Alerts (80%+)',
+      team:     isAr?'كل الفرق':'All Teams',
+      station:  isAr?'كل المحطات':'All Stations',
+      feeder:   isAr?'كل الفيدرات':'All Feeders',
+      reset:    isAr?'مسح الفلاتر':'Clear filters',
+      txH:      isAr?'محولات محمّلة':'Overloaded Transformers',
+      cbH:      isAr?'كيبلات محمّلة':'Overloaded Cables',
+      transformer: isAr?'رقم المحول':'Transformer', stationCol: isAr?'المحطة':'Station',
+      teamCol:  isAr?'الفريق':'Team', loadCol: isAr?'الحمل':'Load', feederCol: isAr?'الفيدر':'Feeder',
+      currentCol: isAr?'التيار':'Current', none: isAr?'لا توجد عناصر مطابقة':'No matching items'
+    };
+    const J = o => JSON.stringify(o).replace(/</g, '\\u003c');
 
     const html = `<!DOCTYPE html><html lang="${lang}" dir="${dir}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <title>${isAr?'تنبيهات التحميل':'Load Alerts'}</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{background:#fff;color:#111827;font-family:'Cairo',sans-serif;padding:1.5rem;direction:${dir}}
-    .page{max-width:900px;margin:0 auto}
-    h1{font-size:1.3rem;color:#dc2626;margin-bottom:0.3rem;text-align:center}
-    .date{text-align:center;color:#6b7280;font-size:0.85rem;font-family:'Tajawal',sans-serif;margin-bottom:1.5rem}
-    h2{font-size:1rem;margin:1.5rem 0 0.6rem;display:flex;align-items:center;gap:0.5rem}
-    .count{background:#dc2626;color:#fff;border-radius:10px;font-size:0.75rem;padding:1px 9px}
-    table{width:100%;border-collapse:collapse;font-size:0.85rem;margin-bottom:0.5rem}
-    thead th{background:#f3f4f6;color:#374151;padding:0.6rem;text-align:center;font-size:0.78rem;border:1px solid #e5e7eb;font-family:'Tajawal',sans-serif}
-    td{padding:0.55rem 0.6rem;text-align:center;border:1px solid #e5e7eb}
-    .bold{font-weight:800}
-    .pct{font-weight:900;font-family:monospace;font-size:1rem}
-    .empty{color:#9ca3af;padding:1.2rem;font-family:'Tajawal',sans-serif}
-    tbody tr:nth-child(even){background:#fafafa}
-    @media print{body{padding:0}}
+    body{background:#f8fafc;color:#0f172a;font-family:'Cairo',sans-serif;padding:1.4rem;direction:${dir}}
+    .page{max-width:960px;margin:0 auto}
+    .head{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border-radius:16px;padding:1.2rem 1.5rem;text-align:center;box-shadow:0 8px 24px rgba(220,38,38,0.25);margin-bottom:1.1rem}
+    .head h1{font-size:1.35rem;font-weight:900;margin-bottom:0.25rem}
+    .head .date{font-size:0.82rem;opacity:0.9;font-family:'Tajawal',sans-serif}
+    .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0.6rem;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:0.9rem;margin-bottom:1.2rem;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+    .filters select{height:42px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:9px;color:#0f172a;padding:0 0.7rem;font-size:0.85rem;font-family:'Tajawal',sans-serif;cursor:pointer;outline:none;transition:border-color .15s}
+    .filters select:focus{border-color:#dc2626}
+    .filters button{height:42px;background:#fff;border:1px solid #cbd5e1;border-radius:9px;color:#64748b;font-size:0.82rem;font-family:'Cairo',sans-serif;font-weight:700;cursor:pointer;transition:all .15s}
+    .filters button:hover{border-color:#dc2626;color:#dc2626}
+    .sec{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:1rem 1.1rem;margin-bottom:1.2rem;box-shadow:0 1px 3px rgba(0,0,0,0.05);overflow:hidden}
+    h2{font-size:1.02rem;font-weight:800;margin-bottom:0.7rem;display:flex;align-items:center;gap:0.5rem}
+    .count{color:#fff;border-radius:11px;font-size:0.75rem;font-weight:800;padding:2px 10px;font-family:monospace}
+    .c-tx{background:#ea580c}.c-cb{background:#7c3aed}
+    .tbl-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:0.86rem;min-width:480px}
+    thead th{background:#f1f5f9;color:#475569;padding:0.6rem;text-align:center;font-size:0.76rem;font-weight:700;border-bottom:2px solid #e2e8f0;font-family:'Tajawal',sans-serif;text-transform:uppercase;letter-spacing:0.3px}
+    td{padding:0.6rem;text-align:center;border-bottom:1px solid #eef2f6}
+    tbody tr:nth-child(even){background:#fafbfc}
+    tbody tr:hover{background:#fef2f2}
+    .bold{font-weight:800;color:#0f172a}
+    .chip{font-size:0.72rem;color:#4338ca;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:1px 7px;font-weight:700}
+    .pct{font-weight:900;font-family:monospace;font-size:1.05rem}
+    .bar{height:6px;border-radius:4px;background:#e2e8f0;margin-top:4px;overflow:hidden}
+    .bar>i{display:block;height:100%;border-radius:4px}
+    .empty{color:#94a3b8;padding:1.4rem;font-family:'Tajawal',sans-serif}
+    .muted{color:#64748b;font-size:0.78rem;font-family:'Tajawal',sans-serif}
+    @media print{body{background:#fff;padding:0}.filters{display:none}.sec,.head{box-shadow:none}.head{border:1px solid #e5e7eb}}
     </style></head><body><div class="page">
-      <h1>🔔 ${isAr?'تنبيهات التحميل (80% فأعلى)':'Load Alerts (80%+)'}</h1>
-      <div class="date">${dateStr}</div>
-      <h2>⚡ ${isAr?'محولات محمّلة':'Overloaded Transformers'} <span class="count">${tx.length}</span></h2>
-      <table><thead><tr><th>#</th><th>${isAr?'رقم المحول':'Transformer'}</th><th>${isAr?'المحطة':'Station'}</th><th>${isAr?'الحمل':'Load'}</th><th>%</th></tr></thead><tbody>${txRows}</tbody></table>
-      <h2>🔌 ${isAr?'كيبلات محمّلة':'Overloaded Cables'} <span class="count">${cables.length}</span></h2>
-      <table><thead><tr><th>#</th><th>${isAr?'رقم المحول':'Transformer'}</th><th>${isAr?'الفيدر':'Feeder'}</th><th>${isAr?'المحطة':'Station'}</th><th>${isAr?'التيار':'Current'}</th><th>%</th></tr></thead><tbody>${cbRows}</tbody></table>
-    </div></body></html>`;
+      <div class="head"><h1>🔔 ${L.title}</h1><div class="date">${dateStr}</div></div>
+      <div class="filters">
+        <select id="fTeam"></select>
+        <select id="fStation"></select>
+        <select id="fFeeder"></select>
+        <button id="fReset" type="button">✕ ${L.reset}</button>
+      </div>
+      <div class="sec">
+        <h2>⚡ ${L.txH} <span class="count c-tx" id="txCount">0</span></h2>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>#</th><th>${L.transformer}</th><th>${L.teamCol}</th><th>${L.stationCol}</th><th>${L.feederCol} HV</th><th>${L.loadCol}</th><th>%</th></tr></thead>
+          <tbody id="txBody"></tbody>
+        </table></div>
+      </div>
+      <div class="sec">
+        <h2>🔌 ${L.cbH} <span class="count c-cb" id="cbCount">0</span></h2>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>#</th><th>${L.transformer}</th><th>${L.feederCol}</th><th>${L.teamCol}</th><th>${L.stationCol}</th><th>${L.currentCol}</th><th>%</th></tr></thead>
+          <tbody id="cbBody"></tbody>
+        </table></div>
+      </div>
+    </div>
+    <script>
+    var TX=${J(TX)},CB=${J(CB)},L=${J(L)},ALL=TX.concat(CB);
+    function uniq(a){return [...new Set(a.filter(Boolean))].sort();}
+    function colorFor(p){return p>=100?'#dc2626':'#ea580c';}
+    var teamSel=document.getElementById('fTeam'),stSel=document.getElementById('fStation'),fdSel=document.getElementById('fFeeder');
+    function fill(sel,vals,allLabel){var cur=sel.value;var h='<option value="">'+allLabel+'</option>';vals.forEach(function(v){h+='<option value="'+v+'">'+v+'</option>';});sel.innerHTML=h;if(vals.indexOf(cur)>-1)sel.value=cur;}
+    function bar(p){var c=colorFor(p);return '<div class="bar"><i style="width:'+Math.min(100,p)+'%;background:'+c+'"></i></div>';}
+    function rebuild(){
+      var t=teamSel.value;
+      fill(stSel,uniq(ALL.filter(function(x){return !t||x.team===t;}).map(function(x){return x.station;})),L.station);
+      var s=stSel.value;
+      fill(fdSel,uniq(ALL.filter(function(x){return (!t||x.team===t)&&(!s||x.station===s);}).map(function(x){return x.hv;})),L.feeder);
+      render();
+    }
+    function render(){
+      var t=teamSel.value,s=stSel.value,h=fdSel.value;
+      function flt(x){return (!t||x.team===t)&&(!s||x.station===s)&&(!h||x.hv===h);}
+      var txf=TX.filter(flt),cbf=CB.filter(flt);
+      document.getElementById('txCount').textContent=txf.length;
+      document.getElementById('cbCount').textContent=cbf.length;
+      document.getElementById('txBody').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold">'+a.id+'</td><td class="muted">'+(a.team||'—')+'</td><td>'+a.station+'</td><td>'+(a.hv||'—')+'</td><td class="muted">'+a.load+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'</td></tr>';}).join('') : '<tr><td colspan="7" class="empty">'+L.none+'</td></tr>';
+      document.getElementById('cbBody').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold">'+a.id+'</td><td><span class="chip">'+a.feeder+'</span></td><td class="muted">'+(a.team||'—')+'</td><td>'+a.station+'</td><td class="muted">'+a.cur+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'</td></tr>';}).join('') : '<tr><td colspan="7" class="empty">'+L.none+'</td></tr>';
+    }
+    fill(teamSel,uniq(ALL.map(function(x){return x.team;})),L.team);
+    teamSel.onchange=rebuild;stSel.onchange=rebuild;fdSel.onchange=render;
+    document.getElementById('fReset').onclick=function(){teamSel.value='';stSel.value='';fdSel.value='';rebuild();};
+    rebuild();
+    <\/script></body></html>`;
 
     showReportPage(html, isAr, isAr ? 'تنبيهات التحميل' : 'Load Alerts');
   }
