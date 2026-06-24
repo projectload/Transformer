@@ -1284,6 +1284,30 @@
     .list-actions-bar .btn { flex: 1 1 100%; justify-content: center; }
     .list-actions-bar { gap: 0.5rem; }
   }
+  /* ── زر إظهار/إخفاء الفلاتر — على الهاتف فقط ── */
+  .filters-toggle-btn {
+    display: none;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    border: 1px solid rgba(0,212,255,0.4);
+    background: transparent;
+    color: var(--accent);
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .filters-toggle-btn .ftb-arrow { transition: transform 0.2s; }
+  .filters-toggle-btn.open .ftb-arrow { transform: rotate(180deg); }
+  @media (max-width: 640px) {
+    .filters-toggle-btn { display: inline-flex; }
+    #filtersCollapse { display: none; }
+    #filtersCollapse.open { display: block; }
+  }
 
   /* ── Summary Report ── */
   .summary-report-table { width: 100%; border-collapse: collapse; }
@@ -1537,7 +1561,11 @@
   <!-- Table -->
   <div class="table-wrapper">
     <div style="padding:0.8rem 1.2rem;border-bottom:1px solid var(--border)">
-      <div class="table-title" style="margin-bottom:0.7rem" data-i18n="tableTitle">📋 قائمة المحولات</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.7rem">
+        <div class="table-title" data-i18n="tableTitle">📋 قائمة المحولات</div>
+        <button class="filters-toggle-btn" id="filtersToggleBtn" onclick="toggleFilters()">⚙️ <span id="filtersToggleLabel">الفلاتر</span> <span class="ftb-arrow">▾</span></button>
+      </div>
+      <div id="filtersCollapse">
       <div class="filters-toolbar">
         <select id="filterTeam" onchange="currentPage=1;renderTable()" style="display:none">
           <option value="">👥 All Teams</option>
@@ -1563,6 +1591,7 @@
           <span class="search-icon">🔍</span>
           <input type="text" id="searchInput" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'');currentPage=1;renderTable()" placeholder="رقم المحول..." />
         </div>
+      </div>
       </div>
     </div>
     <div style="overflow-x:auto;direction:ltr">
@@ -1897,6 +1926,8 @@
     const mapViewBtnLabel = document.getElementById('mapViewBtnLabel');
     if (mapViewBtnLabel) mapViewBtnLabel.textContent = isAr ? 'مواقع المحولات' : 'Map View';
 
+    const filtersToggleLabel = document.getElementById('filtersToggleLabel');
+    if (filtersToggleLabel) filtersToggleLabel.textContent = isAr ? 'الفلاتر' : 'Filters';
     const adminPanelsToggleLabel = document.getElementById('adminPanelsToggleLabel');
     if (adminPanelsToggleLabel) adminPanelsToggleLabel.textContent = isAr ? 'أدوات الأدمن' : 'Admin Tools';
     const smTitle = document.getElementById('smTitle');
@@ -4938,6 +4969,14 @@ ${(()=>{
     document.getElementById('loginModal').classList.add('active');
     document.getElementById('pwInput').value = '';
     document.getElementById('loginError').textContent = '';
+  }
+
+  function toggleFilters() {
+    const box = document.getElementById('filtersCollapse');
+    const btn = document.getElementById('filtersToggleBtn');
+    if (!box) return;
+    box.classList.toggle('open');
+    if (btn) btn.classList.toggle('open', box.classList.contains('open'));
   }
 
   function toggleAdminPanels() {
