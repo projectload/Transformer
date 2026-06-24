@@ -5759,26 +5759,52 @@ ${(()=>{
     if (e.target === this) closeMapView();
   });
 
-  // ─── تنبيهات التحميل (محول ≥80% + كيبل ≥80%) ───
+  // ─── كل جولات القراءة لمحول معيّن ───
+  function getAllRounds(uid) {
+    const ld = loadings[uid];
+    if (!ld) return [];
+    if (ld._allRounds && Object.keys(ld._allRounds).length > 0) return Object.values(ld._allRounds);
+    return [{ volt: ld.volt || {}, pf: ld.pf, feeders: ld.feeders || [], voltSavedAt: ld.voltSavedAt }];
+  }
+
+  // ─── تنبيهات التحميل (محول ≥80% + كيبل ≥80%) — تُعرض دائماً أعلى قراءة عبر كل الجولات ───
   function getAlertsData() {
     const SQRT3 = Math.sqrt(3);
     const tx = [], cables = [];
     records.forEach(rec => {
-      const bd = getBestRoundData(rec.uid);
-      const fds = (bd?.feeders || []).filter(hasData);
-      if (!fds.length) return;
+      const rounds = getAllRounds(rec.uid);
+      if (!rounds.length) return;
       const capKVA = Number(rec.capacity);
+
+      // أعلى حمل للمحول عبر كل الجولات
       if (capKVA > 0) {
         const rated = (capKVA * 1000) / (SQRT3 * 415);
-        const totR = fds.reduce((s,f)=>s+(parseFloat(f.iL1)||0),0);
-        const totY = fds.reduce((s,f)=>s+(parseFloat(f.iL2)||0),0);
-        const totB = fds.reduce((s,f)=>s+(parseFloat(f.iL3)||0),0);
-        const pct = rated > 0 ? (Math.max(totR,totY,totB) / rated) * 100 : 0;
-        if (pct >= 80) tx.push({ rec, pct, cap: capKVA });
+        let maxPct = -1;
+        rounds.forEach(rd => {
+          const fds = (rd.feeders || []).filter(hasData);
+          if (!fds.length || rated <= 0) return;
+          const totR = fds.reduce((s,f)=>s+(parseFloat(f.iL1)||0),0);
+          const totY = fds.reduce((s,f)=>s+(parseFloat(f.iL2)||0),0);
+          const totB = fds.reduce((s,f)=>s+(parseFloat(f.iL3)||0),0);
+          const pct = (Math.max(totR,totY,totB) / rated) * 100;
+          if (pct > maxPct) maxPct = pct;
+        });
+        if (maxPct >= 80) tx.push({ rec, pct: maxPct, cap: capKVA });
       }
-      fds.forEach(f => {
-        const cs = cableStatus(f);
-        if (cs && cs.pct >= 80) cables.push({ rec, feederNum: f.num, name: f.name, maxI: cs.maxI, ampacity: cs.ampacity, pct: cs.pct });
+
+      // أعلى حمل لكل كيبل (حسب رقم الفيدر) عبر كل الجولات
+      const bestByFeeder = {};
+      rounds.forEach(rd => {
+        (rd.feeders || []).filter(hasData).forEach(f => {
+          const cs = cableStatus(f);
+          if (!cs) return;
+          const key = (f.num != null ? f.num : (f.name || '')) + '|' + (f.name || '');
+          if (!bestByFeeder[key] || cs.pct > bestByFeeder[key].cs.pct) bestByFeeder[key] = { f, cs };
+        });
+      });
+      Object.keys(bestByFeeder).forEach(k => {
+        const { f, cs } = bestByFeeder[k];
+        if (cs.pct >= 80) cables.push({ rec, feederNum: f.num, name: f.name, maxI: cs.maxI, ampacity: cs.ampacity, pct: cs.pct });
       });
     });
     tx.sort((a,b)=>b.pct-a.pct);
