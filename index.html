@@ -1551,10 +1551,7 @@
           <span class="search-icon">🔍</span>
           <input type="text" id="searchInput" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'');currentPage=1;renderTable()" placeholder="رقم المحول..." />
         </div>
-        <button id="summaryReportBtn" class="btn btn-secondary" onclick="generateSummaryReport()" style="border-color:rgba(167,139,250,0.4);color:#a78bfa">📄 تقرير مختصر</button>
-        <button id="exportExcelBtn" class="btn btn-secondary" onclick="exportExcel()" title="ينزل CSV — افتحه بـ Excel" style="border-color:rgba(0,255,157,0.4);color:var(--accent3)">📊 تصدير Excel</button>
         <input type="file" id="importExcelInput" accept=".xlsx,.xls" style="display:none" onchange="handleImportExcel(this)">
-        <button id="mapViewBtn" class="btn btn-secondary" onclick="openMapView()" style="border-color:rgba(251,191,36,0.4);color:#fbbf24">🗺️ <span id="mapViewBtnLabel">مواقع المحولات</span></button>
       </div>
     </div>
     <div style="overflow-x:auto;direction:ltr">
@@ -1591,6 +1588,11 @@
       </div>
       <div id="recordCount" class="record-count" style="font-size:0.78rem;color:var(--text-muted)"></div>
       <div id="paginationControls" class="pg-controls"></div>
+    </div>
+    <div class="list-actions-bar" style="display:flex;flex-wrap:wrap;gap:0.6rem;justify-content:center;padding:0.9rem 1.2rem;border-top:1px solid var(--border)">
+      <button id="summaryReportBtn" class="btn btn-secondary" onclick="generateSummaryReport()" style="border-color:rgba(167,139,250,0.4);color:#a78bfa">📄 تقرير مختصر</button>
+      <button id="exportExcelBtn" class="btn btn-secondary" onclick="exportExcel()" title="ينزل CSV — افتحه بـ Excel" style="border-color:rgba(0,255,157,0.4);color:var(--accent3)">📊 تصدير Excel</button>
+      <button id="mapViewBtn" class="btn btn-secondary" onclick="openMapView()" style="border-color:rgba(251,191,36,0.4);color:#fbbf24">🗺️ <span id="mapViewBtnLabel">مواقع المحولات</span></button>
     </div>
   </div>
 
