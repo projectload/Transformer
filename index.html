@@ -1281,6 +1281,8 @@
   }
   @media (max-width: 520px) {
     .filters-toolbar { grid-template-columns: 1fr; }
+    .list-actions-bar .btn { flex: 1 1 100%; justify-content: center; }
+    .list-actions-bar { gap: 0.5rem; }
   }
 
   /* ── Summary Report ── */
@@ -4306,11 +4308,11 @@ ${(()=>{
       });
     }
     const dir = isAr ? 'rtl' : 'ltr';
-    const btnStyle = "padding:0.45rem 1.1rem;border-radius:8px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.08);color:#fff;font-family:'Cairo',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer";
+    const btnStyle = "flex:0 0 auto;white-space:nowrap;padding:0.5rem 0.9rem;border-radius:8px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.08);color:#fff;font-family:'Cairo',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer";
     ov.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding:0.6rem 1rem;background:#111827;color:#fff;direction:${dir};flex:0 0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.25)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding:0.6rem 0.8rem;background:#111827;color:#fff;direction:${dir};flex:0 0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.25)">
         <button onclick="closeReportPage()" style="${btnStyle};display:flex;align-items:center;gap:0.4rem">↩ ${isAr?'رجوع':'Back'}</button>
-        <span style="font-family:'Cairo',sans-serif;font-weight:700;font-size:0.95rem">${isAr?'تقرير المحول':'Transformer Report'}</span>
+        <span style="flex:1 1 auto;min-width:0;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Cairo',sans-serif;font-weight:700;font-size:0.9rem">${isAr?'تقرير المحول':'Transformer Report'}</span>
         <button onclick="document.getElementById('reportFrame').contentWindow.print()" style="${btnStyle}">🖨️ ${isAr?'طباعة':'Print'}</button>
       </div>
       <iframe id="reportFrame" style="flex:1 1 auto;width:100%;border:none;background:#fff"></iframe>`;
