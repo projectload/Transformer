@@ -1213,10 +1213,12 @@
   /* ── Filters Toolbar ── */
   .filters-toolbar {
     display: grid;
-    grid-template-columns: repeat(4, minmax(130px, 1fr)) minmax(130px, 1fr) auto auto;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 8px;
     align-items: center;
   }
+  /* ── شريط البحث المنفصل أسفل الفلاتر ── */
+  .search-bar { margin-top: 8px; }
   .filters-toolbar select {
     height: 40px;
     background: var(--surface2);
@@ -1233,11 +1235,13 @@
   }
   .filters-toolbar select:focus,
   .filters-toolbar select:hover { border-color: rgba(0,212,255,0.5); }
-  .filters-toolbar .search-box {
+  .filters-toolbar .search-box,
+  .search-bar .search-box {
     position: relative;
     min-width: 0;
   }
-  .filters-toolbar .search-box input {
+  .filters-toolbar .search-box input,
+  .search-bar .search-box input {
     width: 100%;
     height: 40px;
     box-sizing: border-box;
@@ -1251,8 +1255,10 @@
     outline: none;
     transition: border-color 0.2s;
   }
-  .filters-toolbar .search-box input:focus { border-color: var(--accent); }
-  .filters-toolbar .search-box .search-icon {
+  .filters-toolbar .search-box input:focus,
+  .search-bar .search-box input:focus { border-color: var(--accent); }
+  .filters-toolbar .search-box .search-icon,
+  .search-bar .search-box .search-icon {
     position: absolute;
     right: 0.7rem;
     top: 50%;
@@ -1547,11 +1553,13 @@
         <select id="filterCapacity" onchange="currentPage=1;renderTable()">
           <option value="">⚡ كل السعات</option>
         </select>
+        <input type="file" id="importExcelInput" accept=".xlsx,.xls" style="display:none" onchange="handleImportExcel(this)">
+      </div>
+      <div class="search-bar">
         <div class="search-box">
           <span class="search-icon">🔍</span>
           <input type="text" id="searchInput" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'');currentPage=1;renderTable()" placeholder="رقم المحول..." />
         </div>
-        <input type="file" id="importExcelInput" accept=".xlsx,.xls" style="display:none" onchange="handleImportExcel(this)">
       </div>
     </div>
     <div style="overflow-x:auto;direction:ltr">
