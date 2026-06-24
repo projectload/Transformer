@@ -5824,7 +5824,8 @@ ${(()=>{
       cbH:      isAr?'كيبلات محمّلة':'Overloaded Cables',
       transformer: isAr?'رقم المحول':'Transformer', stationCol: isAr?'المحطة':'Station',
       teamCol:  isAr?'الفريق':'Team', loadCol: isAr?'الحمل':'Load', feederCol: isAr?'الفيدر':'Feeder',
-      currentCol: isAr?'التيار':'Current', none: isAr?'لا توجد عناصر مطابقة':'No matching items'
+      currentCol: isAr?'التيار':'Current', none: isAr?'لا توجد عناصر مطابقة':'No matching items',
+      pctCol: isAr?'النسبة':'Load %'
     };
     const J = o => JSON.stringify(o).replace(/</g, '\\u003c');
 
@@ -5860,7 +5861,32 @@ ${(()=>{
     .bar>i{display:block;height:100%;border-radius:4px}
     .empty{color:#94a3b8;padding:1.4rem;font-family:'Tajawal',sans-serif}
     .muted{color:#64748b;font-size:0.78rem;font-family:'Tajawal',sans-serif}
-    @media print{body{background:#fff;padding:0}.filters{display:none}.sec,.head{box-shadow:none}.head{border:1px solid #e5e7eb}}
+    .tbl-wrap{-webkit-overflow-scrolling:touch}
+    /* قائمة مدمجة (الهاتف) */
+    .cards{display:none}
+    .item{display:flex;align-items:center;gap:0.7rem;padding:0.6rem 0.7rem;border:1px solid #e2e8f0;border-radius:11px;margin-bottom:0.5rem;background:#fff}
+    .item .ix{color:#94a3b8;font-size:0.78rem;font-weight:700;min-width:1.1rem;text-align:center}
+    .item .main{flex:1 1 auto;min-width:0}
+    .item .id{font-weight:800;color:#0f172a;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .item .id .sub{color:#475569;font-weight:600;font-size:0.8rem}
+    .item .meta{color:#64748b;font-size:0.76rem;font-family:'Tajawal',sans-serif;margin-top:0.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .item .chip{font-size:0.68rem}
+    .item .p{flex:0 0 auto;text-align:center;font-family:monospace;font-weight:900;font-size:1.15rem;line-height:1}
+    .item .p .pbar{width:54px;height:5px;border-radius:3px;background:#e2e8f0;margin-top:4px;overflow:hidden}
+    .item .p .pbar>i{display:block;height:100%}
+    .cards .empty{text-align:center}
+    @media screen and (max-width:560px){
+      body{padding:0.8rem}
+      .head{padding:1rem;border-radius:12px;margin-bottom:0.9rem}
+      .head h1{font-size:1.1rem}
+      .filters{padding:0.7rem;gap:0.5rem;margin-bottom:0.9rem}
+      .filters select,.filters button{height:40px;font-size:0.82rem}
+      .sec{padding:0.7rem;border-radius:12px;margin-bottom:0.9rem}
+      h2{font-size:0.95rem}
+      .tbl-wrap{display:none}
+      .cards{display:block}
+    }
+    @media print{body{background:#fff;padding:0}.filters{display:none}.sec,.head{box-shadow:none}.head{border:1px solid #e5e7eb}.tbl-wrap{overflow:visible}table{min-width:0}}
     </style></head><body><div class="page">
       <div class="head"><h1>🔔 ${L.title}</h1><div class="date">${dateStr}</div></div>
       <div class="filters">
@@ -5875,6 +5901,7 @@ ${(()=>{
           <thead><tr><th>#</th><th>${L.transformer}</th><th>${L.teamCol}</th><th>${L.stationCol}</th><th>${L.feederCol} HV</th><th>${L.loadCol}</th><th>%</th></tr></thead>
           <tbody id="txBody"></tbody>
         </table></div>
+        <div class="cards" id="txCards"></div>
       </div>
       <div class="sec">
         <h2>🔌 ${L.cbH} <span class="count c-cb" id="cbCount">0</span></h2>
@@ -5882,6 +5909,7 @@ ${(()=>{
           <thead><tr><th>#</th><th>${L.transformer}</th><th>${L.feederCol}</th><th>${L.teamCol}</th><th>${L.stationCol}</th><th>${L.currentCol}</th><th>%</th></tr></thead>
           <tbody id="cbBody"></tbody>
         </table></div>
+        <div class="cards" id="cbCards"></div>
       </div>
     </div>
     <script>
@@ -5906,6 +5934,8 @@ ${(()=>{
       document.getElementById('cbCount').textContent=cbf.length;
       document.getElementById('txBody').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold">'+a.id+'</td><td class="muted">'+(a.team||'—')+'</td><td>'+a.station+'</td><td>'+(a.hv||'—')+'</td><td class="muted">'+a.load+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'</td></tr>';}).join('') : '<tr><td colspan="7" class="empty">'+L.none+'</td></tr>';
       document.getElementById('cbBody').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold">'+a.id+'</td><td><span class="chip">'+a.feeder+'</span></td><td class="muted">'+(a.team||'—')+'</td><td>'+a.station+'</td><td class="muted">'+a.cur+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'</td></tr>';}).join('') : '<tr><td colspan="7" class="empty">'+L.none+'</td></tr>';
+      document.getElementById('txCards').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<div class="item" style="border-inline-start:4px solid '+c+'"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id">'+a.id+(a.station?' <span class="sub">'+a.station+'</span>':'')+'</div><div class="meta">'+(a.team?a.team+' · ':'')+(a.hv?'HV '+a.hv+' · ':'')+a.load+'</div></div><div class="p" style="color:'+c+'">'+a.pct+'%<div class="pbar"><i style="width:'+Math.min(100,a.pct)+'%;background:'+c+'"></i></div></div></div>';}).join('') : '<div class="empty">'+L.none+'</div>';
+      document.getElementById('cbCards').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<div class="item" style="border-inline-start:4px solid '+c+'"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id">'+a.id+' <span class="chip">'+a.feeder+'</span>'+(a.station?' <span class="sub">'+a.station+'</span>':'')+'</div><div class="meta">'+(a.team?a.team+' · ':'')+a.cur+'</div></div><div class="p" style="color:'+c+'">'+a.pct+'%<div class="pbar"><i style="width:'+Math.min(100,a.pct)+'%;background:'+c+'"></i></div></div></div>';}).join('') : '<div class="empty">'+L.none+'</div>';
     }
     fill(teamSel,uniq(ALL.map(function(x){return x.team;})),L.team);
     teamSel.onchange=rebuild;stSel.onchange=rebuild;fdSel.onchange=render;
