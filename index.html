@@ -6021,6 +6021,33 @@ ${(()=>{
       if(navigator.share){navigator.share({title:'🔔 '+L.title,text:text}).catch(function(){});}
       else{navigator.clipboard.writeText(text).then(function(){alert(isAr?'✅ تم النسخ!':'✅ Copied!');});}
     }
+    function shareOne(idx, type){
+      var isAr=${isAr?'true':'false'};
+      var a=(type==='tx'?txf:cbf)[idx];
+      if(!a) return;
+      var NL=String.fromCharCode(10);
+      var lines=[];
+      var dt=new Date().toLocaleString(isAr?'ar-OM':'en-GB',{dateStyle:'short',timeStyle:'short'});
+      lines.push('📅 '+dt);
+      if(type==='tx'){
+        lines.push('⚡ '+L.txH);
+        lines.push('🔧 Tx: '+a.id);
+        lines.push('🏭 '+a.station+(a.hv?'  |  🔌 '+a.hv:''));
+        if(ADM&&a.team) lines.push('👥 '+a.team);
+        lines.push('📊 '+a.load+' - '+a.pct+'%');
+        if(a.lat&&a.lng) lines.push('📍 https://maps.google.com/?q='+a.lat+','+a.lng);
+      } else {
+        lines.push('🔌 '+L.cbH);
+        lines.push('🔧 Tx: '+a.id+'  |  '+a.feeder);
+        lines.push('🏭 '+a.station+(a.hv?'  |  🔌 '+a.hv:''));
+        if(ADM&&a.team) lines.push('👥 '+a.team);
+        lines.push('⚡ '+a.cur+' - '+a.pct+'%');
+        if(a.lat&&a.lng) lines.push('📍 https://maps.google.com/?q='+a.lat+','+a.lng);
+      }
+      var text=lines.join(NL);
+      if(navigator.share){navigator.share({title:'🔧 Tx:'+a.id,text:text}).catch(function(){});}
+      else{navigator.clipboard.writeText(text).then(function(){alert(isAr?'✅ تم النسخ!':'✅ Copied!');});}
+    }
     function render(){
       var t=tval(),s=stSel.value,h=fdSel.value;
       function flt(x){return (!t||x.team===t)&&(!s||x.station===s)&&(!h||x.hv===h);}
@@ -6028,10 +6055,10 @@ ${(()=>{
       var COLS=ADM?7:6;
       document.getElementById('txCount').textContent=txf.length;
       document.getElementById('cbCount').textContent=cbf.length;
-      document.getElementById('txBody').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span></td>'+(ADM?'<td style="color:'+teamClr(a.team)+';font-weight:700">'+(a.team||'—')+'</td>':'')+'<td>'+a.station+(a.hv?' <span class="chip">'+a.hv+'</span>':'')+'</td><td>'+(a.hv||'—')+'</td><td class="muted">'+a.load+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'</td></tr>';}).join('') : '<tr><td colspan="'+COLS+'" class="empty">'+L.none+'</td></tr>';
-      document.getElementById('cbBody').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span></td><td><span class="chip">'+a.feeder+'</span></td>'+(ADM?'<td style="color:'+teamClr(a.team)+';font-weight:700">'+(a.team||'—')+'</td>':'')+'<td>'+a.station+(a.hv?' <span class="chip">'+a.hv+'</span>':'')+'</td><td class="muted">'+a.cur+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'</td></tr>';}).join('') : '<tr><td colspan="'+COLS+'" class="empty">'+L.none+'</td></tr>';
-      document.getElementById('txCards').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<div class="item" style="border-inline-start:4px solid '+c+'"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span>'+(a.station?' <span class="sub">'+a.station+(a.hv?' · '+a.hv:'')+'</span>':'')+'</div><div class="meta">'+(ADM&&a.team?'<span style="color:'+teamClr(a.team)+';font-weight:700">'+a.team+'</span> · ':'')+a.load+'</div></div><div class="p" style="color:'+c+'">'+a.pct+'%<div class="pbar"><i style="width:'+Math.min(100,a.pct)+'%;background:'+c+'"></i></div></div></div>';}).join('') : '<div class="empty">'+L.none+'</div>';
-      document.getElementById('cbCards').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<div class="item" style="border-inline-start:4px solid '+c+'"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span> <span class="chip">'+a.feeder+'</span>'+(a.station?' <span class="sub">'+a.station+(a.hv?' · '+a.hv:'')+'</span>':'')+'</div><div class="meta">'+(ADM&&a.team?'<span style="color:'+teamClr(a.team)+';font-weight:700">'+a.team+'</span> · ':'')+a.cur+'</div></div><div class="p" style="color:'+c+'">'+a.pct+'%<div class="pbar"><i style="width:'+Math.min(100,a.pct)+'%;background:'+c+'"></i></div></div></div>';}).join('') : '<div class="empty">'+L.none+'</div>';
+      document.getElementById('txBody').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span></td>'+(ADM?'<td style="color:'+teamClr(a.team)+';font-weight:700">'+(a.team||'—')+'</td>':'')+'<td>'+a.station+(a.hv?' <span class="chip">'+a.hv+'</span>':'')+'</td><td>'+(a.hv||'—')+'</td><td class="muted">'+a.load+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'<button data-idx="'+i+'" data-type="tx" onclick="shareOne(+this.dataset.idx,this.dataset.type)" style="display:block;margin-top:5px;background:none;border:1px solid rgba(100,116,139,0.3);border-radius:6px;cursor:pointer;font-size:0.7rem;padding:0.1rem 0.4rem;color:#64748b;width:100%">📤</button></td></tr>';}).join('') : '<tr><td colspan="'+COLS+'" class="empty">'+L.none+'</td></tr>';
+      document.getElementById('cbBody').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span></td><td><span class="chip">'+a.feeder+'</span></td>'+(ADM?'<td style="color:'+teamClr(a.team)+';font-weight:700">'+(a.team||'—')+'</td>':'')+'<td>'+a.station+(a.hv?' <span class="chip">'+a.hv+'</span>':'')+'</td><td class="muted">'+a.cur+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'<button data-idx="'+i+'" data-type="cb" onclick="shareOne(+this.dataset.idx,this.dataset.type)" style="display:block;margin-top:5px;background:none;border:1px solid rgba(100,116,139,0.3);border-radius:6px;cursor:pointer;font-size:0.7rem;padding:0.1rem 0.4rem;color:#64748b;width:100%">📤</button></td></tr>';}).join('') : '<tr><td colspan="'+COLS+'" class="empty">'+L.none+'</td></tr>';
+      document.getElementById('txCards').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<div class="item" style="border-inline-start:4px solid '+c+'"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span>'+(a.station?' <span class="sub">'+a.station+(a.hv?' · '+a.hv:'')+'</span>':'')+'</div><div class="meta">'+(ADM&&a.team?'<span style="color:'+teamClr(a.team)+';font-weight:700">'+a.team+'</span> · ':'')+a.load+'</div></div><div class="p" style="color:'+c+'">'+a.pct+'%<div class="pbar"><i style="width:'+Math.min(100,a.pct)+'%;background:'+c+'"></i></div></div><button data-idx="'+i+'" data-type="tx" onclick="shareOne(+this.dataset.idx,this.dataset.type)" style="flex:0 0 auto;background:none;border:1px solid rgba(100,116,139,0.25);border-radius:8px;cursor:pointer;font-size:0.8rem;padding:0.3rem 0.45rem;color:#64748b;line-height:1;align-self:center">📤</button></div>';}).join('') : '<div class="empty">'+L.none+'</div>';
+      document.getElementById('cbCards').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<div class="item" style="border-inline-start:4px solid '+c+'"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span> <span class="chip">'+a.feeder+'</span>'+(a.station?' <span class="sub">'+a.station+(a.hv?' · '+a.hv:'')+'</span>':'')+'</div><div class="meta">'+(ADM&&a.team?'<span style="color:'+teamClr(a.team)+';font-weight:700">'+a.team+'</span> · ':'')+a.cur+'</div></div><div class="p" style="color:'+c+'">'+a.pct+'%<div class="pbar"><i style="width:'+Math.min(100,a.pct)+'%;background:'+c+'"></i></div></div><button data-idx="'+i+'" data-type="cb" onclick="shareOne(+this.dataset.idx,this.dataset.type)" style="flex:0 0 auto;background:none;border:1px solid rgba(100,116,139,0.25);border-radius:8px;cursor:pointer;font-size:0.8rem;padding:0.3rem 0.45rem;color:#64748b;line-height:1;align-self:center">📤</button></div>';}).join('') : '<div class="empty">'+L.none+'</div>';
     }
     if(teamSel){fill(teamSel,uniq(ALL.map(function(x){return x.team;})),L.team);teamSel.onchange=rebuild;}
     stSel.onchange=rebuild;fdSel.onchange=render;
