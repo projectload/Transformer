@@ -5984,9 +5984,7 @@ ${(()=>{
       var BIG='▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬';
       var DOT='  · · · · · · · ·';
       var lines=[];
-      var dt=new Date().toLocaleString(isAr?'ar-OM':'en-GB',{dateStyle:'short',timeStyle:'short'});
       lines.push('🔔 '+L.title);
-      lines.push('📅 '+dt);
       if(txf.length){
         lines.push('');
         lines.push(BIG);
@@ -6027,8 +6025,6 @@ ${(()=>{
       if(!a) return;
       var NL=String.fromCharCode(10);
       var lines=[];
-      var dt=new Date().toLocaleString(isAr?'ar-OM':'en-GB',{dateStyle:'short',timeStyle:'short'});
-      lines.push('📅 '+dt);
       if(type==='tx'){
         lines.push('⚡ '+L.txH);
         lines.push('🔧 Tx: '+a.id);
