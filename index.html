@@ -4171,21 +4171,41 @@ ${fResults.length ? `
 
 <div class="section">
   <div class="section-title">🔋 ${isAr?'نسبة التحميل الكلي':'Overall Loading'}</div>
-  <div class="load-box">
-    <div class="load-header">
-      <div><div class="load-pct">${loadPct.toFixed(1)}%</div><div class="sub" style="margin-top:0.2rem">${totalKVA.toFixed(2)} / ${capKVA} KVA</div></div>
-      <span class="load-status">${loadStatus}</span>
-    </div>
-    <div class="load-bar-bg"><div class="load-bar-fill" style="width:${Math.min(100,loadPct)}%"></div></div>
-    <div class="load-sub"><span>0</span><span style="color:${loadColor}">${loadPct>=HIGH?'⚠️ '+(isAr?'تجاوز 80%':'Exceeded 80%'):''}</span><span>${capKVA.toLocaleString()} KVA</span></div>
-    <div style="margin-top:1rem;padding-top:0.8rem;border-top:1px solid #1e3a5f;display:flex;justify-content:space-between;align-items:center">
+  <div class="load-box" style="background:linear-gradient(135deg,${loadColor}0d 0%,${loadColor}06 100%);border-color:${loadColor}33">
+    <!-- Row 1: % + status -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.9rem">
       <div>
-        <div style="font-size:0.72rem;color:#6b7fa3;font-family:'Tajawal',sans-serif;margin-bottom:0.2rem">⚡ ${isAr?'الطاقة الفعلية (KW)':'Active Power (KW)'} — PF = <span style="color:#a78bfa;font-weight:700">${pfR}</span></div>
-        <div style="font-size:1.4rem;font-weight:900;color:#a78bfa">${totalKWR.toFixed(2)} <span style="font-size:0.85rem">KW</span></div>
+        <div style="font-size:2.6rem;font-weight:900;color:${loadColor};line-height:1">${loadPct.toFixed(1)}<span style="font-size:1rem;font-weight:600">%</span></div>
+        <div style="font-size:0.75rem;color:var(--text-muted);font-family:'Tajawal',sans-serif;margin-top:0.2rem">${totalKVA.toFixed(1)} / ${capKVA.toLocaleString()} KVA</div>
       </div>
-      <div style="text-align:${isAr?'left':'right'}">
-        <div style="font-size:0.72rem;color:#6b7fa3;font-family:'Tajawal',sans-serif;margin-bottom:0.2rem">${isAr?'سعة المحول KW':'Transformer KW capacity'}</div>
-        <div style="font-size:1rem;font-weight:700;color:#a78bfa;opacity:0.7">${(capKVA*pfR).toFixed(0)} KW</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem">
+        <span class="load-status">${loadStatus}</span>
+        ${loadPct>=HIGH?`<span style="font-size:0.7rem;color:#dc2626;font-family:'Tajawal',sans-serif;background:#dc262610;border:1px solid #dc262630;border-radius:6px;padding:0.1rem 0.5rem">⚠️ ${isAr?'تجاوز 80%':'Exceeded 80%'}</span>`:''}
+      </div>
+    </div>
+    <!-- Bar -->
+    <div style="position:relative;margin-bottom:0.4rem">
+      <div class="load-bar-bg" style="height:10px;border-radius:5px">
+        <div class="load-bar-fill" style="width:${Math.min(100,loadPct)}%;height:100%;border-radius:5px;background:linear-gradient(90deg,${loadColor}cc,${loadColor})"></div>
+      </div>
+      ${loadPct>0&&loadPct<=100?`<div style="position:absolute;top:-1px;left:${Math.min(100,loadPct)}%;transform:translateX(-50%);width:12px;height:12px;border-radius:50%;background:${loadColor};border:2px solid var(--bg);box-shadow:0 0 4px ${loadColor}88"></div>`:''}
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--text-muted);font-family:'Tajawal',sans-serif;margin-bottom:1rem">
+      <span>0</span><span>${capKVA.toLocaleString()} KVA</span>
+    </div>
+    <!-- Row 2: KW + KW Capacity + PF -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:0.55rem 0.7rem;text-align:center">
+        <div style="font-size:0.62rem;color:var(--text-muted);font-family:'Tajawal',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.25rem">${isAr?'طاقة فعلية':'Active KW'}</div>
+        <div style="font-size:1.05rem;font-weight:900;color:#a78bfa;font-family:monospace">${totalKWR.toFixed(1)}<span style="font-size:0.6rem;font-weight:400;color:var(--text-muted)"> KW</span></div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:0.55rem 0.7rem;text-align:center">
+        <div style="font-size:0.62rem;color:var(--text-muted);font-family:'Tajawal',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.25rem">${isAr?'سعة KW':'KW Capacity'}</div>
+        <div style="font-size:1.05rem;font-weight:900;color:#a78bfa;opacity:0.65;font-family:monospace">${(capKVA*pfR).toFixed(0)}<span style="font-size:0.6rem;font-weight:400;color:var(--text-muted)"> KW</span></div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:0.55rem 0.7rem;text-align:center">
+        <div style="font-size:0.62rem;color:var(--text-muted);font-family:'Tajawal',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.25rem">PF</div>
+        <div style="font-size:1.05rem;font-weight:900;color:#a78bfa;font-family:monospace">${pfR}</div>
       </div>
     </div>
   </div>
