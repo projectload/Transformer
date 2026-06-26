@@ -3849,6 +3849,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
   function openReport(uid) {
     const rec = records.find(r => r.uid === uid);
     if (!rec) return;
+    const logoSrc = (document.querySelector('.header-icon img') || {}).src || '';
     const _bestRd = getBestRoundData(uid);
     const feeders = [...(_bestRd?.feeders || [])].sort((a,b)=>(a.num||0)-(b.num||0));
     const isAr = lang === 'ar';
@@ -4087,7 +4088,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
 <\/style><\/head><body><div class="page">
 <button class="print-btn" onclick="window.print()">🖨️ ${isAr?'طباعة / PDF':'Print / PDF'}</button>
 <div class="report-header">
-  <div style="margin-bottom:0.8rem"><img src="97ecfaff-2ca7-4e26-ada9-e87340085cc3.png" style="height:80px;width:auto;object-fit:contain"/></div>
+  <div style="margin-bottom:0.8rem">${logoSrc?`<img src="${logoSrc}" style="height:80px;width:auto;object-fit:contain"/>`:'<span style="font-size:2rem">⚡</span>'}</div>
   <h1>${isAr?'تقرير المحول الكهربائي':'Transformer Electrical Report'}</h1>
   <div class="sub">${isAr?'تاريخ التقرير':'Report date'}: ${dateStr}</div>
 </div>
@@ -4104,50 +4105,67 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
   </div>
 </div>
 
+${(v.vL1N||v.vL2N||v.vL3N||v.vL1L2||v.vL1L3||v.vL2L3)?`
+<div class="section">
+  <div class="section-title">⚡ ${isAr?'قراءات الجهد (V)':'Voltage Readings (V)'}</div>
+  <div style="font-size:0.68rem;color:var(--text-muted);font-family:'Tajawal',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.5rem">${isAr?'فاز — نيوترال':'Phase — Neutral'}</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;margin-bottom:0.9rem">
+    ${[{l:`${PH[0]}-N`,val:v.vL1N,c:PC[0]},{l:`${PH[1]}-N`,val:v.vL2N,c:PC[1]},{l:`${PH[2]}-N`,val:v.vL3N,c:PC[2]}].map(p=>`
+    <div style="background:var(--bg);border:1px solid var(--border);border-top:3px solid ${p.c};border-radius:8px;padding:0.5rem 0.7rem;text-align:center">
+      <div style="font-size:0.7rem;color:${p.c};font-family:'Tajawal',sans-serif;font-weight:700;margin-bottom:0.3rem">${p.l}</div>
+      <div style="font-size:1.1rem;font-weight:900;font-family:monospace;color:var(--text)">${p.val||'—'}<span style="font-size:0.65rem;font-weight:400;color:var(--text-muted)"> V</span></div>
+    </div>`).join('')}
+  </div>
+  <div style="font-size:0.68rem;color:var(--text-muted);font-family:'Tajawal',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.5rem">${isAr?'فاز — فاز':'Phase — Phase'}</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem">
+    ${[{c1:PC[0],c2:PC[1],n1:PH[0],n2:PH[1],val:v.vL1L2},{c1:PC[0],c2:PC[2],n1:PH[0],n2:PH[2],val:v.vL1L3},{c1:PC[1],c2:PC[2],n1:PH[1],n2:PH[2],val:v.vL2L3}].map(p=>`
+    <div style="background:var(--bg);border:1px solid var(--border);border-top:3px solid;border-image:linear-gradient(90deg,${p.c1},${p.c2}) 1;border-radius:8px;padding:0.5rem 0.7rem;text-align:center">
+      <div style="font-size:0.7rem;font-family:'Tajawal',sans-serif;font-weight:700;margin-bottom:0.3rem"><span style="color:${p.c1}">${p.n1}</span><span style="color:var(--text-muted);margin:0 2px">–</span><span style="color:${p.c2}">${p.n2}</span></div>
+      <div style="font-size:1.1rem;font-weight:900;font-family:monospace;color:var(--text)">${p.val||'—'}<span style="font-size:0.65rem;font-weight:400;color:var(--text-muted)"> V</span></div>
+    </div>`).join('')}
+  </div>
+</div>`:''}
+
 ${fResults.length ? `
 <div class="section">
   <div class="section-title">📊 ${isAr?'ملخص قراءات التيار':'Current Readings Summary'}</div>
-  <div style="overflow-x:auto">
-  <table style="font-size:0.8rem;min-width:500px">
-    <thead>
-      <tr>
-        <th style="text-align:center;padding:0.5rem 0.6rem">#</th>
-        <th style="text-align:center;padding:0.5rem 0.6rem">${isAr?'الكيبل':'Cable'}</th>
-        <th style="text-align:center;padding:0.5rem 0.6rem;color:#ff4444">I <span style="font-size:0.65rem">${isAr?'أحمر':'Red'}</span> (A)</th>
-        <th style="text-align:center;padding:0.5rem 0.6rem;color:#e6b800">I <span style="font-size:0.65rem">${isAr?'أصفر':'Yellow'}</span> (A)</th>
-        <th style="text-align:center;padding:0.5rem 0.6rem;color:#4488ff">I <span style="font-size:0.65rem">${isAr?'أزرق':'Blue'}</span> (A)</th>
-        <th style="text-align:center;padding:0.5rem 0.6rem;color:#888">I <span style="font-size:0.65rem">${isAr?'نيوترال':'N'}</span> (A)</th>
-        <th style="text-align:center;padding:0.5rem 0.6rem">${isAr?'حمل الكيبل':'Cable Load'}</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${fResults.map(r => {
-        const _amp = {50:187,70:229,120:312,185:394,240:455,300:509}[parseInt(r.f.name)];
-        const _pct = _amp ? (r.iMax / _amp * 100) : null;
-        const _clr = _pct === null ? 'var(--text-muted)' : _pct > 80 ? '#dc2626' : _pct > 60 ? '#d97706' : '#16a34a';
-        const _iMax = (v) => v === r.iMax && r.iMax > 0 ? `style="font-weight:700;color:#ff4444"` : '';
-        return `<tr>
-          <td style="text-align:center;font-weight:700;color:var(--accent);padding:0.45rem 0.6rem">${r.f.num||'—'}</td>
-          <td style="text-align:center;color:var(--text-muted);padding:0.45rem 0.6rem">${r.f.name ? r.f.name+' mm²' : '—'}</td>
-          <td style="text-align:center;padding:0.45rem 0.6rem;color:#cc3333" ${r.i1===r.iMax&&r.iMax>0?'style="text-align:center;padding:0.45rem 0.6rem;font-weight:700;color:#cc3333"':''}>${r.i1||'—'}</td>
-          <td style="text-align:center;padding:0.45rem 0.6rem;color:#b8860b">${r.i2||'—'}</td>
-          <td style="text-align:center;padding:0.45rem 0.6rem;color:#3366cc">${r.i3||'—'}</td>
-          <td style="text-align:center;padding:0.45rem 0.6rem;color:#666">${r.iN||'—'}</td>
-          <td style="text-align:center;padding:0.45rem 0.6rem;font-weight:700;color:${_clr}">${_pct !== null ? _pct.toFixed(1)+'%' : '—'}</td>
-        </tr>`;
-      }).join('')}
-    </tbody>
-    <tfoot>
-      <tr style="border-top:2px solid var(--border);background:var(--surface)">
-        <td colspan="2" style="padding:0.5rem 0.6rem;font-weight:700;font-family:'Tajawal',sans-serif;font-size:0.78rem;color:var(--text-muted)">${isAr?'الإجمالي':'Total'}</td>
-        <td style="text-align:center;padding:0.5rem 0.6rem;font-weight:700;color:#cc3333">${totalR.toFixed(0)}</td>
-        <td style="text-align:center;padding:0.5rem 0.6rem;font-weight:700;color:#b8860b">${totalY.toFixed(0)}</td>
-        <td style="text-align:center;padding:0.5rem 0.6rem;font-weight:700;color:#3366cc">${totalB.toFixed(0)}</td>
-        <td style="text-align:center;padding:0.5rem 0.6rem;font-weight:700;color:#666">${fResults.reduce((s,r)=>s+(r.iN||0),0).toFixed(0)}</td>
-        <td style="text-align:center;padding:0.5rem 0.6rem;font-weight:700;color:${loadColor}">${loadPct.toFixed(1)}%</td>
-      </tr>
-    </tfoot>
-  </table>
+  <div style="display:flex;flex-direction:column;gap:0.5rem">
+    ${fResults.map(r => {
+      const _amp = {50:187,70:229,120:312,185:394,240:455,300:509}[parseInt(r.f.name)];
+      const _pct = _amp ? (r.iMax / _amp * 100) : null;
+      const _clr = _pct === null ? 'var(--text-muted)' : _pct > 80 ? '#dc2626' : _pct > 60 ? '#d97706' : '#16a34a';
+      const phases = [
+        {lbl:isAr?'أحمر':'Red',   val:r.i1, c:'#cc3333', bold:r.i1===r.iMax&&r.iMax>0},
+        {lbl:isAr?'أصفر':'Yellow',val:r.i2, c:'#b8860b', bold:r.i2===r.iMax&&r.iMax>0},
+        {lbl:isAr?'أزرق':'Blue',  val:r.i3, c:'#3366cc', bold:r.i3===r.iMax&&r.iMax>0},
+        {lbl:'N',                  val:r.iN, c:'#888',    bold:false},
+      ];
+      return `<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:0.55rem 0.7rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.45rem">
+          <span style="font-weight:700;color:var(--accent);font-size:0.82rem">#${r.f.num||'—'} <span style="color:var(--text-muted);font-weight:400;font-size:0.75rem">${r.f.name?r.f.name+' mm²':'—'}</span></span>
+          ${_pct!==null?`<span style="font-size:0.75rem;font-weight:700;color:${_clr};background:${_clr}18;border:1px solid ${_clr}44;border-radius:6px;padding:0.1rem 0.45rem">${_pct.toFixed(1)}%</span>`:''}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.3rem;text-align:center">
+          ${phases.map(p=>`<div style="background:var(--surface);border-radius:6px;padding:0.3rem 0.2rem">
+            <div style="font-size:0.6rem;color:${p.c};font-family:'Tajawal',sans-serif;font-weight:700;margin-bottom:0.1rem">${p.lbl}</div>
+            <div style="font-size:${p.bold?'0.88rem':'0.8rem'};font-weight:${p.bold?'900':'600'};color:${p.c};font-family:monospace">${p.val||'—'}<span style="font-size:0.55rem;font-weight:400;color:var(--text-muted)"> A</span></div>
+          </div>`).join('')}
+        </div>
+      </div>`;
+    }).join('')}
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.7rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.45rem">
+        <span style="font-weight:700;font-family:'Tajawal',sans-serif;font-size:0.8rem;color:var(--text-muted)">${isAr?'الإجمالي':'Total'}</span>
+        <span style="font-size:0.75rem;font-weight:700;color:${loadColor};background:${loadColor}18;border:1px solid ${loadColor}44;border-radius:6px;padding:0.1rem 0.45rem">${loadPct.toFixed(1)}%</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.3rem;text-align:center">
+        ${[{lbl:isAr?'أحمر':'Red',val:totalR,c:'#cc3333'},{lbl:isAr?'أصفر':'Yellow',val:totalY,c:'#b8860b'},{lbl:isAr?'أزرق':'Blue',val:totalB,c:'#3366cc'},{lbl:'N',val:fResults.reduce((s,r)=>s+(r.iN||0),0),c:'#888'}].map(p=>`
+        <div style="background:var(--bg);border-radius:6px;padding:0.3rem 0.2rem">
+          <div style="font-size:0.6rem;color:${p.c};font-family:'Tajawal',sans-serif;font-weight:700;margin-bottom:0.1rem">${p.lbl}</div>
+          <div style="font-size:0.88rem;font-weight:900;color:${p.c};font-family:monospace">${p.val.toFixed(0)}<span style="font-size:0.55rem;font-weight:400;color:var(--text-muted)"> A</span></div>
+        </div>`).join('')}
+      </div>
+    </div>
   </div>
 </div>` : ''}
 
@@ -4204,29 +4222,7 @@ ${fResults.length?`<div class="section">
       <span class="imb-badge" style="background:${ic}22;border:1px solid ${ic}55;color:${ic}">${imb.toFixed(1)}%</span>
     </div>
   </div>
-  <div class="fc-body">
-    <div class="fc-col">
-      <div class="fc-col-title">⚡ ${t('voltageShared')}</div>
-      <div class="fc-sub-label">${t('phaseToNeutral')}</div>
-      ${[{l:`${PH[0]}-N`,v:v1,c:PC[0]},{l:`${PH[1]}-N`,v:v2,c:PC[1]},{l:`${PH[2]}-N`,v:v3,c:PC[2]}].map(p=>`
-      <div class="fc-volt-row">
-        <div class="phase-dot" style="background:${p.c}"></div>
-        <span class="fc-phase-lbl" style="color:${p.c}">${p.l}</span>
-        <span class="fc-volt-val">${p.v||'—'}<span class="fc-unit"> V</span></span>
-      </div>`).join('')}
-      <div class="fc-divider"></div>
-      <div class="fc-sub-label">${t('phaseToPhase')}</div>
-      ${[
-        {c1:PC[0],c2:PC[1],n1:PH[0],n2:PH[1],val:v.vL1L2},
-        {c1:PC[0],c2:PC[2],n1:PH[0],n2:PH[2],val:v.vL1L3},
-        {c1:PC[1],c2:PC[2],n1:PH[1],n2:PH[2],val:v.vL2L3}
-      ].map(p=>`
-      <div class="fc-volt-row">
-        <div class="phase-dot" style="background:linear-gradient(135deg,${p.c1} 50%,${p.c2} 50%)"></div>
-        <span class="fc-phase-lbl"><span style="color:${p.c1}">${p.n1}</span><span class="fc-dash">–</span><span style="color:${p.c2}">${p.n2}</span></span>
-        <span class="fc-volt-val">${p.val||'—'}<span class="fc-unit"> V</span></span>
-      </div>`).join('')}
-    </div>
+  <div class="fc-body" style="grid-template-columns:1fr">
     <div class="fc-col">
       <div class="fc-col-title">🔌 ${t('currentSection')} (PF=${pfR})${_cableAmp?` <span style="opacity:0.6;font-weight:400">/ ${_cableAmp}A</span>`:''}</div>
       <div class="current-table">
