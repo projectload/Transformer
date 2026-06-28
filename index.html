@@ -1389,9 +1389,14 @@
   /* ── Location Modal ──────────────────────────────────── */
   #locModalOverlay { z-index: 2000; }
   #locModal { max-width: 620px; width: 95%; padding: 1.5rem; }
-  #locMap { height: 350px; border-radius: 12px; margin: 1rem 0; border: 1px solid var(--border); }
-  .loc-hint { font-size: 0.82rem; color: var(--text-muted); font-family: 'Tajawal', sans-serif; margin-bottom: 1rem; text-align: center; }
+  #locMap { height: 350px; border-radius: 12px; margin: 0.5rem 0 1rem; border: 1px solid var(--border); }
+  .loc-hint { font-size: 0.82rem; color: var(--text-muted); font-family: 'Tajawal', sans-serif; margin-bottom: 0.6rem; text-align: center; }
   .loc-edited-by { font-size: 0.75rem; color: var(--text-muted); font-family: 'Tajawal', sans-serif; text-align: center; margin-top: 0.5rem; opacity: 0.7; }
+  .loc-coords-row { display: flex; gap: 0.5rem; margin-bottom: 0.3rem; }
+  .loc-coords-input { flex: 1; padding: 0.45rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; background: var(--bg); color: var(--text); font-family: monospace; }
+  .loc-coords-input:focus { outline: none; border-color: var(--primary); }
+  .loc-coords-btn { font-size: 0.82rem; white-space: nowrap; }
+  .loc-coords-error { font-size: 0.78rem; color: #e53e3e; font-family: 'Tajawal', sans-serif; text-align: center; min-height: 1rem; margin: 0 0 0.3rem; }
   @media (max-width: 520px) { #locMap { height: 260px; } }
 
   /* ── Mobile Responsive ───────────────────────────────── */
@@ -1772,6 +1777,11 @@
     <span class="modal-icon">📍</span>
     <h2 id="locModalTitle">تحديد الموقع</h2>
     <p class="loc-hint" id="locHint">اضغط على الخريطة أو اسحب الدبوس لتحديد الموقع الصحيح</p>
+    <div class="loc-coords-row">
+      <input type="text" id="locCoordsInput" class="loc-coords-input" placeholder="مثال: 23.223127, 56.502244" dir="ltr" onkeydown="if(event.key==='Enter')locGoToCoords()">
+      <button onclick="locGoToCoords()" class="btn btn-secondary loc-coords-btn">انتقل</button>
+    </div>
+    <p id="locCoordsError" class="loc-coords-error"></p>
     <div id="locMap"></div>
     <p class="loc-edited-by" id="locEditedBy"></p>
     <div style="display:flex;gap:0.7rem;justify-content:flex-end;flex-wrap:wrap;margin-top:0.5rem">
@@ -3143,6 +3153,28 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
 
   function closeLocationModal() {
     document.getElementById('locModalOverlay').classList.remove('active');
+    document.getElementById('locCoordsInput').value = '';
+    document.getElementById('locCoordsError').textContent = '';
+  }
+
+  function locGoToCoords() {
+    const raw = document.getElementById('locCoordsInput').value.trim();
+    const errEl = document.getElementById('locCoordsError');
+    // accepts: "lat, lng" or "lat lng" with any number of decimals
+    const match = raw.match(/^(-?\d+(?:\.\d+)?)\s*[,\s]\s*(-?\d+(?:\.\d+)?)$/);
+    if (!match) {
+      errEl.textContent = 'تنسيق غير صحيح — مثال: 23.223127, 56.502244';
+      return;
+    }
+    const lat = parseFloat(match[1]);
+    const lng = parseFloat(match[2]);
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      errEl.textContent = 'الإحداثيات خارج النطاق المقبول';
+      return;
+    }
+    errEl.textContent = '';
+    locMap.setView([lat, lng], 15);
+    locMarker.setLatLng([lat, lng]);
   }
 
   function locOpenGoogleMaps() {
