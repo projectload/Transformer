@@ -3154,6 +3154,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
     document.getElementById('locModalOverlay').classList.remove('active');
     document.getElementById('locCoordsInput').value = '';
     document.getElementById('locCoordsError').textContent = '';
+    if (_returnToAlerts) { _returnToAlerts = false; openAlerts(); }
   }
 
   function locGoToCoords() {
@@ -4581,6 +4582,13 @@ ${(()=>{
   }
 
   var _returnToAlerts = false;
+  function openLocFromAlerts(uid) {
+    const ov = document.getElementById('reportOverlay');
+    if (ov) ov.style.display = 'none';
+    document.body.style.overflow = '';
+    _returnToAlerts = true;
+    openLocationModal(uid);
+  }
   function closeReportPage() {
     if (_returnToAlerts) { _returnToAlerts = false; openAlerts(); return; }
     const ov = document.getElementById('reportOverlay');
@@ -6008,6 +6016,9 @@ ${(()=>{
       cur: `${a.name?a.name+' mm² · ':''}${a.maxI.toFixed(1)} / ${a.ampacity} A`, pct: Math.round(a.pct),
       lat: a.rec.lat || null, lng: a.rec.lng || null
     }));
+    const NL_DATA = records.filter(r => !r.lat).map(r => ({
+      uid: r.uid, id: r.id || '—', team: r.team || '', station: stationOf(r), hv: hvOf(r), type: r.type || '—'
+    }));
 
     const L = {
       title:    isAr?'تنبيهات التحميل (80% فأعلى)':'Load Alerts (80%+)',
@@ -6020,7 +6031,11 @@ ${(()=>{
       transformer: isAr?'رقم المحول':'Transformer', stationCol: isAr?'المحطة':'Station',
       teamCol:  isAr?'الفريق':'Team', loadCol: isAr?'الحمل':'Load', feederCol: isAr?'الفيدر':'Feeder',
       currentCol: isAr?'التيار':'Current', none: isAr?'لا توجد عناصر مطابقة':'No matching items',
-      pctCol: isAr?'النسبة':'Load %'
+      pctCol: isAr?'النسبة':'Load %',
+      noLocH:  isAr?'محولات بدون موقع':'Missing Location',
+      noLocBtn:isAr?'تحديد الموقع':'Set Location',
+      noLocAllOk: isAr?'جميع المحولات لديها موقع محدد ✅':'All transformers have a location ✅',
+      typeCol: isAr?'النوع':'Type'
     };
     const J = o => JSON.stringify(o).replace(/</g, '\\u003c');
 
@@ -6042,7 +6057,9 @@ ${(()=>{
     .sec{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:1rem 1.1rem;margin-bottom:1.2rem;box-shadow:0 1px 3px rgba(0,0,0,0.05);overflow:hidden}
     h2{font-size:1.02rem;font-weight:800;margin-bottom:0.7rem;display:flex;align-items:center;gap:0.5rem}
     .count{color:#fff;border-radius:11px;font-size:0.75rem;font-weight:800;padding:2px 10px;font-family:monospace}
-    .c-tx{background:#ea580c}.c-cb{background:#7c3aed}
+    .c-tx{background:#ea580c}.c-cb{background:#7c3aed}.c-nl{background:#0891b2}
+    .btn-setloc{background:#0891b2;color:#fff;border:none;border-radius:8px;padding:0.3rem 0.75rem;font-family:'Tajawal',sans-serif;font-size:0.8rem;font-weight:700;cursor:pointer;white-space:nowrap}
+    .btn-setloc:hover{background:#0e7490}
     .tbl-wrap{overflow-x:auto}
     table{width:100%;border-collapse:collapse;font-size:0.86rem;min-width:480px}
     thead th{background:#f1f5f9;color:#475569;padding:0.6rem;text-align:center;font-size:0.76rem;font-weight:700;border-bottom:2px solid #e2e8f0;font-family:'Tajawal',sans-serif;text-transform:uppercase;letter-spacing:0.3px}
@@ -6106,14 +6123,61 @@ ${(()=>{
         </table></div>
         <div class="cards" id="cbCards"></div>
       </div>
+      <div class="sec" style="border-color:#bae6fd">
+        <h2>📍 ${L.noLocH} <span class="count c-nl" id="nlCount">0</span></h2>
+        <div class="filters" style="margin-bottom:0.8rem">
+          ${isAdmin ? '<select id="nlFTeam"></select>' : ''}
+          <select id="nlFStation"></select>
+          <select id="nlFHv"></select>
+          <button id="nlFReset" type="button">✕ ${L.reset}</button>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>#</th><th>${L.transformer}</th>${isAdmin?`<th>${L.teamCol}</th>`:''}<th>${L.stationCol}</th><th>HV</th><th>${L.typeCol}</th><th></th></tr></thead>
+          <tbody id="nlBody"></tbody>
+        </table></div>
+        <div class="cards" id="nlCards"></div>
+      </div>
     </div>
     <script>
-    var TX=${J(TX)},CB=${J(CB)},L=${J(L)},ALL=TX.concat(CB),ADM=${isAdmin ? 'true' : 'false'};
+    var TX=${J(TX)},CB=${J(CB)},NL=${J(NL_DATA)},L=${J(L)},ALL=TX.concat(CB),ADM=${isAdmin ? 'true' : 'false'};
     function uniq(a){return [...new Set(a.filter(Boolean))].sort();}
     function colorFor(p){return p>=100?'#dc2626':'#ea580c';}
     var TEAM_CLR={'Ibri':'#3B82F6','Wadi Alain':'#10B981','Araqi':'#F59E0B','Hijermat':'#EF4444','Dank':'#8B5CF6','Yanqul':'#06B6D4','Hamra AlDaroo':'#F97316','Masrooq':'#EC4899'};
     function teamClr(t){return TEAM_CLR[t]||'#64748b';}
     function goTo(uid){parent._returnToAlerts=true;parent.openReport(uid);};
+    function setLoc(uid){parent.openLocFromAlerts(uid);}
+    // ── noLoc filters & render ──
+    var nlTeamSel=document.getElementById('nlFTeam');
+    var nlStSel=document.getElementById('nlFStation');
+    var nlHvSel=document.getElementById('nlFHv');
+    function nlFill(sel,vals,allLabel){var cur=sel.value;var h='<option value="">'+allLabel+'</option>';vals.forEach(function(v){h+='<option value="'+v+'">'+v+'</option>';});sel.innerHTML=h;if(vals.indexOf(cur)>-1)sel.value=cur;}
+    function renderNL(){
+      var t=nlTeamSel?nlTeamSel.value:'';
+      var s=nlStSel.value;
+      var h=nlHvSel.value;
+      var filtered=NL.filter(function(x){return (!t||x.team===t)&&(!s||x.station===s)&&(!h||x.hv===h);});
+      // refill station based on team
+      nlFill(nlStSel,uniq(NL.filter(function(x){return !t||x.team===t;}).map(function(x){return x.station;})),L.station);
+      nlFill(nlHvSel,uniq(NL.filter(function(x){return (!t||x.team===t)&&(!s||x.station===s);}).map(function(x){return x.hv;})),L.feeder+' HV');
+      var COLS=ADM?7:6;
+      document.getElementById('nlCount').textContent=filtered.length;
+      if(!NL.length){
+        document.getElementById('nlBody').innerHTML='<tr><td colspan="'+COLS+'" class="empty" style="color:#0891b2">'+L.noLocAllOk+'</td></tr>';
+        document.getElementById('nlCards').innerHTML='<div class="empty" style="color:#0891b2;text-align:center">'+L.noLocAllOk+'</div>';
+        return;
+      }
+      document.getElementById('nlBody').innerHTML=filtered.length?filtered.map(function(a,i){
+        return '<tr><td>'+(i+1)+'</td><td class="bold">Tx: '+a.id+'</td>'+(ADM?'<td style="font-size:0.8rem">'+a.team+'</td>':'')+'<td>'+a.station+'</td><td>'+(a.hv||'—')+'</td><td class="muted">'+a.type+'</td><td><button class="btn-setloc" data-uid="'+a.uid+'" onclick="setLoc(this.dataset.uid)">📍 '+L.noLocBtn+'</button></td></tr>';
+      }).join(''):'<tr><td colspan="'+COLS+'" class="empty">'+L.none+'</td></tr>';
+      document.getElementById('nlCards').innerHTML=filtered.length?filtered.map(function(a,i){
+        return '<div class="item" style="border-inline-start:4px solid #0891b2"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id">Tx: '+a.id+(a.station?' <span class="sub">'+a.station+(a.hv?' · '+a.hv:'')+'</span>':'')+'</div><div class="meta">'+(ADM&&a.team?a.team+' · ':'')+a.type+'</div></div><button class="btn-setloc" data-uid="'+a.uid+'" onclick="setLoc(this.dataset.uid)" style="flex:0 0 auto;align-self:center">📍 '+L.noLocBtn+'</button></div>';
+      }).join(''):'<div class="empty">'+L.none+'</div>';
+    }
+    if(nlTeamSel){nlFill(nlTeamSel,uniq(NL.map(function(x){return x.team;})),L.team);nlTeamSel.onchange=function(){nlStSel.value='';nlHvSel.value='';renderNL();};}
+    nlStSel.onchange=function(){nlHvSel.value='';renderNL();};
+    nlHvSel.onchange=renderNL;
+    document.getElementById('nlFReset').onclick=function(){if(nlTeamSel)nlTeamSel.value='';nlStSel.value='';nlHvSel.value='';renderNL();};
+    renderNL();
     var teamSel=document.getElementById('fTeam'),stSel=document.getElementById('fStation'),fdSel=document.getElementById('fFeeder');
     function tval(){return teamSel?teamSel.value:'';}
     function fill(sel,vals,allLabel){var cur=sel.value;var h='<option value="">'+allLabel+'</option>';vals.forEach(function(v){h+='<option value="'+v+'">'+v+'</option>';});sel.innerHTML=h;if(vals.indexOf(cur)>-1)sel.value=cur;}
