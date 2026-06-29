@@ -299,7 +299,7 @@ body{font-family:'Cairo',sans-serif;background:#F3F4F6;color:var(--text);line-he
           <ul class="steps-list">
             <li><div class="n purple">1</div><span id="s4-l1"><strong>عند إضافة محول جديد</strong> تفتح نافذة القراءات تلقائياً — أو اضغط زر <strong>📊 قراءة</strong> بجانب أي محول. يمكنك أخذ <strong>عدة قراءات لنفس المحول</strong> بالضغط على <strong>+ قراءة جديدة</strong> في أعلى النافذة</span></li>
             <li><div class="n purple">2</div><span id="s4-l2">أدخل أولاً <strong>قراءات الجهد</strong> (V_L1N, V_L2N, V_L3N وكذلك الجهد بين الأوجه)</span></li>
-            <li><div class="n purple">3</div><span id="s4-l3">اختر <strong>رقم الفيدر</strong> وحدد <strong>حجم الكيبل</strong> (120 / 185 / 240 / 300 mm²)</span></li>
+            <li><div class="n purple">3</div><span id="s4-l3">اختر <strong>رقم الفيدر</strong> وحدد <strong>حجم الكيبل</strong> (120 / 185 / 240 / 300 / 630 mm²)</span></li>
             <li><div class="n purple">4</div><span id="s4-l4">أدخل <strong>قيم التيار</strong> للأوجه الثلاثة (I_R, I_Y, I_B) <strong>وتيار النيوترال (I_N)</strong> في نفس البطاقة</span></li>
             <li><div class="n purple">5</div><span id="s4-l5">كرّر الخطوتين 3 و4 لكل فيدر نشط</span></li>
             <li><div class="n purple">6</div><span id="s4-l6">اضغط <strong>حفظ القراءات</strong> لتخزين البيانات</span></li>
@@ -345,6 +345,7 @@ body{font-family:'Cairo',sans-serif;background:#F3F4F6;color:var(--text);line-he
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.7rem;text-align:center"><div style="font-weight:700;margin-bottom:0.2rem">185 mm²</div><div style="color:var(--text-muted)">394 A</div></div>
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.7rem;text-align:center"><div style="font-weight:700;margin-bottom:0.2rem">240 mm²</div><div style="color:var(--text-muted)">455 A</div></div>
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.7rem;text-align:center"><div style="font-weight:700;margin-bottom:0.2rem">300 mm²</div><div style="color:var(--text-muted)">509 A</div></div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.7rem;text-align:center"><div style="font-weight:700;margin-bottom:0.2rem">630 mm²</div><div style="color:var(--text-muted)">705 A</div></div>
         </div>
       </div>
     </div>
@@ -629,7 +630,7 @@ var T = {
     's4-ct':'فتح نافذة القراءات','s4-cs':'تفتح تلقائياً عند إضافة محول جديد، أو يدوياً بالضغط على زر القراءة',
     's4-l1':'<strong>عند إضافة محول جديد</strong> تفتح نافذة القراءات تلقائياً — أو اضغط زر <strong>📊 قراءة</strong> بجانب أي محول. يمكنك أخذ <strong>عدة قراءات لنفس المحول</strong> بالضغط على <strong>+ قراءة جديدة</strong> في أعلى النافذة',
     's4-l2':'أدخل أولاً <strong>قراءات الجهد</strong> (V_L1N, V_L2N, V_L3N وكذلك الجهد بين الأوجه)',
-    's4-l3':'اختر <strong>رقم الفيدر</strong> وحدد <strong>حجم الكيبل</strong> (120 / 185 / 240 / 300 mm²)',
+    's4-l3':'اختر <strong>رقم الفيدر</strong> وحدد <strong>حجم الكيبل</strong> (120 / 185 / 240 / 300 / 630 mm²)',
     's4-l4':'أدخل <strong>قيم التيار</strong> للأوجه الثلاثة (I_R, I_Y, I_B) <strong>وتيار النيوترال (I_N)</strong> في نفس البطاقة',
     's4-l5':'كرّر الخطوتين 3 و4 لكل فيدر نشط',
     's4-l6':'اضغط <strong>حفظ القراءات</strong> لتخزين البيانات',
@@ -735,7 +736,7 @@ var T = {
     's4-ct':'Open Readings Window','s4-cs':'Opens automatically when adding a transformer, or manually via the readings button',
     's4-l1':'<strong>When adding a new transformer</strong> the readings window opens automatically — or press the <strong>📊 Readings</strong> button next to any transformer. You can take <strong>multiple readings for the same transformer</strong> using <strong>+ New Reading</strong> at the top',
     's4-l2':'First enter <strong>Voltage Readings</strong> (V_L1N, V_L2N, V_L3N and phase-to-phase voltages)',
-    's4-l3':'Select the <strong>Feeder Number</strong> and set the <strong>Cable Size</strong> (120 / 185 / 240 / 300 mm²)',
+    's4-l3':'Select the <strong>Feeder Number</strong> and set the <strong>Cable Size</strong> (120 / 185 / 240 / 300 / 630 mm²)',
     's4-l4':'Enter <strong>Current values</strong> for three phases (I_R, I_Y, I_B) and <strong>Neutral current (I_N)</strong>',
     's4-l5':'Repeat steps 3 and 4 for each active feeder',
     's4-l6':'Press <strong>Save Readings</strong> to store the data',

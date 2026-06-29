@@ -2889,7 +2889,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
   let loadings = JSON.parse(localStorage.getItem('loadings') || '{}');
   let currentLoadUid = null;
   let activeFeederIdx = 0;
-  const CABLE_AMPACITY = {50: 187, 70: 229, 120: 312, 185: 394, 240: 455, 300: 509};
+  const CABLE_AMPACITY = {50: 187, 70: 229, 120: 312, 185: 394, 240: 455, 300: 509, 630: 705};
 
   function getBestRoundData(uid) {
     const ld = loadings[uid];
@@ -3463,7 +3463,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
             <select onchange="updateFeederName(${i},this.value)"
               style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cairo',sans-serif;font-size:0.88rem;padding:0.5rem 0.8rem;outline:none;cursor:pointer;width:auto;height:2.5rem;box-sizing:border-box;${lang==='en'?'direction:ltr;text-align:left;':''}">
               <option value="">${lang==='ar'?'-- اختر --':'-- Select --'}</option>
-              ${[50,70,120,185,240,300].map(s=>`<option value="${s}" ${f.name==s?'selected':''}>${s} mm² (${CABLE_AMPACITY[s]}A)</option>`).join('')}
+              ${[50,70,120,185,240,300,630].map(s=>`<option value="${s}" ${f.name==s?'selected':''}>${s} mm² (${CABLE_AMPACITY[s]}A)</option>`).join('')}
             </select>
           </div>
           <div style="display:flex;flex-direction:column;gap:0.3rem">
@@ -3960,7 +3960,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
       const _feeders = _fds.map(f => {
         const i1=parseFloat(f.iL1)||0, i2=parseFloat(f.iL2)||0, i3=parseFloat(f.iL3)||0, iN=parseFloat(f.iN)||0;
         const iMax=Math.max(i1,i2,i3);
-        const _amp={50:187,70:229,120:312,185:394,240:455,300:509}[parseInt(f.name)];
+        const _amp={50:187,70:229,120:312,185:394,240:455,300:509,630:705}[parseInt(f.name)];
         const cablePct = _amp ? (iMax/_amp*100) : null;
         return { f, i1, i2, i3, iN, iMax, cablePct };
       });
@@ -4268,7 +4268,7 @@ ${fResults.length ? `
       </thead>
       <tbody>
         ${fResults.map((r,idx) => {
-          const _amp = {50:187,70:229,120:312,185:394,240:455,300:509}[parseInt(r.f.name)];
+          const _amp = {50:187,70:229,120:312,185:394,240:455,300:509,630:705}[parseInt(r.f.name)];
           const _pct = _amp ? (r.iMax / _amp * 100) : null;
           const _clr = _pct === null ? 'var(--text-muted)' : _pct > 80 ? '#dc2626' : _pct > 60 ? '#d97706' : '#16a34a';
           const rowBg = idx % 2 === 0 ? 'transparent' : 'var(--surface)';
@@ -4348,7 +4348,7 @@ ${fResults.length?`<div class="section">
   <div class="section-title">⚡ ${isAr?'تفاصيل الفيدرات':'Feeder Details'}</div>
   ${fResults.map(({f,v1,v2,v3,i1,i2,i3,iN,kva1,kva2,kva3,totalF,kw1,kw2,kw3,totalKW,iMax,imb})=>{
     const ic=imb>20?'#dc2626':imb>10?'#d97706':'#16a34a';
-    const _cableAmp={50:187,70:229,120:312,185:394,240:455,300:509}[parseInt(f.name)];
+    const _cableAmp={50:187,70:229,120:312,185:394,240:455,300:509,630:705}[parseInt(f.name)];
     const fp=_cableAmp?Math.min(999,(iMax/_cableAmp)*100):0;
     const fc=fp>=100?'#dc2626':fp>=80?'#d97706':'#16a34a';
     const feederDate = f.savedAt ? fmtDt(f.savedAt) : (isAr?'لم يُحفظ':'Not saved');
@@ -4416,7 +4416,7 @@ ${fResults.length?`<div class="section">
   <div class="section-title">🚨 ${isAr?'ملخص التنبيهات':'Alerts Summary'}</div>
   ${(()=>{
     const al=[];
-    const _cableAmpMap={50:187,70:229,120:312,185:394,240:455,300:509};
+    const _cableAmpMap={50:187,70:229,120:312,185:394,240:455,300:509,630:705};
     const lbl = (r) => `${isAr?'فيدر':'Feeder'} #${r.f.num||'—'}${r.f.name?' ('+r.f.name+' mm²)':''}`;
 
     // ── 1. تحميل المحول الكلي
@@ -4474,7 +4474,7 @@ ${(()=>{
   const isAr2 = isAr;
   if (!f1) return '';
 
-  const amp1 = {50:187,70:229,120:312,185:394,240:455,300:509}[parseInt(f1.f.name)] || null;
+  const amp1 = {50:187,70:229,120:312,185:394,240:455,300:509,630:705}[parseInt(f1.f.name)] || null;
   const imax1 = f1.iMax;
   const iavg1 = f1.iAvg;
   const kva1ex = f1.totalF;
