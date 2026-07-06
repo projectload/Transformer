@@ -66,8 +66,8 @@
   };
   var lang = localStorage.getItem('lang') || 'ar';
   var i18n = {
-    ar:{ editModalTitle:'تعديل المحول', btnSaveEdit:'💾 حفظ التعديلات', title:'سجل المحولات الكهربائية', filterAll:'🏭 كل المحطات', red:'أحمر', yellow:'أصفر', blue:'أزرق', neutral:'نيوترال', kva:'KVA', feederUnit:'فيدر', lmFeeder:'فيدر', lmFeederNum:'رقم الفيدر (من اليسار لليمين)', lmFeederName:'حجم الكيبل', lmCableType:'نوع الكيبل', lmVoltage:'قراءات الفولتيج (V)', lmCurrent:'قراءات التيار (A)', btnSaveFeeder:'💾 حفظ الفيدر', btnClearFeeder:'✕ مسح', summaryTitle:'📊 ملخص جميع القراءات', summaryFeederNum:'رقم الفيدر', summaryFeederName:'حجم الكيبل', summaryDate:'التاريخ والوقت', lastSaved:'آخر حفظ', notSaved:'لم يُحفظ بعد', toastFeederSaved:'✅ تم حفظ قراءات', lmTitle:'⚡ قراءات الأحمال', lmStation:'اسم المحطة', lmId:'رقم المحول', lmType:'نوع المحول', lmCapacity:'السعة', lmOutputs:'عدد مخارج LV', fHvFeederLabel:'رقم فيدر HV', fHvFeederPh:'', colHvFeeder:'رقم فيدر HV', subtitle:'إدارة وتتبع بيانات المحولات', statTotal:'إجمالي المحولات', statCapacity:'إجمالي السعة (KVA)', statOutputs:'إجمالي مخارج LV', statTypes:'عدد المحولات', formTitle:'إضافة / تعديل محول', fHvFeederPh:'', fStationLabel:'اسم المحطة', fStationPh:'مثال: محطة الشمال', fTypeLabel:'نوع المحول', fTypeDefault:'-- اختر النوع --', typeGround:'أرضي', typePole:'معلق', fIdLabel:'رقم المحول', fIdPh:'', fCapacityLabel:'السعة (KVA)', fCapacityDefault:'-- اختر السعة --', fCapacityPh:'مثال: 500', fOutputsLabel:'عدد مخارج LV', fOutputsPh:'مثال: 4', btnSave:'💾 حفظ', btnClear:'✕ مسح', tableTitle:'📋 قائمة المحولات', searchPh:'بحث...', btnExport:'⬇ تصدير CSV', colTeam:'الفريق', colStation:'اسم المحطة', colType:'نوع المحول', colId:'رقم المحول', colCapacity:'السعة (KVA)', colOutputs:'عدد مخارج LV', colActions:'الإجراءات', createdBy:'تم إنشاء هذا النظام بواسطة أحمد محمد الهنائي', emptyMsg:'لا توجد بيانات. أضف محولاً باستخدام النموذج أعلاه.', records:'سجل', adminMode:'🔴 وضع الأدمن', adminLogin:'🔐 تسجيل دخول الأدمن', adminLogout:'🔓 تسجيل الخروج', toastSaved:'✅ تم إضافة المحول بنجاح', toastUpdated:'✅ تم تحديث البيانات بنجاح', toastDeleted:'🗑️ تم الحذف', toastFill:'⚠️ يرجى ملء جميع الحقول', toastDup:'⚠️ رقم المحول موجود مسبقاً', toastExport:'⬇️ تم تصدير الملف بنجاح', toastNoData:'⚠️ لا توجد بيانات للتصدير', toastAdmin:'✅ مرحباً بك يا أدمن!', toastLogout:'👋 تم تسجيل الخروج', toastWrongPw:'❌ كلمة المرور غير صحيحة', toastEditing:'✏️ جاري التعديل - عدّل البيانات واضغط حفظ', confirmDelete:'هل أنت متأكد من حذف هذا المحول؟', editTitle:'✏️', delTitle:'حذف', loadTitle:'قراءات الأحمال', lockTitle:'يتطلب صلاحية الأدمن', adminModalTitle:'دخول الأدمن', adminModalDesc:'أدخل كلمة المرور للوصول إلى صلاحيات الحذف', pwLabel:'كلمة المرور', btnLogin:'دخول', allStations:'🏭 كل المحطات', allTypes:'🔧 كل الأنواع', allCapacities:'⚡ كل السعات', allHvFeeders:'🔌 كل فيدرات HV', searchGeneral:'بحث عام', searchStation:'اسم المحطة', searchTxNo:'رقم المحول', searchCapacity:'السعة', searchLvFeeders:'عدد مخارج LV', searchPlaceholder:'بحث...', summaryReport:'📄 تقرير مختصر', exportExcel:'📊 تصدير Excel', normal:'تحميل طبيعي', severeImbalance:'عدم توازن شديد', moderateImbalance:'توازن متوسط', txOverload:'المحول محمّل زيادة', txWarning:'تحذير: التحميل', overcurrent:'تجاوز التيار', nearMax:'قريب من الحد الأقصى', highestCurrent:'أعلى تيار', feeders:'مخارج', max:'الأعلى', voltageShared:'الفولتيج (V)', phaseToNeutral:'فاز — نيوترال', phaseToPhase:'فاز — فاز', currentSection:'التيار (A)', fcImbalance:'عدم التوازن', feederLoad:'حمل الكيبل' },
-    en:{ editModalTitle:'Edit Transformer', btnSaveEdit:'💾 Save Changes', title:'Transformer Registry', filterAll:'🏭 All Stations', red:'Red', yellow:'Yellow', blue:'Blue', neutral:'Neutral', kva:'KVA', feederUnit:'Feeder', lmFeeder:'Feeder', lmFeederNum:'Feeder No. (left to right)', lmFeederName:'Size of LV Cable', lmCableType:'Cable Type', lmVoltage:'Voltage Readings (V)', lmCurrent:'Current Readings (A)', btnSaveFeeder:'💾 Save Feeder', btnClearFeeder:'✕ Clear', summaryTitle:'📊 All Readings Summary', summaryFeederNum:'Feeder No.', summaryFeederName:'Size of cable', summaryDate:'Date & Time', lastSaved:'Last saved', notSaved:'Not saved yet', toastFeederSaved:'✅ Saved readings for', lmTitle:'⚡ Load Readings', lmStation:'Station', lmId:'Transformer No.', lmType:'Type', lmCapacity:'Capacity', lmOutputs:'LV Feeders', fHvFeederLabel:'HV Feeder No.', fHvFeederPh:'', colHvFeeder:'HV Feeder No.', subtitle:'Manage and track transformer data', statTotal:'Total Transformers', statCapacity:'Total Capacity (KVA)', statOutputs:'Total LV Feeders', statTypes:'No. of Transformers', formTitle:'Add / Edit Transformer', fHvFeederPh:'', fStationLabel:'Station Name', fStationPh:'e.g. North Station', fTypeLabel:'Transformer Type', fTypeDefault:'-- Select Type --', typeGround:'Ground', typePole:'Pole', fIdLabel:'Transformer No.', fIdPh:'', fCapacityLabel:'Capacity (KVA)', fCapacityDefault:'-- Select Capacity --', fCapacityPh:'e.g. 500', fOutputsLabel:'No. of LV Feeders', fOutputsPh:'e.g. 4', btnSave:'💾 Save', btnClear:'✕ Clear', tableTitle:'📋 Transformer List', searchPh:'Search...', btnExport:'⬇ Export CSV', colTeam:'Team', colStation:'Station Name', colType:'Type', colId:'Transformer No.', colCapacity:'Capacity (KVA)', colOutputs:'No. of LV Feeders', colActions:'Actions', createdBy:'This system was created by Ahmed Mohammed Al-Hinai', emptyMsg:'No data found. Add a transformer using the form above.', records:'records', adminMode:'🔴 Admin Mode', adminLogin:'🔐 Admin Login', adminLogout:'🔓 Logout', toastSaved:'✅ Transformer added successfully', toastUpdated:'✅ Data updated successfully', toastDeleted:'🗑️ Deleted', toastFill:'⚠️ Please fill all fields', toastDup:'⚠️ Transformer number already exists', toastExport:'⬇️ File exported successfully', toastNoData:'⚠️ No data to export', toastAdmin:'✅ Welcome, Admin!', toastLogout:'👋 Logged out', toastWrongPw:'❌ Incorrect password', toastEditing:'✏️ Editing — update data and press Save', confirmDelete:'Are you sure you want to delete this transformer?', editTitle:'✏️', delTitle:'Delete', loadTitle:'Load Readings', lockTitle:'Requires admin access', adminModalTitle:'Admin Login', adminModalDesc:'Enter password to access delete permissions', pwLabel:'Password', btnLogin:'Login', allStations:'🏭 All Stations', allTypes:'🔧 All Types', allCapacities:'⚡ All Capacities', allHvFeeders:'🔌 All HV Feeders', searchGeneral:'General Search', searchStation:'Station Name', searchTxNo:'Transformer No.', searchCapacity:'Capacity', searchLvFeeders:'No. of LV Feeders', searchPlaceholder:'Search...', summaryReport:'📄 Summary Report', exportExcel:'📊 Export Excel', normal:'Normal loading', severeImbalance:'Severe imbalance', moderateImbalance:'Moderate imbalance', txOverload:'Transformer overloaded', txWarning:'Warning: Loading', overcurrent:'Overcurrent', nearMax:'Near max current', highestCurrent:'Highest current', feeders:'feeders', max:'Max', voltageShared:'Voltage (V)', phaseToNeutral:'Phase to Neutral', phaseToPhase:'Phase to Phase', currentSection:'Current (A)', fcImbalance:'Imbalance', feederLoad:'Cable Load' }
+    ar:{ editModalTitle:'تعديل المحول', btnSaveEdit:'💾 حفظ التعديلات', title:'سجل المحولات الكهربائية', filterAll:'🏭 كل المحطات', red:'أحمر', yellow:'أصفر', blue:'أزرق', neutral:'نيوترال', kva:'KVA', feederUnit:'فيدر', lmFeeder:'فيدر', lmFeederNum:'رقم الفيدر (من اليسار لليمين)', lmFeederName:'حجم الكيبل', lmCableType:'نوع الكيبل', lmVoltage:'قراءات الفولتيج (V)', lmCurrent:'قراءات التيار (A)', btnSaveFeeder:'💾 حفظ الفيدر', btnClearFeeder:'✕ مسح', summaryTitle:'📊 ملخص جميع القراءات', summaryFeederNum:'رقم الفيدر', summaryFeederName:'حجم الكيبل', summaryDate:'التاريخ والوقت', lastSaved:'آخر حفظ', notSaved:'لم يُحفظ بعد', toastFeederSaved:'✅ تم حفظ قراءات', lmTitle:'⚡ قراءات الأحمال', lmStation:'اسم المحطة', lmId:'رقم المحول', lmType:'نوع المحول', lmCapacity:'السعة', lmOutputs:'عدد مخارج LV', fHvFeederLabel:'رقم فيدر HV', fHvFeederPh:'', colHvFeeder:'رقم فيدر HV', subtitle:'إدارة وتتبع بيانات المحولات', statTotal:'إجمالي المحولات', statCapacity:'إجمالي السعة (KVA)', statOutputs:'إجمالي مخارج LV', statTypes:'عدد المحولات', formTitle:'إضافة / تعديل محول', fHvFeederPh:'', fStationLabel:'اسم المحطة', fStationPh:'مثال: محطة الشمال', fTypeLabel:'نوع المحول', fTypeDefault:'-- اختر النوع --', typeGround:'أرضي', typePole:'معلق', fIdLabel:'رقم المحول', fIdPh:'', fCapacityLabel:'السعة (KVA)', fCapacityDefault:'-- اختر السعة --', fCapacityPh:'مثال: 500', fOutputsLabel:'عدد مخارج LV', fOutputsPh:'مثال: 4', btnSave:'💾 حفظ', btnClear:'✕ مسح', tableTitle:'📋 قائمة المحولات', searchPh:'بحث...', btnExport:'⬇ تصدير CSV', colTeam:'الفريق', colStation:'اسم المحطة', colType:'نوع المحول', colId:'رقم المحول', colCapacity:'السعة (KVA)', colOutputs:'عدد مخارج LV', colActions:'الإجراءات', createdBy:'تم إنشاء هذا النظام بواسطة أحمد محمد الهنائي', emptyMsg:'لا توجد بيانات. أضف محولاً باستخدام النموذج أعلاه.', records:'سجل', adminMode:'🔴 وضع الأدمن', adminLogin:'🔐 تسجيل دخول الأدمن', adminLogout:'🔓 تسجيل الخروج', toastSaved:'✅ تم إضافة المحول بنجاح', toastUpdated:'✅ تم تحديث البيانات بنجاح', toastDeleted:'🗑️ تم الحذف', toastFill:'⚠️ يرجى ملء جميع الحقول', toastDup:'⚠️ رقم المحول موجود مسبقاً', toastExport:'⬇️ تم تصدير الملف بنجاح', toastNoData:'⚠️ لا توجد بيانات للتصدير', toastAdmin:'✅ مرحباً بك يا أدمن!', toastLogout:'👋 تم تسجيل الخروج', toastWrongPw:'❌ كلمة المرور غير صحيحة', toastEditing:'✏️ جاري التعديل - عدّل البيانات واضغط حفظ', confirmDelete:'هل أنت متأكد من حذف هذا المحول؟', editTitle:'✏️', delTitle:'حذف', loadTitle:'قراءات الأحمال', newReadingTitle:'إضافة قراءة جديدة', lockedReading:'🔒 مقفلة — تجاوزت 10 دقائق من الحفظ', toastLocked:'⛔ لا يمكن تعديل القراءة بعد 10 دقائق من حفظها', lockTitle:'يتطلب صلاحية الأدمن', adminModalTitle:'دخول الأدمن', adminModalDesc:'أدخل كلمة المرور للوصول إلى صلاحيات الحذف', pwLabel:'كلمة المرور', btnLogin:'دخول', allStations:'🏭 كل المحطات', allTypes:'🔧 كل الأنواع', allCapacities:'⚡ كل السعات', allHvFeeders:'🔌 كل فيدرات HV', searchGeneral:'بحث عام', searchStation:'اسم المحطة', searchTxNo:'رقم المحول', searchCapacity:'السعة', searchLvFeeders:'عدد مخارج LV', searchPlaceholder:'بحث...', summaryReport:'📄 تقرير مختصر', exportExcel:'📊 تصدير Excel', normal:'تحميل طبيعي', severeImbalance:'عدم توازن شديد', moderateImbalance:'توازن متوسط', txOverload:'المحول محمّل زيادة', txWarning:'تحذير: التحميل', overcurrent:'تجاوز التيار', nearMax:'قريب من الحد الأقصى', highestCurrent:'أعلى تيار', feeders:'مخارج', max:'الأعلى', voltageShared:'الفولتيج (V)', phaseToNeutral:'فاز — نيوترال', phaseToPhase:'فاز — فاز', currentSection:'التيار (A)', fcImbalance:'عدم التوازن', feederLoad:'حمل الكيبل' },
+    en:{ editModalTitle:'Edit Transformer', btnSaveEdit:'💾 Save Changes', title:'Transformer Registry', filterAll:'🏭 All Stations', red:'Red', yellow:'Yellow', blue:'Blue', neutral:'Neutral', kva:'KVA', feederUnit:'Feeder', lmFeeder:'Feeder', lmFeederNum:'Feeder No. (left to right)', lmFeederName:'Size of LV Cable', lmCableType:'Cable Type', lmVoltage:'Voltage Readings (V)', lmCurrent:'Current Readings (A)', btnSaveFeeder:'💾 Save Feeder', btnClearFeeder:'✕ Clear', summaryTitle:'📊 All Readings Summary', summaryFeederNum:'Feeder No.', summaryFeederName:'Size of cable', summaryDate:'Date & Time', lastSaved:'Last saved', notSaved:'Not saved yet', toastFeederSaved:'✅ Saved readings for', lmTitle:'⚡ Load Readings', lmStation:'Station', lmId:'Transformer No.', lmType:'Type', lmCapacity:'Capacity', lmOutputs:'LV Feeders', fHvFeederLabel:'HV Feeder No.', fHvFeederPh:'', colHvFeeder:'HV Feeder No.', subtitle:'Manage and track transformer data', statTotal:'Total Transformers', statCapacity:'Total Capacity (KVA)', statOutputs:'Total LV Feeders', statTypes:'No. of Transformers', formTitle:'Add / Edit Transformer', fHvFeederPh:'', fStationLabel:'Station Name', fStationPh:'e.g. North Station', fTypeLabel:'Transformer Type', fTypeDefault:'-- Select Type --', typeGround:'Ground', typePole:'Pole', fIdLabel:'Transformer No.', fIdPh:'', fCapacityLabel:'Capacity (KVA)', fCapacityDefault:'-- Select Capacity --', fCapacityPh:'e.g. 500', fOutputsLabel:'No. of LV Feeders', fOutputsPh:'e.g. 4', btnSave:'💾 Save', btnClear:'✕ Clear', tableTitle:'📋 Transformer List', searchPh:'Search...', btnExport:'⬇ Export CSV', colTeam:'Team', colStation:'Station Name', colType:'Type', colId:'Transformer No.', colCapacity:'Capacity (KVA)', colOutputs:'No. of LV Feeders', colActions:'Actions', createdBy:'This system was created by Ahmed Mohammed Al-Hinai', emptyMsg:'No data found. Add a transformer using the form above.', records:'records', adminMode:'🔴 Admin Mode', adminLogin:'🔐 Admin Login', adminLogout:'🔓 Logout', toastSaved:'✅ Transformer added successfully', toastUpdated:'✅ Data updated successfully', toastDeleted:'🗑️ Deleted', toastFill:'⚠️ Please fill all fields', toastDup:'⚠️ Transformer number already exists', toastExport:'⬇️ File exported successfully', toastNoData:'⚠️ No data to export', toastAdmin:'✅ Welcome, Admin!', toastLogout:'👋 Logged out', toastWrongPw:'❌ Incorrect password', toastEditing:'✏️ Editing — update data and press Save', confirmDelete:'Are you sure you want to delete this transformer?', editTitle:'✏️', delTitle:'Delete', loadTitle:'Load Readings', newReadingTitle:'Add New Reading', lockedReading:'🔒 Locked — over 10 min since save', toastLocked:'⛔ Cannot edit reading after 10 minutes from saving', lockTitle:'Requires admin access', adminModalTitle:'Admin Login', adminModalDesc:'Enter password to access delete permissions', pwLabel:'Password', btnLogin:'Login', allStations:'🏭 All Stations', allTypes:'🔧 All Types', allCapacities:'⚡ All Capacities', allHvFeeders:'🔌 All HV Feeders', searchGeneral:'General Search', searchStation:'Station Name', searchTxNo:'Transformer No.', searchCapacity:'Capacity', searchLvFeeders:'No. of LV Feeders', searchPlaceholder:'Search...', summaryReport:'📄 Summary Report', exportExcel:'📊 Export Excel', normal:'Normal loading', severeImbalance:'Severe imbalance', moderateImbalance:'Moderate imbalance', txOverload:'Transformer overloaded', txWarning:'Warning: Loading', overcurrent:'Overcurrent', nearMax:'Near max current', highestCurrent:'Highest current', feeders:'feeders', max:'Max', voltageShared:'Voltage (V)', phaseToNeutral:'Phase to Neutral', phaseToPhase:'Phase to Phase', currentSection:'Current (A)', fcImbalance:'Imbalance', feederLoad:'Cable Load' }
   };
   function t(k){ return (i18n[lang]&&i18n[lang][k]) || (i18n['ar']&&i18n['ar'][k]) || k; }
   function toggleLang(){
@@ -2028,6 +2028,18 @@
   let isTeamAdmin = false; // team admin: can delete records belonging to their own team
 
   // Block any write action when logged in as a read-only team admin
+  function toggleMoreActions(btn) {
+    const el = btn.nextElementSibling;
+    if (!el || !el.classList.contains('more-actions')) return;
+    const show = el.style.display === 'none';
+    document.querySelectorAll('.more-actions').forEach(other => { if (other !== el) other.style.display = 'none'; });
+    el.style.display = show ? 'inline-flex' : 'none';
+  }
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.more-toggle') || e.target.closest('.more-actions')) return;
+    document.querySelectorAll('.more-actions').forEach(el => el.style.display = 'none');
+  });
+
   function blockIfViewer() {
     if (isViewer) {
       showToast(lang==='ar' ? '👁️ وضع القراءة فقط — لا يمكن التعديل' : '👁️ Read-only mode — editing disabled', 'error');
@@ -2227,12 +2239,16 @@
       const cardsHtml = [];
       paginated.forEach((r, i) => {
         const rowNum = startIndex + i + 1;
-        const actionsHtml = `
-                <button class="btn-icon edit" title="${t('editTitle')}" onclick="editRecord('${r.uid}')">✏️</button>
+        const moreActionsHtml = `
                 <button class="btn-icon" title="${t('loadTitle')}" onclick="openLoadModal('${r.uid}')" style="border-color:rgba(0,255,157,0.3);color:var(--accent3)">📊</button>
                 <button class="btn-icon" title="${lang==='ar'?'تقرير':'Report'}" onclick="openReport('${r.uid}')" style="border-color:rgba(167,139,250,0.4);color:#a78bfa">📄</button>
-                <button class="btn-icon" title="${r.lat ? (lang==='ar'?'تعديل الموقع':'Edit Location') : (lang==='ar'?'تحديد الموقع':'Set Location')}" onclick="openLocationModal('${r.uid}')" style="border-color:${r.lat?'rgba(251,191,36,0.4)':'rgba(107,127,163,0.25)'};color:${r.lat?'#fbbf24':'var(--text-muted)'};opacity:${r.lat?'1':'0.5'}">📍</button>
+                <button class="btn-icon" title="${isAdmin ? (r.lat ? (lang==='ar'?'تعديل الموقع':'Edit Location') : (lang==='ar'?'تحديد الموقع':'Set Location')) : (lang==='ar'?'عرض الموقع':'View Location')}" onclick="openLocationModal('${r.uid}')" style="border-color:${r.lat?'rgba(251,191,36,0.4)':'rgba(107,127,163,0.25)'};color:${r.lat?'#fbbf24':'var(--text-muted)'};opacity:${r.lat?'1':'0.5'}">📍</button>
                 ${(isAdmin || isViewer || isTeamAdmin) ? `<button class="btn-icon del" title="${t('delTitle')}" onclick="deleteRecord('${r.uid}')" data-uid="${r.uid}">🗑️</button>` : ''}`;
+        const actionsHtml = `
+                <button class="btn-icon edit" title="${t('editTitle')}" onclick="editRecord('${r.uid}')">✏️</button>
+                <button class="btn-icon" title="${t('newReadingTitle')}" onclick="quickNewReading('${r.uid}')" style="border-color:rgba(0,212,255,0.4);color:var(--accent)">🆕</button>
+                <button class="btn-icon more-toggle" title="${lang==='ar'?'المزيد':'More'}" onclick="toggleMoreActions(this)">⋮</button>
+                <span class="more-actions" style="display:none;gap:0.25rem">${moreActionsHtml}</span>`;
 
         rowsHtml.push(`
           <tr>
@@ -2937,13 +2953,13 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
     const r = records.find(r => r.uid === uid);
     if (!r) return;
 
-    if (!loadings[uid]) { const _er=records.find(x=>x.uid===uid); loadings[uid] = { feeders: [], volt:{}, voltSavedAt: null, _round: 1, location: (_er?.lat ? {lat:_er.lat, lng:_er.lng} : null) }; }
+    if (!loadings[uid]) { loadings[uid] = { feeders: [], volt:{}, voltSavedAt: null, _round: 1, location: null }; }
     if (!loadings[uid].volt) loadings[uid].volt = {};
     if (!loadings[uid].pf) loadings[uid].pf = '0.9';
     if (loadings[uid].voltSavedAt === undefined) loadings[uid].voltSavedAt = null;
     if (!loadings[uid]._round) loadings[uid]._round = 1;
     if (!loadings[uid]._allRounds) loadings[uid]._allRounds = {};
-    loadings[uid]._allRounds[loadings[uid]._round] = {volt:loadings[uid].volt,pf:loadings[uid].pf,voltSavedAt:loadings[uid].voltSavedAt,feeders:loadings[uid].feeders};
+    loadings[uid]._allRounds[loadings[uid]._round] = {volt:loadings[uid].volt,pf:loadings[uid].pf,voltSavedAt:loadings[uid].voltSavedAt,feeders:loadings[uid].feeders,location:loadings[uid].location||null};
 
     if (autoSelectBest) {
       const SQRT3 = Math.sqrt(3);
@@ -3106,21 +3122,25 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
   }
 
   // ── Location Picker ──────────────────────────────────
-  let locMap = null, locMarker = null, locTargetUid = null;
+  let locMap = null, locMarker = null, locTargetUid = null, locReadOnly = false;
 
   function openLocationModal(uid) {
     locTargetUid = uid;
+    locReadOnly = !isAdmin;
     const rec = records.find(r => r.uid === uid);
-    const hasLoc = !!(rec?.lat);
+    const roundLoc = loadings[uid]?.location;
+    const hasLoc = !!roundLoc?.lat;
 
     document.getElementById('locModalTitle').textContent = lang === 'ar'
-      ? (hasLoc ? 'تعديل الموقع' : 'تحديد الموقع')
-      : (hasLoc ? 'Edit Location' : 'Set Location');
-    document.getElementById('locHint').textContent = lang === 'ar'
-      ? 'اضغط على الخريطة أو اسحب الدبوس لتحديد الموقع الصحيح'
-      : 'Click on the map or drag the pin to set the correct location';
-    document.getElementById('locCancelBtn').textContent = lang === 'ar' ? 'إلغاء' : 'Cancel';
+      ? (locReadOnly ? 'الموقع' : (hasLoc ? 'تعديل الموقع' : 'تحديد الموقع'))
+      : (locReadOnly ? 'Location' : (hasLoc ? 'Edit Location' : 'Set Location'));
+    document.getElementById('locHint').textContent = locReadOnly
+      ? (lang === 'ar' ? '👁️ عرض فقط — تعديل الموقع للأدمن فقط' : '👁️ View only — editing location requires admin access')
+      : (lang === 'ar' ? 'اضغط على الخريطة أو اسحب الدبوس لتحديد الموقع الصحيح' : 'Click on the map or drag the pin to set the correct location');
+    document.getElementById('locCancelBtn').textContent = lang === 'ar' ? (locReadOnly?'إغلاق':'إلغاء') : (locReadOnly?'Close':'Cancel');
     document.getElementById('locSaveBtn').innerHTML = lang === 'ar' ? '💾 حفظ الموقع' : '💾 Save Location';
+    document.getElementById('locSaveBtn').style.display = locReadOnly ? 'none' : '';
+    document.querySelector('.loc-coords-row').style.display = locReadOnly ? 'none' : '';
 
     const editedBy = rec?.locationEditedBy;
     const editedAt = rec?.locationEditedAt;
@@ -3134,8 +3154,8 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
 
     document.getElementById('locModalOverlay').classList.add('active');
 
-    const lat = rec?.lat || 23.5;
-    const lng = rec?.lng || 57.5;
+    const lat = roundLoc?.lat || 23.5;
+    const lng = roundLoc?.lng || 57.5;
     const zoom = hasLoc ? 15 : 8;
 
     setTimeout(() => {
@@ -3144,11 +3164,12 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(locMap);
-        locMarker = L.marker([lat, lng], { draggable: true }).addTo(locMap);
-        locMap.on('click', e => locMarker.setLatLng(e.latlng));
+        locMarker = L.marker([lat, lng], { draggable: !locReadOnly }).addTo(locMap);
+        locMap.on('click', e => { if (!locReadOnly) locMarker.setLatLng(e.latlng); });
       } else {
         locMap.setView([lat, lng], zoom);
         locMarker.setLatLng([lat, lng]);
+        locReadOnly ? locMarker.dragging.disable() : locMarker.dragging.enable();
       }
       locMap.invalidateSize();
     }, 120);
@@ -3189,6 +3210,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
 
   async function confirmLocation() {
     if (blockIfViewer()) return;
+    if (!isAdmin) { showToast(lang==='ar'?'⛔ تعديل الموقع للأدمن فقط':'⛔ Editing location requires admin access','error'); return; }
     if (!locMarker || !locTargetUid) return;
     const { lat, lng } = locMarker.getLatLng();
     const flatLat = parseFloat(lat.toFixed(6));
@@ -3284,14 +3306,15 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
     syncFormToMemory();
     // Save current round data before switching
     const cur = loadings[uid]._round || 1;
-    loadings[uid]._allRounds[cur] = {volt:loadings[uid].volt,pf:loadings[uid].pf,voltSavedAt:loadings[uid].voltSavedAt,feeders:loadings[uid].feeders,tapNo:loadings[uid].tapNo};
-    // Load selected round (location stays at transformer level, not per-round)
+    loadings[uid]._allRounds[cur] = {volt:loadings[uid].volt,pf:loadings[uid].pf,voltSavedAt:loadings[uid].voltSavedAt,feeders:loadings[uid].feeders,tapNo:loadings[uid].tapNo,location:loadings[uid].location||null};
+    // Load selected round — each reading has its own independent location
     const rd = loadings[uid]._allRounds[roundNum] || {volt:{},pf:'0.9',voltSavedAt:null,feeders:[]};
     loadings[uid].volt = rd.volt || {};
     loadings[uid].pf = rd.pf || '0.9';
     loadings[uid].voltSavedAt = rd.voltSavedAt || null;
     loadings[uid].feeders = rd.feeders || [];
     loadings[uid].tapNo = rd.tapNo || '';
+    loadings[uid].location = rd.location || null;
     loadings[uid]._round = roundNum;
     openLoadModal(uid, false);
   }
@@ -3308,18 +3331,27 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
     if (!confirm(msg)) return;
     // Save current round
     if (!loadings[uid]._allRounds) loadings[uid]._allRounds = {};
-    loadings[uid]._allRounds[currentRound] = {volt:loadings[uid].volt,pf:loadings[uid].pf,voltSavedAt:loadings[uid].voltSavedAt,feeders:loadings[uid].feeders,tapNo:loadings[uid].tapNo};
-    // Start new round (location stays — belongs to the transformer, not the round)
+    loadings[uid]._allRounds[currentRound] = {volt:loadings[uid].volt,pf:loadings[uid].pf,voltSavedAt:loadings[uid].voltSavedAt,feeders:loadings[uid].feeders,tapNo:loadings[uid].tapNo,location:loadings[uid].location||null};
+    // Start new round — each new reading gets its own independent location
     const newRound = currentRound + 1;
     loadings[uid]._round = newRound;
-    loadings[uid]._allRounds[newRound] = {volt:{},pf:'0.9',voltSavedAt:null,feeders:[]};
+    loadings[uid]._allRounds[newRound] = {volt:{},pf:'0.9',voltSavedAt:null,feeders:[],location:null};
     loadings[uid].feeders = [];
     loadings[uid].volt = {};
     loadings[uid].voltSavedAt = null;
     loadings[uid].pf = '0.9';
     loadings[uid].tapNo = '';
+    loadings[uid].location = null;
     openLoadModal(uid);
     showToast((lang === 'ar' ? '✅ بدأت القراءة ' : '✅ Reading ') + newRound, 'success');
+  }
+
+  function quickNewReading(uid) {
+    if (blockIfViewer()) return;
+    openLoadModal(uid, false);
+    const cur = loadings[uid];
+    const hasAnyData = (cur.feeders || []).some(hasData) || Object.values(cur.volt || {}).some(v => v !== '' && v !== undefined);
+    if (hasAnyData) startNewRound();
   }
   document.getElementById('loadModal').addEventListener('click', function(e) {
     if (e.target === this) closeLoadModal();
@@ -3335,22 +3367,37 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
       ['vL1L3', `${t('red')}-${t('blue')}`      ,'voltage'],
       ['vL2L3', `${t('yellow')}-${t('blue')}`   ,'voltage'],
     ];
+    const voltSavedAt = loadings[uid].voltSavedAt;
+    const voltLocked = isLocked(voltSavedAt);
     document.getElementById('voltageFields').innerHTML = voltKeys.map(([key, label, cls]) => `
       <div class="reading-field">
         <label>${colorLabel(label)}</label>
-        <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
+        <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" ${voltLocked?'disabled':''}
           class="${cls}" value="${v[key]||''}" placeholder="0"
           oninput="this.value=this.value.replace(/[^0-9]/g,'');updateVolt('${key}',this.value)"/>
       </div>`).join('');
     document.getElementById('tapNo').value = loadings[uid].tapNo || '';
     document.getElementById('vPF').value = loadings[uid].pf || '0.9';
+    document.getElementById('tapNo').disabled = voltLocked;
+    document.getElementById('vPF').disabled = voltLocked;
+    const saveVoltBtn = document.getElementById('btnSaveVolt')?.closest('button');
+    if (saveVoltBtn) saveVoltBtn.style.display = voltLocked ? 'none' : '';
+    let lockBadge = document.getElementById('voltLockBadge');
+    if (!lockBadge) {
+      lockBadge = document.createElement('span');
+      lockBadge.id = 'voltLockBadge';
+      lockBadge.className = 'timestamp-badge';
+      lockBadge.style.cssText = 'border-color:rgba(255,71,87,0.3);color:var(--danger);background:rgba(255,71,87,0.06)';
+      saveVoltBtn?.parentElement.insertBefore(lockBadge, saveVoltBtn);
+    }
+    lockBadge.textContent = t('lockedReading');
+    lockBadge.style.display = voltLocked ? 'inline-flex' : 'none';
 
     const hasSaved = Object.values(v).some(x=>x);
     document.getElementById('voltSavedBadge').style.display = hasSaved ? 'inline' : 'none';
 
     // Show voltage timestamp
     const voltTs = document.getElementById('voltTimestamp');
-    const voltSavedAt = loadings[uid].voltSavedAt;
     if (voltSavedAt && hasSaved) {
       const ago = timeAgo(voltSavedAt);
       const full = formatDateTime(voltSavedAt);
@@ -3428,6 +3475,13 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
     return [f.iL1,f.iL2,f.iL3,f.iN].some(v => v !== '' && v !== undefined);
   }
 
+  const READING_LOCK_MS = 10 * 60 * 1000;
+  function isLocked(savedAt) {
+    if (!savedAt) return false;
+    if (isAdmin || isTeamAdmin) return false;
+    return (Date.now() - new Date(savedAt).getTime()) > READING_LOCK_MS;
+  }
+
   function usedFeeders(uid) {
     return (loadings[uid]?.feeders || []).filter(hasData).length;
   }
@@ -3437,6 +3491,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
     const cnt = rec ? Number(rec.outputs) : loadings[uid].feeders.length;
     const feeders = loadings[uid].feeders.slice(0, cnt);
     document.getElementById('feederForms').innerHTML = feeders.map((f, i) => {
+      const locked = isLocked(f.savedAt);
       // Build timestamp HTML for this feeder
       let tsHtml = '';
       if (f.savedAt) {
@@ -3464,7 +3519,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
           </div>
           <div style="display:flex;flex-direction:column;gap:0.3rem">
             <label style="font-size:0.73rem;color:var(--text-muted);font-family:'Tajawal',sans-serif">${t('lmFeederName')}</label>
-            <select onchange="updateFeederName(${i},this.value)"
+            <select ${locked?'disabled':''} onchange="updateFeederName(${i},this.value)"
               style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cairo',sans-serif;font-size:0.88rem;padding:0.5rem 0.8rem;outline:none;cursor:pointer;width:auto;height:2.5rem;box-sizing:border-box;${lang==='en'?'direction:ltr;text-align:left;':''}">
               <option value="">${lang==='ar'?'-- اختر --':'-- Select --'}</option>
               ${[50,70,120,185,240,300,630].map(s=>`<option value="${s}" ${f.name==s?'selected':''}>${s} mm² (${CABLE_AMPACITY[s]}A)</option>`).join('')}
@@ -3472,7 +3527,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
           </div>
           <div style="display:flex;flex-direction:column;gap:0.3rem">
             <label style="font-size:0.73rem;color:var(--text-muted);font-family:'Tajawal',sans-serif">${t('lmCableType')}</label>
-            <select onchange="updateFeederCableType(${i},this.value)"
+            <select ${locked?'disabled':''} onchange="updateFeederCableType(${i},this.value)"
               style="background:var(--surface2);border:1px solid rgba(167,139,250,0.4);border-radius:8px;color:var(--text);font-family:'Cairo',sans-serif;font-size:0.88rem;padding:0.5rem 0.8rem;outline:none;cursor:pointer;width:auto;height:2.5rem;box-sizing:border-box;${lang==='en'?'direction:ltr;text-align:left;':''}">
               <option value="">${lang==='ar'?'-- اختر --':'-- Select --'}</option>
               <option value="Cu" ${f.cableType==='Cu'?'selected':''}>Cu ${lang==='ar'?'(نحاس)':'(Copper)'}</option>
@@ -3497,16 +3552,18 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
 
         <div class="reading-section-title">${t('lmCurrent')}</div>
         <div class="readings-grid" style="grid-template-columns:repeat(auto-fill,minmax(100px,1fr));max-width:480px">
-          ${currentField(i,'iL1', t('red'),     'current')}
-          ${currentField(i,'iL2', t('yellow'),  'current')}
-          ${currentField(i,'iL3', t('blue'),    'current')}
-          ${currentField(i,'iN',  t('neutral'), 'current')}
+          ${currentField(i,'iL1', t('red'),     'current', locked)}
+          ${currentField(i,'iL2', t('yellow'),  'current', locked)}
+          ${currentField(i,'iL3', t('blue'),    'current', locked)}
+          ${currentField(i,'iN',  t('neutral'), 'current', locked)}
         </div>
 
         <div class="lm-actions">
           ${tsHtml}
-          <button class="btn btn-secondary" onclick="clearFeeder(${i})" style="font-size:0.85rem;padding:0.5rem 1rem">${t('btnClearFeeder')}</button>
-          <button class="btn btn-primary" onclick="saveFeeder(${i})" style="font-size:0.85rem;padding:0.5rem 1.2rem">${t('btnSaveFeeder')}</button>
+          ${locked
+            ? `<span class="timestamp-badge" style="border-color:rgba(255,71,87,0.3);color:var(--danger);background:rgba(255,71,87,0.06)">${t('lockedReading')}</span>`
+            : `<button class="btn btn-secondary" onclick="clearFeeder(${i})" style="font-size:0.85rem;padding:0.5rem 1rem">${t('btnClearFeeder')}</button>
+          <button class="btn btn-primary" onclick="saveFeeder(${i})" style="font-size:0.85rem;padding:0.5rem 1.2rem">${t('btnSaveFeeder')}</button>`}
         </div>
       </div>`;
     }).join('');
@@ -3520,12 +3577,12 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
       .replace(/نيوترال|Neutral/g, `<span style="color:#aaaaaa;font-weight:700">${t('neutral')}</span>`);
   }
 
-  function currentField(fi, key, label, cls) {
+  function currentField(fi, key, label, cls, locked) {
     const val = loadings[currentLoadUid]?.feeders[fi]?.[key] ?? '';
     const warn = false;
     return `<div class="reading-field">
       <label>${colorLabel(label)}</label>
-      <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
+      <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" ${locked?'disabled':''}
         class="${cls}" value="${val}" placeholder="0"
         oninput="this.value=this.value.replace(/[^0-9]/g,'');liveUpdate(${fi},'${key}',this.value)"
         style="${warn?'border-color:var(--danger);':''}"/>
@@ -3593,6 +3650,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
 
   function clearFeeder(fi) {
     const f = loadings[currentLoadUid].feeders[fi];
+    if (isLocked(f.savedAt)) { showToast(t('toastLocked'),'error'); return; }
     ['iL1','iL2','iL3','iN'].forEach(k => f[k]='');
     f.cableType = '';
     f.savedAt = null;
@@ -5413,22 +5471,13 @@ ${(()=>{
         if (!_allRoundsMap[r.uid]) _allRoundsMap[r.uid] = {};
         const rawVolt = r.volt || {};
         const cleanVolt = {...rawVolt}; delete cleanVolt._loc;
-        if (rawVolt._loc && !_allRoundsMap[r.uid]?._txLocation) {
-          if (!_allRoundsMap[r.uid]) _allRoundsMap[r.uid] = {};
-          _allRoundsMap[r.uid]._txLocation = rawVolt._loc;
-        }
-        _allRoundsMap[r.uid][round] = {volt:cleanVolt,pf:r.pf||'0.9',voltSavedAt:r.volt_saved_at,feeders:r.feeders||[],tapNo:r.tap_no||''};
+        _allRoundsMap[r.uid][round] = {volt:cleanVolt,pf:r.pf||'0.9',voltSavedAt:r.volt_saved_at,feeders:r.feeders||[],tapNo:r.tap_no||'',location:rawVolt._loc||null};
       });
       Object.keys(_allRoundsMap).forEach(uid => {
         const rounds = _allRoundsMap[uid];
-        const txLocation = rounds._txLocation || null;
-        const roundNums = Object.keys(rounds).filter(k => k !== '_txLocation').map(Number);
+        const roundNums = Object.keys(rounds).map(Number);
         const latest = Math.max(...roundNums);
-        const cleanRounds = {...rounds}; delete cleanRounds._txLocation;
-        loadings[uid] = {...rounds[latest], _round:latest, _allRounds:cleanRounds, location:txLocation};
-      });
-      records.forEach(rec => {
-        if (rec.lat && loadings[rec.uid]) loadings[rec.uid].location = { lat: rec.lat, lng: rec.lng };
+        loadings[uid] = {...rounds[latest], _round:latest, _allRounds:rounds, location:rounds[latest].location||null};
       });
       setSyncing('ok', lang==='ar'?'متزامن':'Synced');
     } catch(e) {
@@ -5513,6 +5562,7 @@ ${(()=>{
   const _origSaveFeeder = saveFeeder;
   saveFeeder = async function(fi) {
     if (blockIfViewer()) return;
+    if (isLocked(loadings[currentLoadUid].feeders[fi].savedAt)) { showToast(t('toastLocked'),'error'); return; }
     syncFormToMemory();
     loadings[currentLoadUid].feeders[fi].savedAt = new Date().toISOString();
     buildFeederTabs(currentLoadUid); buildFeederForms(currentLoadUid); renderSummary(currentLoadUid); renderAnalysis(currentLoadUid);
@@ -5527,6 +5577,7 @@ ${(()=>{
   saveVoltageReadings = async function() {
     if (blockIfViewer()) return;
     if(!currentLoadUid) return;
+    if (isLocked(loadings[currentLoadUid].voltSavedAt)) { showToast(t('toastLocked'),'error'); return; }
     const rawPF=parseFloat(document.getElementById('vPF').value);
     loadings[currentLoadUid].pf=isNaN(rawPF)?'0.9':Math.min(0.99,Math.max(0.01,rawPF)).toFixed(2);
     loadings[currentLoadUid].tapNo = document.getElementById('tapNo').value;
