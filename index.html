@@ -2241,7 +2241,7 @@
       paginated.forEach((r, i) => {
         const rowNum = startIndex + i + 1;
         const moreActionsHtml = `
-                <button class="btn-icon" title="${t('loadTitle')}" onclick="loadModalMode='browse';openLoadModal('${r.uid}')" style="border-color:rgba(0,255,157,0.3);color:var(--accent3)">📊</button>
+                <button class="btn-icon" title="${t('loadTitle')}" onclick="loadModalMode='browse';openLoadModal('${r.uid}',false)" style="border-color:rgba(0,255,157,0.3);color:var(--accent3)">📊</button>
                 <button class="btn-icon" title="${lang==='ar'?'تقرير':'Report'}" onclick="openReport('${r.uid}')" style="border-color:rgba(167,139,250,0.4);color:#a78bfa">📄</button>
                 <button class="btn-icon" title="${isAdmin ? (r.lat ? (lang==='ar'?'تعديل الموقع':'Edit Location') : (lang==='ar'?'تحديد الموقع':'Set Location')) : (lang==='ar'?'عرض الموقع':'View Location')}" onclick="openLocationModal('${r.uid}')" style="border-color:${r.lat?'rgba(251,191,36,0.4)':'rgba(107,127,163,0.25)'};color:${r.lat?'#fbbf24':'var(--text-muted)'};opacity:${r.lat?'1':'0.5'}">📍</button>
                 ${(isAdmin || isViewer || isTeamAdmin) ? `<button class="btn-icon del" title="${t('delTitle')}" onclick="deleteRecord('${r.uid}')" data-uid="${r.uid}">🗑️</button>` : ''}`;
