@@ -1427,12 +1427,14 @@
   /* ── Read-only team admin (viewer) mode ─────────────── */
   /* Hide all edit affordances; readings/reports/map stay visible */
   body.viewer-mode .btn-icon.edit,
-  body.viewer-mode #newRoundBtn,
   body.viewer-mode [onclick^="openLocationModal"],
   body.viewer-mode [onclick^="addFeeder"],
   body.viewer-mode [onclick^="removeFeeder"],
   body.viewer-mode [onclick^="saveFeeder"],
   body.viewer-mode [onclick^="saveVoltageReadings"] { display: none !important; }
+  /* ── New Reading mode: standalone blank form, no round history ── */
+  #loadModal.new-reading-mode #roundTabsRow,
+  #loadModal.new-reading-mode #readingsSummary { display: none !important; }
   /* Lock reading inputs against editing */
   body.viewer-mode #loadModal input,
   body.viewer-mode #loadModal select,
@@ -1717,7 +1719,6 @@
       </div>
       <div style="display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap">
         <span id="roundBadge" style="background:rgba(0,212,255,0.15);border:1px solid rgba(0,212,255,0.4);border-radius:8px;padding:0.3rem 0.9rem;font-size:0.85rem;color:var(--accent);font-family:'Cairo',sans-serif;font-weight:700"></span>
-        <button id="newRoundBtn" onclick="startNewRound()" style="background:rgba(0,255,157,0.1);border:1px solid rgba(0,255,157,0.4);border-radius:8px;padding:0.3rem 1rem;font-size:0.82rem;color:var(--accent3);cursor:pointer;font-family:'Cairo',sans-serif;font-weight:600">+ قراءة جديدة</button>
         <a id="locationBadge" href="#" target="_blank" rel="noopener" style="display:none;align-items:center;gap:0.4rem;padding:0.3rem 0.9rem;border-radius:8px;border:1px solid rgba(107,127,163,0.3);font-size:0.82rem;font-family:'Tajawal',sans-serif;text-decoration:none;cursor:pointer"></a>
       </div>
     </div>
@@ -1962,7 +1963,7 @@
     document.querySelector('.btn-login').textContent        = t('btnLogin');
 
     const lmTitleEl = document.getElementById('lmTitle');
-    if (lmTitleEl) lmTitleEl.textContent = t('lmTitle');
+    if (lmTitleEl) lmTitleEl.textContent = loadModalMode === 'new' ? (isAr ? '⚡ قراءة جديدة' : '⚡ New Reading') : t('lmTitle');
 
     const voltTitle = document.getElementById('voltSectionTitle');
     if (voltTitle) voltTitle.textContent = isAr ? 'قراءات الفولتيج (V) ' : 'Voltage Readings (V) — Once per Transformer';
@@ -2240,7 +2241,7 @@
       paginated.forEach((r, i) => {
         const rowNum = startIndex + i + 1;
         const moreActionsHtml = `
-                <button class="btn-icon" title="${t('loadTitle')}" onclick="openLoadModal('${r.uid}')" style="border-color:rgba(0,255,157,0.3);color:var(--accent3)">📊</button>
+                <button class="btn-icon" title="${t('loadTitle')}" onclick="loadModalMode='browse';openLoadModal('${r.uid}')" style="border-color:rgba(0,255,157,0.3);color:var(--accent3)">📊</button>
                 <button class="btn-icon" title="${lang==='ar'?'تقرير':'Report'}" onclick="openReport('${r.uid}')" style="border-color:rgba(167,139,250,0.4);color:#a78bfa">📄</button>
                 <button class="btn-icon" title="${isAdmin ? (r.lat ? (lang==='ar'?'تعديل الموقع':'Edit Location') : (lang==='ar'?'تحديد الموقع':'Set Location')) : (lang==='ar'?'عرض الموقع':'View Location')}" onclick="openLocationModal('${r.uid}')" style="border-color:${r.lat?'rgba(251,191,36,0.4)':'rgba(107,127,163,0.25)'};color:${r.lat?'#fbbf24':'var(--text-muted)'};opacity:${r.lat?'1':'0.5'}">📍</button>
                 ${(isAdmin || isViewer || isTeamAdmin) ? `<button class="btn-icon del" title="${t('delTitle')}" onclick="deleteRecord('${r.uid}')" data-uid="${r.uid}">🗑️</button>` : ''}`;
@@ -2702,7 +2703,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
     clearForm();
     updateStationFilter();
     renderTable();
-    setTimeout(() => openLoadModal(savedUid), 300);
+    setTimeout(() => { loadModalMode = 'new'; openLoadModal(savedUid); }, 300);
   }
 
   function editRecord(uid) {
@@ -2909,6 +2910,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
   let loadings = JSON.parse(localStorage.getItem('loadings') || '{}');
   let currentLoadUid = null;
   let activeFeederIdx = 0;
+  let loadModalMode = 'browse'; // 'browse' = view all readings with round tabs, 'new' = standalone blank form for one new reading
   const CABLE_AMPACITY = {50: 187, 70: 229, 120: 312, 185: 394, 240: 455, 300: 509, 630: 705};
 
   function getBestRoundData(uid) {
@@ -2990,9 +2992,12 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
 
     const roundEl = document.getElementById('roundBadge');
     if (roundEl) roundEl.textContent = (lang==='ar'?'القراءة ':'Reading ') + loadings[uid]._round;
-    const newRoundBtn = document.getElementById('newRoundBtn');
-    if (newRoundBtn) newRoundBtn.textContent = lang==='ar' ? '+ قراءة جديدة' : '+ New Reading';
     buildRoundTabs(uid);
+
+    const lmTitleEl = document.getElementById('lmTitle');
+    if (lmTitleEl) lmTitleEl.textContent = loadModalMode === 'new'
+      ? (lang==='ar' ? '⚡ قراءة جديدة' : '⚡ New Reading')
+      : (lang==='ar' ? '⚡ قراءات الأحمال' : '⚡ Load Readings');
 
     updateLocationBadge(uid);
     if (navigator.geolocation && !loadings[uid].location) {
@@ -3029,12 +3034,15 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
     renderSummary(uid);
     renderAnalysis(uid);
 
-    document.getElementById('loadModal').classList.add('active');
+    const loadModalEl = document.getElementById('loadModal');
+    loadModalEl.classList.toggle('new-reading-mode', loadModalMode === 'new');
+    loadModalEl.classList.add('active');
   }
 
   function closeLoadModal() {
     document.getElementById('loadModal').classList.remove('active');
     currentLoadUid = null;
+    loadModalMode = 'browse';
   }
 
   function renderLoadInfoRow(uid) {
@@ -3303,6 +3311,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
 
   function switchRound(uid, roundNum) {
     if (!loadings[uid]) return;
+    loadModalMode = 'browse';
     syncFormToMemory();
     // Save current round data before switching
     const cur = loadings[uid]._round || 1;
@@ -3325,14 +3334,10 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
     const uid = currentLoadUid;
     syncFormToMemory();
     const currentRound = loadings[uid]._round || 1;
-    const msg = lang === 'ar'
-      ? `هل تريد بدء القراءة ${currentRound + 1}؟\nستُحفظ القراءة الحالية وتبدأ جديدة فارغة.`
-      : `Start Reading ${currentRound + 1}?\nCurrent reading will be kept and a new empty one will start.`;
-    if (!confirm(msg)) return;
     // Save current round
     if (!loadings[uid]._allRounds) loadings[uid]._allRounds = {};
     loadings[uid]._allRounds[currentRound] = {volt:loadings[uid].volt,pf:loadings[uid].pf,voltSavedAt:loadings[uid].voltSavedAt,feeders:loadings[uid].feeders,tapNo:loadings[uid].tapNo,location:loadings[uid].location||null};
-    // Start new round — each new reading gets its own independent location
+    // Start new round — each new reading gets its own independent, standalone form
     const newRound = currentRound + 1;
     loadings[uid]._round = newRound;
     loadings[uid]._allRounds[newRound] = {volt:{},pf:'0.9',voltSavedAt:null,feeders:[],location:null};
@@ -3342,12 +3347,14 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
     loadings[uid].pf = '0.9';
     loadings[uid].tapNo = '';
     loadings[uid].location = null;
-    openLoadModal(uid);
+    loadModalMode = 'new';
+    openLoadModal(uid, false);
     showToast((lang === 'ar' ? '✅ بدأت القراءة ' : '✅ Reading ') + newRound, 'success');
   }
 
   function quickNewReading(uid) {
     if (blockIfViewer()) return;
+    loadModalMode = 'new';
     openLoadModal(uid, false);
     const cur = loadings[uid];
     const hasAnyData = (cur.feeders || []).some(hasData) || Object.values(cur.volt || {}).some(v => v !== '' && v !== undefined);
@@ -5539,7 +5546,7 @@ ${(()=>{
         showToast(t('toastSaved'),'success');
       }
       clearForm(); updateStationFilter(); renderTable();
-      setTimeout(()=>openLoadModal(savedUid),300);
+      setTimeout(()=>{ loadModalMode='new'; openLoadModal(savedUid); },300);
     } catch(e){ showToast('❌ '+e.message,'error'); }
   };
 
