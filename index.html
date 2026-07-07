@@ -3484,10 +3484,20 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
   }
 
   const READING_LOCK_MS = 10 * 60 * 1000;
-  function isLocked(savedAt) {
-    if (!savedAt) return false;
+  // أحدث وقت حفظ بين فيدرات المحول (مرجع قفل الفيدرات الفاضية)
+  function latestFeederSave(uid) {
+    let latest = 0;
+    (loadings[uid]?.feeders || []).forEach(f => {
+      if (f.savedAt) { const ts = new Date(f.savedAt).getTime(); if (ts > latest) latest = ts; }
+    });
+    return latest || null;
+  }
+  function isLocked(savedAt, uid) {
     if (isAdmin || isTeamAdmin) return false;
-    return (Date.now() - new Date(savedAt).getTime()) > READING_LOCK_MS;
+    // الفيدر الفاضي (بدون وقت حفظ) يُقفل بناءً على آخر فيدر اتحفظ بنفس المحول
+    const ref = savedAt || (uid ? latestFeederSave(uid) : null);
+    if (!ref) return false;
+    return (Date.now() - new Date(ref).getTime()) > READING_LOCK_MS;
   }
 
   function usedFeeders(uid) {
@@ -3499,7 +3509,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
     const cnt = rec ? Number(rec.outputs) : loadings[uid].feeders.length;
     const feeders = loadings[uid].feeders.slice(0, cnt);
     document.getElementById('feederForms').innerHTML = feeders.map((f, i) => {
-      const locked = isLocked(f.savedAt);
+      const locked = isLocked(f.savedAt, uid);
       // Build timestamp HTML for this feeder
       let tsHtml = '';
       if (f.savedAt) {
@@ -3658,7 +3668,7 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
 
   function clearFeeder(fi) {
     const f = loadings[currentLoadUid].feeders[fi];
-    if (isLocked(f.savedAt)) { showToast(t('toastLocked'),'error'); return; }
+    if (isLocked(f.savedAt, currentLoadUid)) { showToast(t('toastLocked'),'error'); return; }
     ['iL1','iL2','iL3','iN'].forEach(k => f[k]='');
     f.cableType = '';
     f.savedAt = null;
