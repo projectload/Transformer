@@ -3260,7 +3260,8 @@ span[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!
     el.style.display = 'inline-flex';
     if (loc && loc.lat) {
       el.href = `https://www.google.com/maps?q=${loc.lat},${loc.lng}`;
-      el.innerHTML = `📍 <span style="font-family:monospace;font-weight:700">${loc.lat}, ${loc.lng}</span>&nbsp;<span style="opacity:0.6;font-size:0.76rem">±${loc.accuracy}m</span>`;
+      const accTxt = loc.accuracy > 0 ? `&nbsp;<span style="opacity:0.6;font-size:0.76rem">±${loc.accuracy}${lang==='ar'?'م':'m'}</span>` : '';
+      el.innerHTML = `📍 <span style="font-weight:700">${lang==='ar'?'تم تحديد الموقع ✓':'Location set ✓'}</span>${accTxt}`;
       el.style.color = 'var(--accent3)';
       el.style.borderColor = 'rgba(0,255,157,0.4)';
       el.style.background = 'rgba(0,255,157,0.06)';
