@@ -49,7 +49,7 @@
     'According to the details above there are 2 options, the best option is option No.1 that will solve the issue',
     'According to the details above there are 2 options, the best option is option No.2 that will solve the issue'
   ];
-  const lbl  = x        => `<td style="${S.lbl}">${x}</td>`;
+  const lbl  = (x, extra)  => `<td style="${S.lbl}${extra ? ';'+extra : ''}">${x}</td>`;
   const colh = x        => `<td style="${S.colh}">${x}</td>`;
   // contenteditable="true" so the cell can be filled in directly on this standalone page
   const val  = (x, cs, key)  => `<td style="${S.val}"${cs ? ` colspan="${cs}"` : ''}${key ? ` data-key="${key}"` : ''} contenteditable="true" onclick="_copyCell(this)" title="${tip}">${x || ''}</td>`;
@@ -144,11 +144,11 @@
   </div>
   <div style="${S.hdr}">PROJECT DETAILS</div>
   <table style="${S.tbl}">
-    <tr>${lbl('REF. NO:')}${val(d.refNo,5,'refNo')}</tr>
-    <tr>${lbl('Project Description')}${val(d.projDesc,5,'projDesc')}</tr>
-    <tr>${lbl('Area')}${val(d.station,5,'station')}</tr>
-    <tr>${lbl('District')}${val(d.district,5,'district')}</tr>
-    <tr>${lbl('Requesting Department')}${val(d.reqDept,5,'reqDept')}</tr>
+    <tr>${lbl('REF. NO:','white-space:nowrap')}${val(d.refNo,5,'refNo')}</tr>
+    <tr>${lbl('Project Description','white-space:nowrap')}${val(d.projDesc,5,'projDesc')}</tr>
+    <tr>${lbl('Area','white-space:nowrap')}${val(d.station,5,'station')}</tr>
+    <tr>${lbl('District','white-space:nowrap')}${val(d.district,5,'district')}</tr>
+    <tr>${lbl('Requesting Department','white-space:nowrap')}${val(d.reqDept,5,'reqDept')}</tr>
   </table>
   <div style="${S.hdr}">TRANSFORMER DETAILS</div>
   <table style="${S.tbl}">
