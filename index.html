@@ -4701,10 +4701,14 @@ ${(()=>{
     }
     const btnStyle = "flex:0 0 auto;white-space:nowrap;padding:0.5rem 0.9rem;border-radius:8px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.08);color:#fff;font-family:'Cairo',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer";
     ov.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding:0.6rem 0.8rem;background:#111827;color:#fff;direction:${dir};flex:0 0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.25)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding:0.6rem 0.8rem;background:#111827;color:#fff;direction:${dir};flex:0 0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.25);flex-wrap:wrap">
         <button onclick="closeProposalOverlay()" style="${btnStyle};display:flex;align-items:center;gap:0.4rem">↩ ${isAr?'رجوع':'Back'}</button>
         <span style="flex:1 1 auto;min-width:0;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Cairo',sans-serif;font-weight:700;font-size:0.9rem">📝 ${isAr?'مقترح':'Proposal'}</span>
-        <span style="flex:0 0 auto;width:1px"></span>
+        <div style="flex:0 0 auto;display:flex;gap:0.4rem">
+          <button onclick="document.getElementById('proposalFrame').contentWindow.postMessage({action:'print'},'*')" style="${btnStyle}">🖨️ ${isAr?'طباعة':'Print'}</button>
+          <button onclick="document.getElementById('proposalFrame').contentWindow.postMessage({action:'exportWord'},'*')" style="${btnStyle}">📄 ${isAr?'تصدير Word':'Export Word'}</button>
+          <button onclick="document.getElementById('proposalFrame').contentWindow.postMessage({action:'save'},'*')" style="${btnStyle};background:#2563eb;border-color:#2563eb">💾 ${isAr?'حفظ':'Save'}</button>
+        </div>
       </div>
       <iframe id="proposalFrame" style="flex:1 1 auto;width:100%;border:none;background:#fff"></iframe>`;
     ov.querySelector('#proposalFrame').src = encodeURI('مقترح.html') + '?t=' + Date.now();

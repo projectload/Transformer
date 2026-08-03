@@ -27,11 +27,12 @@
 </head>
 <body>
 
-<div class="toolbar">
+<div class="toolbar" id="_localToolbar">
   <button type="button" onclick="window.print()">🖨️ Print</button>
   <button type="button" onclick="_exportWord()">📄 Export Word</button>
   <button type="button" class="primary" onclick="_saveProposal()">💾 Save</button>
 </div>
+<script>if (window !== window.top) document.write('<style>#_localToolbar{display:none}</style>');</script>
 
 <div class="tip">💡 Click any value cell to copy it, then paste it wherever you need.</div>
 
@@ -287,6 +288,37 @@
     document.getElementById('proposalForm').innerHTML = reportFormHtml(d);
   }
 
+  // ── Load the last saved proposal text for this transformer (if any) so
+  // reopening the form later restores what was typed, not just live readings ─
+  async function _loadSavedProposal() {
+    if (!d.txNo) return;
+    const SUPA_URL = 'https://hgnufhugpqqbkbxflyot.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnbnVmaHVncHFxYmtieGZseW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTc4NTgsImV4cCI6MjA5MjUzMzg1OH0.ElSIjFOg82EuNgdfCL3RtQDUhEXHqjjz7BwC4G7IAyA';
+    try {
+      const res = await fetch(`${SUPA_URL}/rest/v1/proposals?tx_no=eq.${encodeURIComponent(d.txNo)}&order=created_at.desc&limit=1`, {
+        headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }
+      });
+      if (!res.ok) return;
+      const rows = await res.json();
+      if (!rows.length) return;
+      const r = rows[0];
+      Object.assign(d, {
+        refNo: r.ref_no || '', projDesc: r.project_description || '',
+        district: r.district || '', reqDept: r.requesting_department || '', complaints: r.complaints || '',
+        cableSize: r.cable_size || d.cableSize, connPoint: r.connection_point || '',
+        opt1: r.option1 || '', opt1Cost: r.option1_cost || '', opt2: r.option2 || '', opt2Cost: r.option2_cost || '',
+        reason: r.reason || '', risk: r.risk || '',
+        freeSpare: r.free_spare || '', assetTypes: (r.asset_types && r.asset_types.length) ? r.asset_types : d.assetTypes,
+        recommendation: r.recommendation || '',
+        engName: r.eng_name || '', engDate: r.eng_date || '', secName: r.sec_name || '', secDate: r.sec_date || '',
+        mgrName: r.mgr_name || '', mgrDate: r.mgr_date || ''
+      });
+      document.getElementById('proposalForm').innerHTML = reportFormHtml(d);
+      _toast('📥 Loaded previously saved data');
+    } catch (e) { /* no saved proposal yet, or offline — keep defaults */ }
+  }
+  _loadSavedProposal();
+
   function _removeSig(key) {
     d[key] = null;
     document.getElementById('proposalForm').innerHTML = reportFormHtml(d);
@@ -333,6 +365,15 @@
     reader.readAsDataURL(file);
   }
 
+  // ── Respond to toolbar commands sent from the parent window (postMessage avoids
+  // cross-origin issues when this file is opened via file:// as a separate iframe src) ─
+  window.addEventListener('message', e => {
+    const action = e.data && e.data.action;
+    if (action === 'print') window.print();
+    else if (action === 'exportWord') _exportWord();
+    else if (action === 'save') _saveProposal();
+  });
+
   // ── Sync manual edits in contenteditable cells back into `d` ─────────
   document.getElementById('proposalForm').addEventListener('focusout', e => {
     const el = e.target.closest('[data-key]');
@@ -364,6 +405,7 @@
       free_spare: d.freeSpare, asset_types: d.assetTypes, recommendation: d.recommendation,
       eng_name: d.engName, eng_date: d.engDate || null, sec_name: d.secName, sec_date: d.secDate || null,
       mgr_name: d.mgrName, mgr_date: d.mgrDate || null,
+      has_gis_image: !!d.gisImage, has_eng_sig: !!d.engSig, has_sec_sig: !!d.secSig, has_mgr_sig: !!d.mgrSig,
       created_at: new Date().toISOString()
     };
     try {
