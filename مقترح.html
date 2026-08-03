@@ -138,7 +138,11 @@
         ${d.gisImage ? `<button type="button" onclick="event.preventDefault();event.stopPropagation();_removeGisImage()" title="Remove image" style="position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(220,38,38,0.9);color:#fff;font-size:14px;font-weight:900;cursor:pointer;line-height:1">✕</button>` : ''}
         <input type="file" accept="image/*" onchange="_onGisUpload(this)" style="display:none">
       </label>`;
-    return `<div style="${S.hdr}">PROJECT DETAILS</div>
+    return `<div style="display:flex;align-items:stretch;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.1)">
+    <img src="nama.png" style="height:64px;padding:10px 22px;background:#fff">
+    <div style="flex:1;background:#e8333a;color:#fff;font-weight:800;font-size:17px;padding:14px 20px;display:flex;align-items:center;justify-content:center;text-align:center">ENHANCEMENT PRE-INVESTMENT PROJECT APPRAISAL</div>
+  </div>
+  <div style="${S.hdr}">PROJECT DETAILS</div>
   <table style="${S.tbl}">
     <tr>${lbl('REF. NO:')}${val(d.refNo,5,'refNo')}</tr>
     <tr>${lbl('Project Description')}${val(d.projDesc,5,'projDesc')}</tr>
