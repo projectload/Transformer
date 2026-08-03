@@ -8,15 +8,29 @@
   body { font-family: Tahoma, Arial, sans-serif; background:#f4f6fb; margin:0; padding:24px; }
   .tip { font-size:0.8rem; color:#666; margin-bottom:0.6rem; }
   .page-break { margin-top:34px; padding-top:26px; border-top:8px solid #d8dce3; }
-  @media print { .page-break { break-before:page; page-break-before:always; border-top:none; margin-top:0; padding-top:0; } }
+  @media print { .page-break { break-before:page; page-break-before:always; border-top:none; margin-top:0; padding-top:0; } .toolbar { display:none!important; } }
+  .toolbar { max-width:920px; margin:0 auto 1rem; display:flex; gap:0.5rem; flex-wrap:wrap }
+  .toolbar button { display:flex; align-items:center; gap:6px; padding:0.5rem 1rem; border-radius:8px; border:1px solid #cbd5e1; background:#fff; color:#111; font-size:0.85rem; font-weight:700; cursor:pointer; font-family:inherit }
+  .toolbar button:hover { border-color:#94a3b8 }
+  .toolbar button.primary { background:#2563eb; border-color:#2563eb; color:#fff }
+  #_toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#111827; color:#fff; padding:0.6rem 1.1rem; border-radius:8px; font-size:0.85rem; font-weight:700; opacity:0; pointer-events:none; transition:opacity .2s; z-index:9999 }
+  #_toast.show { opacity:1 }
+  #_toast.err { background:#b91c1c }
 </style>
 </head>
 <body>
+
+<div class="toolbar">
+  <button type="button" onclick="window.print()">🖨️ Print</button>
+  <button type="button" onclick="_exportWord()">📄 Export Word</button>
+  <button type="button" class="primary" onclick="_saveProposal()">💾 Save</button>
+</div>
 
 <div class="tip">💡 Click any value cell to copy it, then paste it wherever you need.</div>
 
 <div id="roundSelWrap" style="max-width:920px;margin:0 auto"></div>
 <div id="proposalForm" style="max-width:920px;margin:0 auto 1.5rem"></div>
+<div id="_toast"></div>
 
 <script>
   // ── Style tokens (match the original report look) ──────────────────
@@ -31,25 +45,30 @@
   };
 
   const tip  = 'click to copy';
+  const RECS = [
+    'According to the details above there are 2 options, the best option is option No.1 that will solve the issue',
+    'According to the details above there are 2 options, the best option is option No.2 that will solve the issue'
+  ];
   const lbl  = x        => `<td style="${S.lbl}">${x}</td>`;
   const colh = x        => `<td style="${S.colh}">${x}</td>`;
   // contenteditable="true" so the cell can be filled in directly on this standalone page
-  const val  = (x, cs)  => `<td style="${S.val}"${cs ? ` colspan="${cs}"` : ''} contenteditable="true" onclick="_copyCell(this)" title="${tip}">${x || ''}</td>`;
-  const cval = x         => `<td style="${S.cval}" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${x || ''}</td>`;
+  const val  = (x, cs, key)  => `<td style="${S.val}"${cs ? ` colspan="${cs}"` : ''}${key ? ` data-key="${key}"` : ''} contenteditable="true" onclick="_copyCell(this)" title="${tip}">${x || ''}</td>`;
+  const cval = (x, key)      => `<td style="${S.cval}"${key ? ` data-key="${key}"` : ''} contenteditable="true" onclick="_copyCell(this)" title="${tip}">${x || ''}</td>`;
 
   // ── Fill this object with your data (or leave blank / edit inline) ─
   const d = {
-    station: '',                 // Area
-    txNo: '', cap: '', lat: null, lng: null,
+    refNo:'', projDesc:'', station: '', district:'', reqDept:'',   // Area = station
+    txNo: '', cap: '', complaints:'', lat: null, lng: null,
     vRN:'', vYN:'', vBN:'', vRY:'', vRB:'', vYB:'',
     tR:'', tY:'', tB:'', tN:'', txPct:'',
     fR:'', fY:'', fB:'', fN:'', fPct:'',
-    cableSize:'',
-    opt1:'', opt2:'',
+    cableSize:'', connPoint:'',
+    opt1:'', opt1Cost:'', opt2:'', opt2Cost:'',
     reason:'', risk:'', gisImage:null,
     freeSpare:'', assetTypes:['Transformer'], assetUnit:'',
     recommendation:'',
-    engName:'', engDate:'', secName:'', secDate:'', mgrName:'', mgrDate:''
+    engName:'', engDate:'', secName:'', secDate:'', mgrName:'', mgrDate:'',
+    engSig:null, secSig:null, mgrSig:null
   };
 
   // ── Prefill from URL query params (e.g. ?station=...&txNo=...&cap=...&txPct=...) ─
@@ -70,6 +89,25 @@
     const rated = cap ? (Number(cap) * 1000) / (Math.sqrt(3) * 415) : 0;
     if (!rated || !cur) return '';
     return String(Math.round((Number(cur) / rated) * 100));
+  }
+
+  function dateCell(key) {
+    return `<td style="${S.val};padding:0;width:1%">
+      <input type="date" value="${d[key]||''}" onchange="d.${key}=this.value" style="width:100%;height:100%;min-width:118px;border:none;background:transparent;padding:9px 6px;font-size:10.5px;color:#111;cursor:pointer;outline:none;box-sizing:border-box;font-family:inherit">
+    </td>`;
+  }
+
+  function sigCell(key) {
+    const img = d[key];
+    return `<td style="padding:0;width:14%">
+      <label style="box-sizing:border-box;display:flex;align-items:center;justify-content:center;position:relative;width:100%;height:46px;background:#fff;border:1px solid #ccc;cursor:pointer;overflow:hidden">
+        ${img
+          ? `<img src="${img}" style="width:100%;height:100%;object-fit:contain;display:block">`
+          : `<span style="display:flex;align-items:center;gap:4px;color:#94a3b8;font-size:9.5px;font-weight:700;white-space:nowrap">📁 Upload</span>`}
+        <input type="file" accept="image/*" onchange="_onSigUpload(this,'${key}')" style="display:none">
+        ${img ? `<button type="button" onclick="event.preventDefault();event.stopPropagation();_removeSig('${key}')" title="Remove signature" style="position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;border:none;background:rgba(220,38,38,0.85);color:#fff;font-size:10px;font-weight:900;cursor:pointer;line-height:1;padding:0">✕</button>` : ''}
+      </label>
+    </td>`;
   }
 
   function _toggleAsset(name) {
@@ -102,15 +140,15 @@
       </label>`;
     return `<div style="${S.hdr}">PROJECT DETAILS</div>
   <table style="${S.tbl}">
-    <tr>${lbl('REF. NO:')}${val('',5)}</tr>
-    <tr>${lbl('Project Description')}${val('',5)}</tr>
-    <tr>${lbl('Area')}${val(d.station,5)}</tr>
-    <tr>${lbl('District')}${val('',5)}</tr>
-    <tr>${lbl('Requesting Department')}${val('',5)}</tr>
+    <tr>${lbl('REF. NO:')}${val(d.refNo,5,'refNo')}</tr>
+    <tr>${lbl('Project Description')}${val(d.projDesc,5,'projDesc')}</tr>
+    <tr>${lbl('Area')}${val(d.station,5,'station')}</tr>
+    <tr>${lbl('District')}${val(d.district,5,'district')}</tr>
+    <tr>${lbl('Requesting Department')}${val(d.reqDept,5,'reqDept')}</tr>
   </table>
   <div style="${S.hdr}">TRANSFORMER DETAILS</div>
   <table style="${S.tbl}">
-    <tr>${lbl('TX. NO.')}${cval(d.txNo)}${lbl('Capacity')}${cval(d.cap)}${lbl('NO of Complaints')}${cval('')}</tr>
+    <tr>${lbl('TX. NO.')}${cval(d.txNo,'txNo')}${lbl('Capacity')}${cval(d.cap,'cap')}${lbl('NO of Complaints')}${cval(d.complaints,'complaints')}</tr>
   </table>
   <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
   <table style="${S.tbl};min-width:560px">
@@ -118,39 +156,39 @@
       <td style="${S.lbl}" rowspan="2">Voltage Reading</td>
       ${colh('R-N')}${colh('Y-N')}${colh('B-N')}${colh('R-Y')}${colh('R-B')}${colh('Y-B')}
     </tr>
-    <tr>${cval(d.vRN)}${cval(d.vYN)}${cval(d.vBN)}${cval(d.vRY)}${cval(d.vRB)}${cval(d.vYB)}</tr>
+    <tr>${cval(d.vRN,'vRN')}${cval(d.vYN,'vYN')}${cval(d.vBN,'vBN')}${cval(d.vRY,'vRY')}${cval(d.vRB,'vRB')}${cval(d.vYB,'vYB')}</tr>
   </table>
   </div>
   <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
   <table style="${S.tbl};min-width:560px">
     <tr><td style="${S.grp}" colspan="4">TX. Load</td><td style="${S.grp}" colspan="4">Feeder Load</td></tr>
     <tr>${colh('R')}${colh('Y')}${colh('B')}${colh('N')}${colh('R')}${colh('Y')}${colh('B')}${colh('N')}</tr>
-    <tr>${cval(d.tR)}${cval(d.tY)}${cval(d.tB)}${cval(d.tN)}${cval(d.fR)}${cval(d.fY)}${cval(d.fB)}${cval(d.fN)}</tr>
+    <tr>${cval(d.tR,'tR')}${cval(d.tY,'tY')}${cval(d.tB,'tB')}${cval(d.tN,'tN')}${cval(d.fR,'fR')}${cval(d.fY,'fY')}${cval(d.fB,'fB')}${cval(d.fN,'fN')}</tr>
   </table>
   </div>
   <table style="${S.tbl}">
     <tr>
-      <td style="${S.grp};width:50%">TX. Load &nbsp; <span style="display:inline-block;min-width:42px;background:#e7ecf7;padding:2px 8px;border-radius:3px;cursor:pointer" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.txPct}</span> &nbsp; %</td>
-      <td style="${S.grp};width:50%">Feeder Load &nbsp; <span style="display:inline-block;min-width:42px;background:#e7ecf7;padding:2px 8px;border-radius:3px;cursor:pointer" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.fPct}</span> &nbsp; %</td>
+      <td style="${S.grp};width:50%">TX. Load &nbsp; <span data-key="txPct" style="display:inline-block;min-width:42px;background:#e7ecf7;padding:2px 8px;border-radius:3px;cursor:pointer" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.txPct}</span> &nbsp; %</td>
+      <td style="${S.grp};width:50%">Feeder Load &nbsp; <span data-key="fPct" style="display:inline-block;min-width:42px;background:#e7ecf7;padding:2px 8px;border-radius:3px;cursor:pointer" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.fPct}</span> &nbsp; %</td>
     </tr>
   </table>
   <table style="${S.tbl};table-layout:fixed">
     <tr>
       <td style="${S.lbl};width:30%;font-size:10.5px">Main cable/conductor size</td>
-      <td style="${S.val};width:20%;font-size:10.5px" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.cableSize||''}</td>
+      <td style="${S.val};width:20%;font-size:10.5px" data-key="cableSize" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.cableSize||''}</td>
       <td style="${S.lbl};width:30%;font-size:10.5px">Connection point from the TX to the affected customer (m)</td>
-      <td style="${S.val};width:20%;font-size:10.5px" contenteditable="true" onclick="_copyCell(this)" title="${tip}"></td>
+      <td style="${S.val};width:20%;font-size:10.5px" data-key="connPoint" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.connPoint||''}</td>
     </tr>
   </table>
   <div style="${S.hdr}">PROJECT DESCRIPTION OPTION</div>
   <table style="${S.tbl}">
-    <tr>${lbl('Option 1')}${val(d.opt1)}${lbl('Cost estimated')}${val('')}</tr>
-    <tr>${lbl('Option 2')}${val(d.opt2)}${lbl('Cost estimated')}${val('')}</tr>
+    <tr>${lbl('Option 1')}${val(d.opt1,0,'opt1')}${lbl('Cost estimated')}${val(d.opt1Cost,0,'opt1Cost')}</tr>
+    <tr>${lbl('Option 2')}${val(d.opt2,0,'opt2')}${lbl('Cost estimated')}${val(d.opt2Cost,0,'opt2Cost')}</tr>
   </table>
   <div style="${S.hdr}">PROJECT REASON</div>
-  <table style="${S.tbl}"><tr><td style="${S.val}" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.reason}</td></tr></table>
+  <table style="${S.tbl}"><tr><td style="${S.val}" data-key="reason" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.reason}</td></tr></table>
   <div style="${S.hdr}">RISK OF NOT EXECUTING PROPOSAL</div>
-  <table style="${S.tbl}"><tr><td style="${S.val}" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.risk}</td></tr></table>
+  <table style="${S.tbl}"><tr><td style="${S.val}" data-key="risk" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.risk}</td></tr></table>
   <hr style="margin:18px 0 10px;border:none;border-top:1px solid #ddd">
   <div style="display:flex;align-items:center;gap:12px;font-size:10px;color:#333;flex-wrap:wrap">
     <img src="nama.png" style="height:34px" alt="nama">
@@ -189,14 +227,19 @@
     </table>
 
     <div style="${S.hdr}">RECOMMENDATIONS</div>
-    <table style="${S.tbl}"><tr><td style="${S.val}" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.recommendation}</td></tr></table>
+    <table style="${S.tbl}"><tr><td style="${S.val};padding:0">
+      <select onchange="d.recommendation=this.value" style="width:100%;border:none;background:transparent;padding:9px 10px;font-size:11.5px;color:#111;cursor:pointer;outline:none">
+        <option value="" ${!d.recommendation?'selected':''}>Select..</option>
+        ${RECS.map(r => `<option value="${r}" ${d.recommendation===r?'selected':''}>${r}</option>`).join('')}
+      </select>
+    </td></tr></table>
 
     <div style="${S.hdr}">AUTHORIZATION APPROVAL</div>
     <table style="${S.tbl}">
-      <tr>${colh('Position')}${colh('Name')}${colh('Signature')}${colh('Date')}</tr>
-      <tr>${lbl('Operation Engineer')}${val(d.engName)}<td style="background:#fff;border:1px solid #ccc"></td>${val(d.engDate)}</tr>
-      <tr>${lbl('Operation Section Head')}${val(d.secName)}<td style="background:#fff;border:1px solid #ccc"></td>${val(d.secDate)}</tr>
-      <tr>${lbl('Operation Manger')}${val(d.mgrName)}<td style="background:#fff;border:1px solid #ccc"></td>${val(d.mgrDate)}</tr>
+      <tr><td style="${S.colh};width:22%;white-space:nowrap">Position</td>${colh('Name')}${colh('Signature')}<td style="${S.colh};width:1%;white-space:nowrap">Date</td></tr>
+      <tr><td style="${S.lbl};white-space:nowrap">Operation Engineer</td>${val(d.engName,0,'engName')}${sigCell('engSig')}${dateCell('engDate')}</tr>
+      <tr><td style="${S.lbl};white-space:nowrap">Operation Section Head</td>${val(d.secName,0,'secName')}${sigCell('secSig')}${dateCell('secDate')}</tr>
+      <tr><td style="${S.lbl};white-space:nowrap">Operation Manger</td>${val(d.mgrName,0,'mgrName')}${sigCell('mgrSig')}${dateCell('mgrDate')}</tr>
     </table>
   </div>`;
   }
@@ -239,6 +282,37 @@
     document.getElementById('proposalForm').innerHTML = reportFormHtml(d);
   }
 
+  function _removeSig(key) {
+    d[key] = null;
+    document.getElementById('proposalForm').innerHTML = reportFormHtml(d);
+  }
+  function _onSigUpload(input, key) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width; canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const px = data.data;
+        for (let i = 0; i < px.length; i += 4) {
+          const r = px[i], g = px[i+1], b = px[i+2];
+          const brightness = (r + g + b) / 3;
+          if (brightness > 235) px[i+3] = 0;
+          else if (brightness > 190) px[i+3] = Math.round(255 * (235 - brightness) / 45);
+        }
+        ctx.putImageData(data, 0, 0);
+        d[key] = canvas.toDataURL('image/png');
+        document.getElementById('proposalForm').innerHTML = reportFormHtml(d);
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
   function _removeGisImage() {
     d.gisImage = null;
     document.getElementById('proposalForm').innerHTML = reportFormHtml(d);
@@ -252,6 +326,72 @@
       document.getElementById('proposalForm').innerHTML = reportFormHtml(d);
     };
     reader.readAsDataURL(file);
+  }
+
+  // ── Sync manual edits in contenteditable cells back into `d` ─────────
+  document.getElementById('proposalForm').addEventListener('focusout', e => {
+    const el = e.target.closest('[data-key]');
+    if (el && el.isContentEditable) d[el.dataset.key] = el.textContent.trim();
+  });
+
+  // ── Toast ──────────────────────────────────────────────────────────
+  function _toast(msg, isErr) {
+    const t = document.getElementById('_toast');
+    t.textContent = msg;
+    t.className = isErr ? 'show err' : 'show';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.className = ''; }, 3500);
+  }
+
+  // ── Save (excludes uploaded images) ───────────────────────────────────
+  async function _saveProposal() {
+    const SUPA_URL = 'https://hgnufhugpqqbkbxflyot.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnbnVmaHVncHFxYmtieGZseW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTc4NTgsImV4cCI6MjA5MjUzMzg1OH0.ElSIjFOg82EuNgdfCL3RtQDUhEXHqjjz7BwC4G7IAyA';
+    const payload = {
+      ref_no: d.refNo, project_description: d.projDesc, station: d.station, district: d.district, requesting_department: d.reqDept,
+      tx_no: d.txNo, cap: d.cap, complaints: d.complaints,
+      v_rn: d.vRN, v_yn: d.vYN, v_bn: d.vBN, v_ry: d.vRY, v_rb: d.vRB, v_yb: d.vYB,
+      t_r: d.tR, t_y: d.tY, t_b: d.tB, t_n: d.tN, tx_pct: d.txPct,
+      f_r: d.fR, f_y: d.fY, f_b: d.fB, f_n: d.fN, f_pct: d.fPct,
+      cable_size: d.cableSize, connection_point: d.connPoint,
+      option1: d.opt1, option1_cost: d.opt1Cost, option2: d.opt2, option2_cost: d.opt2Cost,
+      reason: d.reason, risk: d.risk,
+      free_spare: d.freeSpare, asset_types: d.assetTypes, recommendation: d.recommendation,
+      eng_name: d.engName, eng_date: d.engDate || null, sec_name: d.secName, sec_date: d.secDate || null,
+      mgr_name: d.mgrName, mgr_date: d.mgrDate || null,
+      created_at: new Date().toISOString()
+    };
+    try {
+      const res = await fetch(`${SUPA_URL}/rest/v1/proposals`, {
+        method: 'POST',
+        headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify([payload])
+      });
+      if (!res.ok) throw new Error(await res.text());
+      _toast('✅ Saved to database');
+    } catch (e) {
+      _toast('❌ Save failed — ' + e.message, true);
+    }
+  }
+
+  // ── Export as Word (.doc) ─────────────────────────────────────────────
+  function _exportWord() {
+    const form = document.getElementById('proposalForm').cloneNode(true);
+    form.querySelectorAll('select').forEach(s => {
+      [...s.options].forEach(o => o.toggleAttribute('selected', o.selected));
+    });
+    form.querySelectorAll('input[type="date"]').forEach(i => i.setAttribute('value', i.value));
+    form.querySelectorAll('input[type="checkbox"],input[type="radio"]').forEach(i => i.toggleAttribute('checked', i.checked));
+    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+      <head><meta charset="utf-8"><title>Proposal</title></head>
+      <body>${form.innerHTML}</body></html>`;
+    const blob = new Blob(['﻿', html], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Proposal_${d.txNo || 'form'}.doc`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   // ── Click-to-copy helpers ───────────────────────────────────────────
