@@ -47,7 +47,7 @@
     cableSize:'',
     opt1:'', opt2:'',
     reason:'', risk:'', gisImage:null,
-    freeSpare:'', assetType:'Transformer', assetUnit:'',
+    freeSpare:'', assetTypes:['Transformer'], assetUnit:'',
     recommendation:'',
     engName:'', engDate:'', secName:'', secDate:'', mgrName:'', mgrDate:''
   };
@@ -72,10 +72,16 @@
     return String(Math.round((Number(cur) / rated) * 100));
   }
 
+  function _toggleAsset(name) {
+    const i = d.assetTypes.indexOf(name);
+    if (i > -1) d.assetTypes.splice(i, 1); else d.assetTypes.push(name);
+  }
+
   function assetRow(name) {
     const unit = name === 'Transformer' && d.cap ? (d.cap + 'KVA') : '';
+    const checked = d.assetTypes.includes(name);
     return `<tr>
-      <td style="${S.val};width:29%;padding:5px 10px;font-size:11px"><label style="cursor:pointer;display:flex;align-items:center;gap:8px"><input type="radio" name="assetType" ${d.assetType===name?'checked':''} onclick="d.assetType='${name}'"> ${name}</label></td>
+      <td style="${S.val};width:29%;padding:5px 10px;font-size:11px"><label style="cursor:pointer;display:flex;align-items:center;gap:8px"><input type="checkbox" ${checked?'checked':''} onclick="_toggleAsset('${name}')"> ${name}</label></td>
       <td style="${S.val};width:29%;padding:5px 10px;font-size:11px" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${unit}</td>
     </tr>`;
   }
