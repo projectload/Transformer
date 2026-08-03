@@ -13,6 +13,7 @@
 
 <div class="tip">💡 Click any value cell to copy it, then paste it wherever you need.</div>
 
+<div id="roundSelWrap" style="max-width:920px;margin:0 auto"></div>
 <div id="proposalForm" style="max-width:920px;margin:0 auto 1.5rem"></div>
 
 <script>
@@ -44,6 +45,26 @@
     cableSize:'',
     opt1:'', opt2:''
   };
+
+  // ── Prefill from URL query params (e.g. ?station=...&txNo=...&cap=...&txPct=...) ─
+  const _qs = new URLSearchParams(location.search);
+  ['station','txNo','cap','txPct','fPct'].forEach(k => {
+    const v = _qs.get(k);
+    if (v) d[k] = v;
+  });
+
+  // ── Prefill from the app (sessionStorage payload: station/txNo/cap + per-round readings) ─
+  let _payload = null;
+  try {
+    const raw = sessionStorage.getItem('proposalData');
+    if (raw) _payload = JSON.parse(raw);
+  } catch (e) {}
+
+  function _pct(cap, cur) {
+    const rated = cap ? (Number(cap) * 1000) / (Math.sqrt(3) * 415) : 0;
+    if (!rated || !cur) return '';
+    return String(Math.round((Number(cur) / rated) * 100));
+  }
 
   function reportFormHtml(d) {
     return `<div style="${S.hdr}">PROJECT DETAILS</div>
@@ -80,8 +101,13 @@
       <td style="${S.grp};width:50%">Feeder Load &nbsp; <span style="display:inline-block;min-width:42px;background:#e7ecf7;padding:2px 8px;border-radius:3px;cursor:pointer" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.fPct}</span> &nbsp; %</td>
     </tr>
   </table>
-  <table style="${S.tbl}">
-    <tr>${lbl('Main cable/conductor size')}${val(d.cableSize)}${lbl('Connection point from the TX to the affected customer (m)')}${val('')}</tr>
+  <table style="${S.tbl};table-layout:fixed">
+    <tr>
+      <td style="${S.lbl};width:30%;font-size:10.5px">Main cable/conductor size</td>
+      <td style="${S.val};width:20%;font-size:10.5px" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.cableSize||''}</td>
+      <td style="${S.lbl};width:30%;font-size:10.5px">Connection point from the TX to the affected customer (m)</td>
+      <td style="${S.val};width:20%;font-size:10.5px" contenteditable="true" onclick="_copyCell(this)" title="${tip}"></td>
+    </tr>
   </table>
   <div style="${S.hdr}">PROJECT DESCRIPTION OPTION</div>
   <table style="${S.tbl}">
@@ -90,7 +116,41 @@
   </table>`;
   }
 
-  document.getElementById('proposalForm').innerHTML = reportFormHtml(d);
+  // ── Round selector + render ──────────────────────────────────────────
+  function renderRound(i) {
+    if (!_payload || !_payload.rounds || !_payload.rounds[i]) return;
+    Object.assign(d, _payload.rounds[i]);
+    d.station = _payload.station || d.station;
+    d.txNo = _payload.txNo || d.txNo;
+    d.cap = _payload.cap || d.cap;
+    d.txPct = _pct(d.cap, Math.max(Number(d.tR)||0, Number(d.tY)||0, Number(d.tB)||0));
+    d.fPct = _pct(d.cap, Math.max(Number(d.fR)||0, Number(d.fY)||0, Number(d.fB)||0));
+    document.getElementById('proposalForm').innerHTML = reportFormHtml(d);
+  }
+
+  function selectRound(i) {
+    document.querySelectorAll('#roundSelWrap button').forEach((b, bi) => {
+      b.style.background = bi === i ? '#2563eb' : '#efefef';
+      b.style.color = bi === i ? '#fff' : '#111';
+    });
+    renderRound(i);
+  }
+
+  if (_payload && _payload.rounds && _payload.rounds.length) {
+    if (_payload.station) d.station = _payload.station;
+    if (_payload.txNo) d.txNo = _payload.txNo;
+    if (_payload.cap) d.cap = _payload.cap;
+    if (_payload.rounds.length > 1) {
+      document.getElementById('roundSelWrap').innerHTML =
+        '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.8rem">' +
+        _payload.rounds.map((r, i) =>
+          `<button onclick="selectRound(${i})" style="padding:0.4rem 0.9rem;border-radius:8px;border:1px solid #cbd5e1;background:${i===0?'#2563eb':'#efefef'};color:${i===0?'#fff':'#111'};cursor:pointer;font-size:0.85rem;font-weight:700">${r.label}</button>`
+        ).join('') + '</div>';
+    }
+    renderRound(0);
+  } else {
+    document.getElementById('proposalForm').innerHTML = reportFormHtml(d);
+  }
 
   // ── Click-to-copy helpers ───────────────────────────────────────────
   function _fallbackCopy(txt, done) {

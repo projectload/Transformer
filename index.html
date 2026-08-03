@@ -4661,6 +4661,61 @@ ${(()=>{
     document.body.style.overflow = 'hidden';
   }
 
+  function openProposal(uid, type, feederNum) {
+    const isAr = lang === 'ar';
+    const dir = isAr ? 'rtl' : 'ltr';
+    const rec = records.find(r => r.uid === uid);
+    if (!rec) return;
+    const capKVA = Number(rec.capacity) || 0;
+    const rounds = getAllRounds(uid);
+    const roundsData = (rounds.length ? rounds : [{ volt: {}, feeders: [], voltSavedAt: null }]).map((rd, i) => {
+      const fds = (rd.feeders || []).filter(hasData);
+      const sum = k => fds.reduce((s, f) => s + (parseFloat(f[k]) || 0), 0);
+      const round1 = n => n ? String(Math.round(n * 10) / 10) : '';
+      let fR = '', fY = '', fB = '', fN = '';
+      if (type === 'cb' && feederNum != null) {
+        const f = fds.find(x => String(x.num) === String(feederNum));
+        if (f) { fR = f.iL1 || ''; fY = f.iL2 || ''; fB = f.iL3 || ''; fN = f.iN || ''; }
+      }
+      const v = rd.volt || {};
+      const dateLabel = rd.voltSavedAt ? formatDateTimeShort(rd.voltSavedAt) : '';
+      return {
+        label: (isAr ? 'جولة ' : 'Round ') + (i + 1) + (dateLabel ? ' — ' + dateLabel : ''),
+        vRN: v.vL1N || '', vYN: v.vL2N || '', vBN: v.vL3N || '',
+        vRY: v.vL1L2 || '', vRB: v.vL1L3 || '', vYB: v.vL2L3 || '',
+        tR: round1(sum('iL1')), tY: round1(sum('iL2')), tB: round1(sum('iL3')), tN: round1(sum('iN')),
+        fR, fY, fB, fN
+      };
+    });
+    const payload = { station: rec.station || '', txNo: rec.id || '', cap: capKVA || '', rounds: roundsData };
+    try { sessionStorage.setItem('proposalData', JSON.stringify(payload)); } catch (e) {}
+    let ov = document.getElementById('proposalOverlay');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.id = 'proposalOverlay';
+      ov.style.cssText = 'position:fixed;inset:0;z-index:10000;background:#fff;display:none;flex-direction:column';
+      document.body.appendChild(ov);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && ov.style.display !== 'none') closeProposalOverlay();
+      });
+    }
+    const btnStyle = "flex:0 0 auto;white-space:nowrap;padding:0.5rem 0.9rem;border-radius:8px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.08);color:#fff;font-family:'Cairo',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer";
+    ov.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding:0.6rem 0.8rem;background:#111827;color:#fff;direction:${dir};flex:0 0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.25)">
+        <button onclick="closeProposalOverlay()" style="${btnStyle};display:flex;align-items:center;gap:0.4rem">↩ ${isAr?'رجوع':'Back'}</button>
+        <span style="flex:1 1 auto;min-width:0;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Cairo',sans-serif;font-weight:700;font-size:0.9rem">📝 ${isAr?'مقترح':'Proposal'}</span>
+        <span style="flex:0 0 auto;width:1px"></span>
+      </div>
+      <iframe id="proposalFrame" style="flex:1 1 auto;width:100%;border:none;background:#fff"></iframe>`;
+    ov.querySelector('#proposalFrame').src = encodeURI('مقترح.html') + '?t=' + Date.now();
+    ov.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+  function closeProposalOverlay() {
+    const ov = document.getElementById('proposalOverlay');
+    if (ov) ov.style.display = 'none';
+  }
+
   var _returnToAlerts = false;
   function openLocFromAlerts(uid) {
     const ov = document.getElementById('reportOverlay');
@@ -6080,12 +6135,12 @@ ${(()=>{
 
     const TX = tx.map(a => ({
       uid: a.rec.uid, id: a.rec.id, team: a.rec.team || '', station: stationOf(a.rec), hv: hvOf(a.rec),
-      load: `${(a.cap*a.pct/100).toFixed(1)} / ${a.cap.toLocaleString()} KVA`, pct: Math.round(a.pct),
+      load: `${(a.cap*a.pct/100).toFixed(1)} / ${a.cap.toLocaleString()} KVA`, pct: Math.round(a.pct), cap: a.cap,
       lat: a.rec.lat || null, lng: a.rec.lng || null
     }));
     const CB = cables.map(a => ({
       uid: a.rec.uid, id: a.rec.id, team: a.rec.team || '', station: stationOf(a.rec), hv: hvOf(a.rec),
-      feeder: `${isAr?'ف':'F'}${a.feederNum||'?'}`,
+      feeder: `${isAr?'ف':'F'}${a.feederNum||'?'}`, feederNum: a.feederNum,
       cur: `${a.name?a.name+' mm² · ':''}${a.maxI.toFixed(1)} / ${a.ampacity} A`, pct: Math.round(a.pct),
       lat: a.rec.lat || null, lng: a.rec.lng || null
     }));
@@ -6329,6 +6384,11 @@ ${(()=>{
       if(navigator.share){navigator.share({title:'🔧 Tx:'+a.id,text:text}).catch(function(){});}
       else{navigator.clipboard.writeText(text).then(function(){alert(isAr?'✅ تم النسخ!':'✅ Copied!');});}
     }
+    function proposalOne(idx, type){
+      var a=(type==='tx'?txf:cbf)[idx];
+      if(!a) return;
+      parent.openProposal(a.uid, type, type==='cb'?a.feederNum:null);
+    }
     function render(){
       var t=tval(),s=stSel.value,h=fdSel.value;
       function flt(x){return (!t||x.team===t)&&(!s||x.station===s)&&(!h||x.hv===h);}
@@ -6336,10 +6396,10 @@ ${(()=>{
       var COLS=ADM?7:6;
       document.getElementById('txCount').textContent=txf.length;
       document.getElementById('cbCount').textContent=cbf.length;
-      document.getElementById('txBody').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span></td>'+(ADM?'<td style="color:'+teamClr(a.team)+';font-weight:700">'+(a.team||'—')+'</td>':'')+'<td>'+a.station+(a.hv?' <span class="chip">'+a.hv+'</span>':'')+'</td><td>'+(a.hv||'—')+'</td><td class="muted">'+a.load+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'<button data-idx="'+i+'" data-type="tx" onclick="shareOne(+this.dataset.idx,this.dataset.type)" style="display:block;margin-top:5px;background:none;border:1px solid rgba(100,116,139,0.3);border-radius:6px;cursor:pointer;font-size:0.7rem;padding:0.1rem 0.4rem;color:#64748b;width:100%">📤</button></td></tr>';}).join('') : '<tr><td colspan="'+COLS+'" class="empty">'+L.none+'</td></tr>';
-      document.getElementById('cbBody').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span></td><td><span class="chip">'+a.feeder+'</span></td>'+(ADM?'<td style="color:'+teamClr(a.team)+';font-weight:700">'+(a.team||'—')+'</td>':'')+'<td>'+a.station+(a.hv?' <span class="chip">'+a.hv+'</span>':'')+'</td><td class="muted">'+a.cur+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'<button data-idx="'+i+'" data-type="cb" onclick="shareOne(+this.dataset.idx,this.dataset.type)" style="display:block;margin-top:5px;background:none;border:1px solid rgba(100,116,139,0.3);border-radius:6px;cursor:pointer;font-size:0.7rem;padding:0.1rem 0.4rem;color:#64748b;width:100%">📤</button></td></tr>';}).join('') : '<tr><td colspan="'+COLS+'" class="empty">'+L.none+'</td></tr>';
-      document.getElementById('txCards').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<div class="item" style="border-inline-start:4px solid '+c+'"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span>'+(a.station?' <span class="sub">'+a.station+(a.hv?' · '+a.hv:'')+'</span>':'')+'</div><div class="meta">'+(ADM&&a.team?'<span style="color:'+teamClr(a.team)+';font-weight:700">'+a.team+'</span> · ':'')+a.load+'</div></div><div class="p" style="color:'+c+'">'+a.pct+'%<div class="pbar"><i style="width:'+Math.min(100,a.pct)+'%;background:'+c+'"></i></div></div><button data-idx="'+i+'" data-type="tx" onclick="shareOne(+this.dataset.idx,this.dataset.type)" style="flex:0 0 auto;background:none;border:1px solid rgba(100,116,139,0.25);border-radius:8px;cursor:pointer;font-size:0.8rem;padding:0.3rem 0.45rem;color:#64748b;line-height:1;align-self:center">📤</button></div>';}).join('') : '<div class="empty">'+L.none+'</div>';
-      document.getElementById('cbCards').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<div class="item" style="border-inline-start:4px solid '+c+'"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span> <span class="chip">'+a.feeder+'</span>'+(a.station?' <span class="sub">'+a.station+(a.hv?' · '+a.hv:'')+'</span>':'')+'</div><div class="meta">'+(ADM&&a.team?'<span style="color:'+teamClr(a.team)+';font-weight:700">'+a.team+'</span> · ':'')+a.cur+'</div></div><div class="p" style="color:'+c+'">'+a.pct+'%<div class="pbar"><i style="width:'+Math.min(100,a.pct)+'%;background:'+c+'"></i></div></div><button data-idx="'+i+'" data-type="cb" onclick="shareOne(+this.dataset.idx,this.dataset.type)" style="flex:0 0 auto;background:none;border:1px solid rgba(100,116,139,0.25);border-radius:8px;cursor:pointer;font-size:0.8rem;padding:0.3rem 0.45rem;color:#64748b;line-height:1;align-self:center">📤</button></div>';}).join('') : '<div class="empty">'+L.none+'</div>';
+      document.getElementById('txBody').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span></td>'+(ADM?'<td style="color:'+teamClr(a.team)+';font-weight:700">'+(a.team||'—')+'</td>':'')+'<td>'+a.station+(a.hv?' <span class="chip">'+a.hv+'</span>':'')+'</td><td>'+(a.hv||'—')+'</td><td class="muted">'+a.load+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'<div style="display:flex;gap:0.3rem;margin-top:5px;justify-content:center"><button data-idx="'+i+'" data-type="tx" onclick="shareOne(+this.dataset.idx,this.dataset.type)" style="width:26px;height:26px;background:none;border:1px solid rgba(100,116,139,0.3);border-radius:6px;cursor:pointer;font-size:0.75rem;padding:0;color:#64748b">📤</button><button data-idx="'+i+'" data-type="tx" onclick="proposalOne(+this.dataset.idx,this.dataset.type)" style="width:26px;height:26px;background:none;border:1px solid rgba(100,116,139,0.3);border-radius:6px;cursor:pointer;font-size:0.75rem;padding:0;color:#64748b">📝</button></div></td></tr>';}).join('') : '<tr><td colspan="'+COLS+'" class="empty">'+L.none+'</td></tr>';
+      document.getElementById('cbBody').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<tr><td>'+(i+1)+'</td><td class="bold"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span></td><td><span class="chip">'+a.feeder+'</span></td>'+(ADM?'<td style="color:'+teamClr(a.team)+';font-weight:700">'+(a.team||'—')+'</td>':'')+'<td>'+a.station+(a.hv?' <span class="chip">'+a.hv+'</span>':'')+'</td><td class="muted">'+a.cur+'</td><td class="pct" style="color:'+c+'">'+a.pct+'%'+bar(a.pct)+'<div style="display:flex;gap:0.3rem;margin-top:5px;justify-content:center"><button data-idx="'+i+'" data-type="cb" onclick="shareOne(+this.dataset.idx,this.dataset.type)" style="width:26px;height:26px;background:none;border:1px solid rgba(100,116,139,0.3);border-radius:6px;cursor:pointer;font-size:0.75rem;padding:0;color:#64748b">📤</button><button data-idx="'+i+'" data-type="cb" onclick="proposalOne(+this.dataset.idx,this.dataset.type)" style="width:26px;height:26px;background:none;border:1px solid rgba(100,116,139,0.3);border-radius:6px;cursor:pointer;font-size:0.75rem;padding:0;color:#64748b">📝</button></div></td></tr>';}).join('') : '<tr><td colspan="'+COLS+'" class="empty">'+L.none+'</td></tr>';
+      document.getElementById('txCards').innerHTML = txf.length ? txf.map(function(a,i){var c=colorFor(a.pct);return '<div class="item" style="border-inline-start:4px solid '+c+'"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span>'+(a.station?' <span class="sub">'+a.station+(a.hv?' · '+a.hv:'')+'</span>':'')+'</div><div class="meta">'+(ADM&&a.team?'<span style="color:'+teamClr(a.team)+';font-weight:700">'+a.team+'</span> · ':'')+a.load+'</div></div><div class="p" style="color:'+c+'">'+a.pct+'%<div class="pbar"><i style="width:'+Math.min(100,a.pct)+'%;background:'+c+'"></i></div></div><div style="flex:0 0 auto;display:flex;gap:0.3rem;align-self:center"><button data-idx="'+i+'" data-type="tx" onclick="shareOne(+this.dataset.idx,this.dataset.type)" style="width:28px;height:28px;background:none;border:1px solid rgba(100,116,139,0.25);border-radius:8px;cursor:pointer;font-size:0.8rem;padding:0;color:#64748b;line-height:1">📤</button><button data-idx="'+i+'" data-type="tx" onclick="proposalOne(+this.dataset.idx,this.dataset.type)" style="width:28px;height:28px;background:none;border:1px solid rgba(100,116,139,0.25);border-radius:8px;cursor:pointer;font-size:0.8rem;padding:0;color:#64748b;line-height:1">📝</button></div></div>';}).join('') : '<div class="empty">'+L.none+'</div>';
+      document.getElementById('cbCards').innerHTML = cbf.length ? cbf.map(function(a,i){var c=colorFor(a.pct);return '<div class="item" style="border-inline-start:4px solid '+c+'"><span class="ix">'+(i+1)+'</span><div class="main"><div class="id"><span style="cursor:pointer;text-decoration:underline" data-uid="'+a.uid+'" onclick="goTo(this.dataset.uid)">(Tx:'+a.id+')</span> <span class="chip">'+a.feeder+'</span>'+(a.station?' <span class="sub">'+a.station+(a.hv?' · '+a.hv:'')+'</span>':'')+'</div><div class="meta">'+(ADM&&a.team?'<span style="color:'+teamClr(a.team)+';font-weight:700">'+a.team+'</span> · ':'')+a.cur+'</div></div><div class="p" style="color:'+c+'">'+a.pct+'%<div class="pbar"><i style="width:'+Math.min(100,a.pct)+'%;background:'+c+'"></i></div></div><div style="flex:0 0 auto;display:flex;gap:0.3rem;align-self:center"><button data-idx="'+i+'" data-type="cb" onclick="shareOne(+this.dataset.idx,this.dataset.type)" style="width:28px;height:28px;background:none;border:1px solid rgba(100,116,139,0.25);border-radius:8px;cursor:pointer;font-size:0.8rem;padding:0;color:#64748b;line-height:1">📤</button><button data-idx="'+i+'" data-type="cb" onclick="proposalOne(+this.dataset.idx,this.dataset.type)" style="width:28px;height:28px;background:none;border:1px solid rgba(100,116,139,0.25);border-radius:8px;cursor:pointer;font-size:0.8rem;padding:0;color:#64748b;line-height:1">📝</button></div></div>';}).join('') : '<div class="empty">'+L.none+'</div>';
     }
     if(teamSel){fill(teamSel,uniq(ALL.map(function(x){return x.team;})),L.team);teamSel.onchange=rebuild;}
     stSel.onchange=rebuild;fdSel.onchange=render;
