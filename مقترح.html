@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proposal Form</title>
+<style>
+  body { font-family: Tahoma, Arial, sans-serif; background:#f4f6fb; margin:0; padding:24px; }
+  .tip { font-size:0.8rem; color:#666; margin-bottom:0.6rem; }
+</style>
+</head>
+<body>
+
+<div class="tip">💡 Click any value cell to copy it, then paste it wherever you need.</div>
+
+<div id="proposalForm" style="max-width:920px;margin:0 auto 1.5rem"></div>
+
+<script>
+  // ── Style tokens (match the original report look) ──────────────────
+  const S = {
+    hdr:  'background:#e8333a;color:#fff;font-weight:800;padding:8px 12px;font-size:13px;margin-top:14px;border-radius:3px',
+    tbl:  'width:100%;border-collapse:separate;border-spacing:4px;margin-top:4px',
+    lbl:  'background:#efefef;color:#111;font-weight:700;font-size:11.5px;padding:9px 10px;width:1%',
+    val:  'background:#e7ecf7;color:#111;padding:9px 10px;font-size:11.5px;cursor:pointer',
+    colh: 'background:#efefef;color:#111;font-weight:700;text-align:center;font-size:11px;padding:7px',
+    cval: 'background:#e7ecf7;color:#111;text-align:center;padding:9px;font-size:11.5px;cursor:pointer;min-width:42px',
+    grp:  'background:#efefef;color:#111;font-weight:700;text-align:center;font-size:11.5px;padding:7px',
+  };
+
+  const tip  = 'click to copy';
+  const lbl  = x        => `<td style="${S.lbl}">${x}</td>`;
+  const colh = x        => `<td style="${S.colh}">${x}</td>`;
+  // contenteditable="true" so the cell can be filled in directly on this standalone page
+  const val  = (x, cs)  => `<td style="${S.val}"${cs ? ` colspan="${cs}"` : ''} contenteditable="true" onclick="_copyCell(this)" title="${tip}">${x || ''}</td>`;
+  const cval = x         => `<td style="${S.cval}" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${x || ''}</td>`;
+
+  // ── Fill this object with your data (or leave blank / edit inline) ─
+  const d = {
+    station: '',                 // Area
+    txNo: '', cap: '',
+    vRN:'', vYN:'', vBN:'', vRY:'', vRB:'', vYB:'',
+    tR:'', tY:'', tB:'', tN:'', txPct:'',
+    fR:'', fY:'', fB:'', fN:'', fPct:'',
+    cableSize:'',
+    opt1:'', opt2:''
+  };
+
+  function reportFormHtml(d) {
+    return `<div style="${S.hdr}">PROJECT DETAILS</div>
+  <table style="${S.tbl}">
+    <tr>${lbl('REF. NO:')}${val('',5)}</tr>
+    <tr>${lbl('Project Description')}${val('',5)}</tr>
+    <tr>${lbl('Area')}${val(d.station,5)}</tr>
+    <tr>${lbl('District')}${val('',5)}</tr>
+    <tr>${lbl('Requesting Department')}${val('',5)}</tr>
+  </table>
+  <div style="${S.hdr}">TRANSFORMER DETAILS</div>
+  <table style="${S.tbl}">
+    <tr>${lbl('TX. NO.')}${cval(d.txNo)}${lbl('Capacity')}${cval(d.cap)}${lbl('NO of Complaints')}${cval('')}</tr>
+  </table>
+  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+  <table style="${S.tbl};min-width:560px">
+    <tr>
+      <td style="${S.lbl}" rowspan="2">Voltage Reading</td>
+      ${colh('R-N')}${colh('Y-N')}${colh('B-N')}${colh('R-Y')}${colh('R-B')}${colh('Y-B')}
+    </tr>
+    <tr>${cval(d.vRN)}${cval(d.vYN)}${cval(d.vBN)}${cval(d.vRY)}${cval(d.vRB)}${cval(d.vYB)}</tr>
+  </table>
+  </div>
+  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+  <table style="${S.tbl};min-width:560px">
+    <tr><td style="${S.grp}" colspan="4">TX. Load</td><td style="${S.grp}" colspan="4">Feeder Load</td></tr>
+    <tr>${colh('R')}${colh('Y')}${colh('B')}${colh('N')}${colh('R')}${colh('Y')}${colh('B')}${colh('N')}</tr>
+    <tr>${cval(d.tR)}${cval(d.tY)}${cval(d.tB)}${cval(d.tN)}${cval(d.fR)}${cval(d.fY)}${cval(d.fB)}${cval(d.fN)}</tr>
+  </table>
+  </div>
+  <table style="${S.tbl}">
+    <tr>
+      <td style="${S.grp};width:50%">TX. Load &nbsp; <span style="display:inline-block;min-width:42px;background:#e7ecf7;padding:2px 8px;border-radius:3px;cursor:pointer" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.txPct}</span> &nbsp; %</td>
+      <td style="${S.grp};width:50%">Feeder Load &nbsp; <span style="display:inline-block;min-width:42px;background:#e7ecf7;padding:2px 8px;border-radius:3px;cursor:pointer" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.fPct}</span> &nbsp; %</td>
+    </tr>
+  </table>
+  <table style="${S.tbl}">
+    <tr>${lbl('Main cable/conductor size')}${val(d.cableSize)}${lbl('Connection point from the TX to the affected customer (m)')}${val('')}</tr>
+  </table>
+  <div style="${S.hdr}">PROJECT DESCRIPTION OPTION</div>
+  <table style="${S.tbl}">
+    <tr>${lbl('Option 1')}${val(d.opt1)}${lbl('Cost estimated')}${val('')}</tr>
+    <tr>${lbl('Option 2')}${val(d.opt2)}${lbl('Cost estimated')}${val('')}</tr>
+  </table>`;
+  }
+
+  document.getElementById('proposalForm').innerHTML = reportFormHtml(d);
+
+  // ── Click-to-copy helpers ───────────────────────────────────────────
+  function _fallbackCopy(txt, done) {
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try { document.execCommand('copy'); if (done) done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  function _copyText(txt) {
+    if (!txt) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).catch(() => _fallbackCopy(txt));
+    } else _fallbackCopy(txt);
+  }
+  function _copyCell(el) {
+    const t = (el.textContent || '').trim();
+    if (t) _copyText(t);
+  }
+</script>
+</body>
+</html>
