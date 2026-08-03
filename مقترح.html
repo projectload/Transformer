@@ -7,6 +7,8 @@
 <style>
   body { font-family: Tahoma, Arial, sans-serif; background:#f4f6fb; margin:0; padding:24px; }
   .tip { font-size:0.8rem; color:#666; margin-bottom:0.6rem; }
+  .page-break { margin-top:34px; padding-top:26px; border-top:8px solid #d8dce3; }
+  @media print { .page-break { break-before:page; page-break-before:always; border-top:none; margin-top:0; padding-top:0; } }
 </style>
 </head>
 <body>
@@ -38,12 +40,16 @@
   // ── Fill this object with your data (or leave blank / edit inline) ─
   const d = {
     station: '',                 // Area
-    txNo: '', cap: '',
+    txNo: '', cap: '', lat: null, lng: null,
     vRN:'', vYN:'', vBN:'', vRY:'', vRB:'', vYB:'',
     tR:'', tY:'', tB:'', tN:'', txPct:'',
     fR:'', fY:'', fB:'', fN:'', fPct:'',
     cableSize:'',
-    opt1:'', opt2:''
+    opt1:'', opt2:'',
+    reason:'', risk:'', gisImage:null,
+    freeSpare:'', assetType:'Transformer', assetUnit:'',
+    recommendation:'',
+    engName:'', engDate:'', secName:'', secDate:'', mgrName:'', mgrDate:''
   };
 
   // ── Prefill from URL query params (e.g. ?station=...&txNo=...&cap=...&txPct=...) ─
@@ -66,7 +72,28 @@
     return String(Math.round((Number(cur) / rated) * 100));
   }
 
+  function assetRow(name) {
+    const unit = name === 'Transformer' && d.cap ? (d.cap + 'KVA') : '';
+    return `<tr>
+      <td style="${S.val}"><label style="cursor:pointer;display:flex;align-items:center;gap:8px"><input type="radio" name="assetType" ${d.assetType===name?'checked':''} onclick="d.assetType='${name}'"> ${name}</label></td>
+      <td style="${S.val}" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${unit}</td>
+    </tr>`;
+  }
+
   function reportFormHtml(d) {
+    const assetRows = ['Transformer','RMU','HFU','OLU','FP','MFP','SMFP','Cable'].map(assetRow).join('');
+    const mapBlock = `
+      <label style="display:block;position:relative;width:100%;height:260px;border:1px dashed #ccc;border-radius:6px;margin-top:6px;background:#fafafa;overflow:hidden;cursor:pointer">
+        ${d.gisImage
+          ? `<img src="${d.gisImage}" style="width:100%;height:100%;object-fit:cover;display:block">`
+          : `<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#94a3b8;gap:6px">
+               <div style="font-size:28px">📷</div>
+               <div style="font-size:0.85rem;font-weight:700">Upload GIS Image</div>
+             </div>`}
+        ${d.gisImage ? `<div style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.6);color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700">📁 Replace Image</div>` : ''}
+        ${d.gisImage ? `<button type="button" onclick="event.preventDefault();event.stopPropagation();_removeGisImage()" title="Remove image" style="position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(220,38,38,0.9);color:#fff;font-size:14px;font-weight:900;cursor:pointer;line-height:1">✕</button>` : ''}
+        <input type="file" accept="image/*" onchange="_onGisUpload(this)" style="display:none">
+      </label>`;
     return `<div style="${S.hdr}">PROJECT DETAILS</div>
   <table style="${S.tbl}">
     <tr>${lbl('REF. NO:')}${val('',5)}</tr>
@@ -113,7 +140,59 @@
   <table style="${S.tbl}">
     <tr>${lbl('Option 1')}${val(d.opt1)}${lbl('Cost estimated')}${val('')}</tr>
     <tr>${lbl('Option 2')}${val(d.opt2)}${lbl('Cost estimated')}${val('')}</tr>
-  </table>`;
+  </table>
+  <div style="${S.hdr}">PROJECT REASON</div>
+  <table style="${S.tbl}"><tr><td style="${S.val}" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.reason}</td></tr></table>
+  <div style="${S.hdr}">RISK OF NOT EXECUTING PROPOSAL</div>
+  <table style="${S.tbl}"><tr><td style="${S.val}" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.risk}</td></tr></table>
+  <hr style="margin:18px 0 10px;border:none;border-top:1px solid #ddd">
+  <div style="display:flex;align-items:center;gap:12px;font-size:10px;color:#333;flex-wrap:wrap">
+    <img src="nama.png" style="height:34px" alt="nama">
+    <div>
+      <div style="color:#e8333a;font-weight:700">www.distribution.nama.om &nbsp;|&nbsp; info@distribution.nama.om &nbsp;|&nbsp; +968 24588600</div>
+      <div>Nama Electricity Distribution Company SAOC &nbsp;|&nbsp; PO Box 1721, PC 111, Sultanate of Oman &nbsp;|&nbsp; CR 1712390</div>
+    </div>
+  </div>
+
+  <div class="page-break">
+    <div style="display:flex;align-items:stretch;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.1)">
+      <img src="nama.png" style="height:64px;padding:10px 22px;background:#fff">
+      <div style="flex:1;background:#e8333a;color:#fff;font-weight:800;font-size:17px;padding:14px 20px;display:flex;align-items:center;justify-content:center;text-align:center">ENHANCEMENT PRE-INVESTMENT PROJECT APPRAISAL</div>
+    </div>
+
+    <div style="${S.hdr};margin-top:18px">NETWORK OVERVIEW (GIS)</div>
+    ${mapBlock}
+
+    <table style="${S.tbl}">
+      <tr>
+        <td style="${S.lbl};width:40%">Free Spare Available for New Proposed FD</td>
+        <td style="${S.val}" colspan="3">
+          <label style="margin-inline-end:24px;cursor:pointer"><input type="radio" name="freeSpare" ${d.freeSpare==='yes'?'checked':''} onclick="d.freeSpare='yes'"> Yes</label>
+          <label style="cursor:pointer"><input type="radio" name="freeSpare" ${d.freeSpare==='no'?'checked':''} onclick="d.freeSpare='no'"> No</label>
+        </td>
+      </tr>
+    </table>
+
+    <table style="${S.tbl}">
+      <tr>
+        <td style="${S.lbl}" rowspan="9">List of additional required Asset</td>
+        <td style="${S.grp}">Asset</td>
+        <td style="${S.grp}">Unit (No./meters)</td>
+      </tr>
+      ${assetRows}
+    </table>
+
+    <div style="${S.hdr}">RECOMMENDATIONS</div>
+    <table style="${S.tbl}"><tr><td style="${S.val}" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.recommendation}</td></tr></table>
+
+    <div style="${S.hdr}">AUTHORIZATION APPROVAL</div>
+    <table style="${S.tbl}">
+      <tr>${colh('Position')}${colh('Name')}${colh('Signature')}${colh('Date')}</tr>
+      <tr>${lbl('Operation Engineer')}${val(d.engName)}<td style="background:#fff;border:1px solid #ccc"></td>${val(d.engDate)}</tr>
+      <tr>${lbl('Operation Section Head')}${val(d.secName)}<td style="background:#fff;border:1px solid #ccc"></td>${val(d.secDate)}</tr>
+      <tr>${lbl('Operation Manger')}${val(d.mgrName)}<td style="background:#fff;border:1px solid #ccc"></td>${val(d.mgrDate)}</tr>
+    </table>
+  </div>`;
   }
 
   // ── Round selector + render ──────────────────────────────────────────
@@ -123,6 +202,8 @@
     d.station = _payload.station || d.station;
     d.txNo = _payload.txNo || d.txNo;
     d.cap = _payload.cap || d.cap;
+    d.lat = _payload.lat || d.lat;
+    d.lng = _payload.lng || d.lng;
     d.txPct = _pct(d.cap, Math.max(Number(d.tR)||0, Number(d.tY)||0, Number(d.tB)||0));
     d.fPct = _pct(d.cap, Math.max(Number(d.fR)||0, Number(d.fY)||0, Number(d.fB)||0));
     document.getElementById('proposalForm').innerHTML = reportFormHtml(d);
@@ -150,6 +231,21 @@
     renderRound(0);
   } else {
     document.getElementById('proposalForm').innerHTML = reportFormHtml(d);
+  }
+
+  function _removeGisImage() {
+    d.gisImage = null;
+    document.getElementById('proposalForm').innerHTML = reportFormHtml(d);
+  }
+  function _onGisUpload(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      d.gisImage = reader.result;
+      document.getElementById('proposalForm').innerHTML = reportFormHtml(d);
+    };
+    reader.readAsDataURL(file);
   }
 
   // ── Click-to-copy helpers ───────────────────────────────────────────

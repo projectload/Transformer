@@ -4687,7 +4687,7 @@ ${(()=>{
         fR, fY, fB, fN
       };
     });
-    const payload = { station: rec.station || '', txNo: rec.id || '', cap: capKVA || '', rounds: roundsData };
+    const payload = { station: rec.station || '', txNo: rec.id || '', cap: capKVA || '', lat: rec.lat || null, lng: rec.lng || null, rounds: roundsData };
     try { sessionStorage.setItem('proposalData', JSON.stringify(payload)); } catch (e) {}
     let ov = document.getElementById('proposalOverlay');
     if (!ov) {
