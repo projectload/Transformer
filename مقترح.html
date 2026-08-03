@@ -5,10 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Proposal Form</title>
 <style>
-  body { font-family: Tahoma, Arial, sans-serif; background:#f4f6fb; margin:0; padding:24px; }
-  .tip { font-size:0.8rem; color:#666; margin-bottom:0.6rem; }
-  .page-break { margin-top:34px; padding-top:26px; border-top:8px solid #d8dce3; }
-  @media print { .page-break { break-before:page; page-break-before:always; border-top:none; margin-top:0; padding-top:0; } .toolbar { display:none!important; } }
+  body { font-family: Tahoma, Arial, sans-serif; background:#eef0f4; margin:0; padding:24px; }
+  .tip { font-size:0.8rem; color:#666; margin-bottom:0.6rem; max-width:210mm; margin-inline:auto }
+  .a4-page { width:210mm; min-height:297mm; margin:0 auto 22px; background:#fff; padding:14mm; box-sizing:border-box; box-shadow:0 2px 14px rgba(0,0,0,0.18); }
+  .page-break { break-before:page; }
+  @media print {
+    @page { size:A4; margin:0; }
+    body { background:#fff; padding:0 }
+    .a4-page { width:auto; min-height:auto; margin:0; padding:14mm; box-shadow:none; break-after:page }
+    .page-break { break-before:page; page-break-before:always }
+    .toolbar, .tip { display:none!important; }
+  }
   .toolbar { max-width:920px; margin:0 auto 1rem; display:flex; gap:0.5rem; flex-wrap:wrap }
   .toolbar button { display:flex; align-items:center; gap:6px; padding:0.5rem 1rem; border-radius:8px; border:1px solid #cbd5e1; background:#fff; color:#111; font-size:0.85rem; font-weight:700; cursor:pointer; font-family:inherit }
   .toolbar button:hover { border-color:#94a3b8 }
@@ -138,7 +145,8 @@
         ${d.gisImage ? `<button type="button" onclick="event.preventDefault();event.stopPropagation();_removeGisImage()" title="Remove image" style="position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(220,38,38,0.9);color:#fff;font-size:14px;font-weight:900;cursor:pointer;line-height:1">✕</button>` : ''}
         <input type="file" accept="image/*" onchange="_onGisUpload(this)" style="display:none">
       </label>`;
-    return `<div style="display:flex;align-items:stretch;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.1)">
+    return `<div class="a4-page">
+  <div style="display:flex;align-items:stretch;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.1)">
     <img src="nama.png" style="height:64px;padding:10px 22px;background:#fff">
     <div style="flex:1;background:#e8333a;color:#fff;font-weight:800;font-size:17px;padding:14px 20px;display:flex;align-items:center;justify-content:center;text-align:center">ENHANCEMENT PRE-INVESTMENT PROJECT APPRAISAL</div>
   </div>
@@ -152,7 +160,7 @@
   </table>
   <div style="${S.hdr}">TRANSFORMER DETAILS</div>
   <table style="${S.tbl}">
-    <tr>${lbl('TX. NO.')}${cval(d.txNo,'txNo')}${lbl('Capacity')}${cval(d.cap,'cap')}${lbl('NO of Complaints')}${cval(d.complaints,'complaints')}</tr>
+    <tr>${lbl('TX. NO.','white-space:nowrap')}${cval(d.txNo,'txNo')}${lbl('Capacity','white-space:nowrap')}${cval(d.cap,'cap')}${lbl('NO of Complaints','white-space:nowrap')}${cval(d.complaints,'complaints')}</tr>
   </table>
   <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
   <table style="${S.tbl};min-width:560px">
@@ -186,23 +194,16 @@
   </table>
   <div style="${S.hdr}">PROJECT DESCRIPTION OPTION</div>
   <table style="${S.tbl}">
-    <tr>${lbl('Option 1')}${val(d.opt1,0,'opt1')}${lbl('Cost estimated')}${val(d.opt1Cost,0,'opt1Cost')}</tr>
-    <tr>${lbl('Option 2')}${val(d.opt2,0,'opt2')}${lbl('Cost estimated')}${val(d.opt2Cost,0,'opt2Cost')}</tr>
+    <tr>${lbl('Option 1','white-space:nowrap')}${val(d.opt1,0,'opt1')}${lbl('Cost estimated','white-space:nowrap')}${val(d.opt1Cost,0,'opt1Cost')}</tr>
+    <tr>${lbl('Option 2','white-space:nowrap')}${val(d.opt2,0,'opt2')}${lbl('Cost estimated','white-space:nowrap')}${val(d.opt2Cost,0,'opt2Cost')}</tr>
   </table>
   <div style="${S.hdr}">PROJECT REASON</div>
   <table style="${S.tbl}"><tr><td style="${S.val}" data-key="reason" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.reason}</td></tr></table>
   <div style="${S.hdr}">RISK OF NOT EXECUTING PROPOSAL</div>
   <table style="${S.tbl}"><tr><td style="${S.val}" data-key="risk" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.risk}</td></tr></table>
-  <hr style="margin:18px 0 10px;border:none;border-top:1px solid #ddd">
-  <div style="display:flex;align-items:center;gap:12px;font-size:10px;color:#333;flex-wrap:wrap">
-    <img src="nama.png" style="height:34px" alt="nama">
-    <div>
-      <div style="color:#e8333a;font-weight:700">www.distribution.nama.om &nbsp;|&nbsp; info@distribution.nama.om &nbsp;|&nbsp; +968 24588600</div>
-      <div>Nama Electricity Distribution Company SAOC &nbsp;|&nbsp; PO Box 1721, PC 111, Sultanate of Oman &nbsp;|&nbsp; CR 1712390</div>
-    </div>
   </div>
 
-  <div class="page-break">
+  <div class="a4-page page-break">
     <div style="display:flex;align-items:stretch;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.1)">
       <img src="nama.png" style="height:64px;padding:10px 22px;background:#fff">
       <div style="flex:1;background:#e8333a;color:#fff;font-weight:800;font-size:17px;padding:14px 20px;display:flex;align-items:center;justify-content:center;text-align:center">ENHANCEMENT PRE-INVESTMENT PROJECT APPRAISAL</div>
