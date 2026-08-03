@@ -75,8 +75,8 @@
   function assetRow(name) {
     const unit = name === 'Transformer' && d.cap ? (d.cap + 'KVA') : '';
     return `<tr>
-      <td style="${S.val}"><label style="cursor:pointer;display:flex;align-items:center;gap:8px"><input type="radio" name="assetType" ${d.assetType===name?'checked':''} onclick="d.assetType='${name}'"> ${name}</label></td>
-      <td style="${S.val}" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${unit}</td>
+      <td style="${S.val};width:29%;padding:5px 10px;font-size:11px"><label style="cursor:pointer;display:flex;align-items:center;gap:8px"><input type="radio" name="assetType" ${d.assetType===name?'checked':''} onclick="d.assetType='${name}'"> ${name}</label></td>
+      <td style="${S.val};width:29%;padding:5px 10px;font-size:11px" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${unit}</td>
     </tr>`;
   }
 
@@ -165,8 +165,8 @@
 
     <table style="${S.tbl}">
       <tr>
-        <td style="${S.lbl};width:40%">Free Spare Available for New Proposed FD</td>
-        <td style="${S.val}" colspan="3">
+        <td style="${S.lbl};width:42%;padding:6px 10px;font-size:11px">Free Spare Available for New Proposed FD</td>
+        <td style="${S.val};padding:6px 10px" colspan="3">
           <label style="margin-inline-end:24px;cursor:pointer"><input type="radio" name="freeSpare" ${d.freeSpare==='yes'?'checked':''} onclick="d.freeSpare='yes'"> Yes</label>
           <label style="cursor:pointer"><input type="radio" name="freeSpare" ${d.freeSpare==='no'?'checked':''} onclick="d.freeSpare='no'"> No</label>
         </td>
@@ -175,9 +175,9 @@
 
     <table style="${S.tbl}">
       <tr>
-        <td style="${S.lbl}" rowspan="9">List of additional required Asset</td>
-        <td style="${S.grp}">Asset</td>
-        <td style="${S.grp}">Unit (No./meters)</td>
+        <td style="${S.lbl};width:42%;padding:6px 10px;font-size:11px" rowspan="9">List of additional required Asset</td>
+        <td style="${S.grp};width:29%;padding:5px 10px;font-size:10.5px">Asset</td>
+        <td style="${S.grp};width:29%;padding:5px 10px;font-size:10.5px">Unit (No./meters)</td>
       </tr>
       ${assetRows}
     </table>
