@@ -202,7 +202,12 @@ printed, each `.a4-page` becomes its own physical A4 page.
 - Main cable/conductor size + Connection point (compact 2-column custom row: wide label,
   narrow input)
 - PROJECT DESCRIPTION OPTION (Option 1/2 + Cost estimated)
-- PROJECT REASON / RISK OF NOT EXECUTING PROPOSAL (free-text boxes)
+- PROJECT REASON — a `<select>` built from the `REASONS` array via the same `selCell`
+  helper (transformer overload >80%, LV feeder overload >80%, interrupted more than 2 times
+  in the last 3 months, interrupted feeder serving a special-need/critical customer, radial
+  feeders supplying a special-need/critical customer).
+- RISK OF NOT EXECUTING PROPOSAL — also a `selCell` `<select>`, from the `RISKS` array
+  ("Power interruption and System Instability", "TX Burn and System Instability").
 
 **Page 2** — same nama header, then:
 - NETWORK OVERVIEW (GIS) — **not** a live map; a fixed-size (100% × 260px) upload box.

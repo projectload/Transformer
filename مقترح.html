@@ -68,6 +68,19 @@
     'Upgrade TX. from 315 KVA To 1000 KVA',
     'Upgrade TX. from 500 KVA To 1000 KVA'
   ];
+  // أسباب المشروع الجاهزة (قائمة منسدلة)
+  const REASONS = [
+    'Overload of the transformer more than 80%',
+    'Overload of the LV Feeder more than 80%',
+    'Interrupted more than 2 times in the last 3 months',
+    'Interrupted for the feeder which feed a special need or a critical customer',
+    'Radial feeders supplying special need or a critical customer'
+  ];
+  // مخاطر عدم التنفيذ الجاهزة (قائمة منسدلة)
+  const RISKS = [
+    'Power interruption and System Instability',
+    'TX Burn and System Instability'
+  ];
   const lbl  = (x, extra)  => `<td style="${S.lbl}${extra ? ';'+extra : ''}">${x}</td>`;
   const colh = x        => `<td style="${S.colh}">${x}</td>`;
   // contenteditable="true" so the cell can be filled in directly on this standalone page
@@ -229,9 +242,9 @@
     <tr>${lbl('Option 2','white-space:nowrap')}${val(d.opt2,0,'opt2')}${lbl('Cost estimated','white-space:nowrap')}${val(d.opt2Cost,0,'opt2Cost')}</tr>
   </table>
   <div style="${S.hdr}">PROJECT REASON</div>
-  <table style="${S.tbl}"><tr><td style="${S.val}" data-key="reason" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.reason}</td></tr></table>
+  <table style="${S.tbl}"><tr>${selCell('reason', REASONS)}</tr></table>
   <div style="${S.hdr}">RISK OF NOT EXECUTING PROPOSAL</div>
-  <table style="${S.tbl}"><tr><td style="${S.val}" data-key="risk" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.risk}</td></tr></table>
+  <table style="${S.tbl}"><tr>${selCell('risk', RISKS)}</tr></table>
   </div>
 
   <div class="a4-page page-break">
