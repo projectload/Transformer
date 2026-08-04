@@ -57,6 +57,17 @@
     'According to the details above there are 2 options, the best option is option No.1 that will solve the issue',
     'According to the details above there are 2 options, the best option is option No.2 that will solve the issue'
   ];
+  // خيارات "Project Description" الجاهزة (قائمة منسدلة بدل الكتابة اليدوية)
+  const PROJ_DESCS = [
+    'Add New LT FD to share the load with exiting FD due to overload',
+    'Add New TX with LT FD due to voltage drop',
+    'Upgrade TX. from 100 KVA To 200 KVA',
+    'Upgrade TX. from 100 KVA To 315 KVA',
+    'Upgrade TX. from 200 KVA To 315 KVA',
+    'Upgrade TX. from 315 KVA To 500 KVA',
+    'Upgrade TX. from 315 KVA To 1000 KVA',
+    'Upgrade TX. from 500 KVA To 1000 KVA'
+  ];
   const lbl  = (x, extra)  => `<td style="${S.lbl}${extra ? ';'+extra : ''}">${x}</td>`;
   const colh = x        => `<td style="${S.colh}">${x}</td>`;
   // contenteditable="true" so the cell can be filled in directly on this standalone page
@@ -112,6 +123,18 @@
     </td>`;
   }
 
+  // خلية قائمة منسدلة؛ لو القيمة المحفوظة خارج القائمة تُضاف كخيار حتى لا تضيع
+  function selCell(key, opts, cs) {
+    const cur = d[key] || '';
+    const all = cur && !opts.includes(cur) ? opts.concat([cur]) : opts;
+    return `<td style="${S.val};padding:0"${cs ? ` colspan="${cs}"` : ''}>
+      <select onchange="d.${key}=this.value" style="width:100%;border:none;background:transparent;padding:9px 10px;font-size:11.5px;color:#111;cursor:pointer;outline:none;font-family:inherit">
+        <option value="" ${!cur?'selected':''}>Select..</option>
+        ${all.map(o => `<option value="${o}" ${cur===o?'selected':''}>${o}</option>`).join('')}
+      </select>
+    </td>`;
+  }
+
   function sigCell(key) {
     const img = d[key];
     return `<td style="padding:0;width:14%">
@@ -161,7 +184,7 @@
   <div style="${S.hdr}">PROJECT DETAILS</div>
   <table style="${S.tbl}">
     <tr>${lbl('REF. NO:','white-space:nowrap')}${val(d.refNo,5,'refNo')}</tr>
-    <tr>${lbl('Project Description','white-space:nowrap')}${val(d.projDesc,5,'projDesc')}</tr>
+    <tr>${lbl('Project Description','white-space:nowrap')}${selCell('projDesc', PROJ_DESCS, 5)}</tr>
     <tr>${lbl('Area','white-space:nowrap')}${val(d.station,5,'station')}</tr>
     <tr>${lbl('District','white-space:nowrap')}${val(d.district,5,'district')}</tr>
     <tr>${lbl('Requesting Department','white-space:nowrap')}${val(d.reqDept,5,'reqDept')}</tr>

@@ -184,6 +184,12 @@ printed, each `.a4-page` becomes its own physical A4 page.
 
 **Page 1** — nama logo + "ENHANCEMENT PRE-INVESTMENT PROJECT APPRAISAL" header, then:
 - PROJECT DETAILS (Ref No, Project Description, Area, District, Requesting Department).
+  **Project Description** is a `<select>` dropdown (not free text) built from the `PROJ_DESCS`
+  array — "Add New LT FD…", "Add New TX with LT FD due to voltage drop", and the
+  `Upgrade TX. from X KVA To Y KVA` variants — rendered by the shared `selCell(key, opts, colspan)`
+  helper. `selCell` appends the current value as an extra `<option>` when it isn't in the
+  list, so a proposal saved back when the field was free text (or edited directly in the
+  DB) still shows its value instead of falling back to "Select..".
   **District** (`Dhahira`) and **Requesting Department** (`Operation`) are pre-filled with
   defaults in the `d` object — they're the same on every proposal, so they're not retyped
   each time; both stay `contenteditable` for the exceptions. `_loadSavedProposal` restores
