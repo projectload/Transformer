@@ -38,13 +38,89 @@ the formatted "F3" string) so the specific overloaded feeder can be looked up la
 - For each round, computes:
   - Voltage readings (`vRN, vYN, vBN, vRY, vRB, vYB`) from `round.volt` (`vL1N`, `vL2N`, `vL3N`, `vL1L2`, `vL1L3`, `vL2L3`).
   - Transformer load per phase (`tR, tY, tB, tN`) = sum of all feeders' currents in that round.
-  - Feeder load per phase (`fR, fY, fB, fN`) = the *specific* feeder's currents, only filled
-    in when `type === 'cb'` and a matching `feederNum` is found.
+  - Feeder load per phase (`fR, fY, fB, fN`) + `fNum` (the feeder number those currents
+    belong to), `fSize` (its cable size in mm²) and `fAmp` (that cable's ampacity) — see
+    §2.1 for how the feeder is picked and §2.2 for how its % is computed.
   - A human label per round, e.g. `"Round 2 — 12/05 14:30"`.
 - Payload shape:
   ```js
-  { station, txNo, cap, lat, lng, rounds: [ {label, vRN..vYB, tR..tN, fR..fN}, ... ] }
+  { station, txNo, cap, lat, lng, type, bestRound,
+    rounds: [ {label, vRN..vYB, tR..tN, fR..fN, fNum, fSize, fAmp}, ... ] }
   ```
+
+## 2.1 Which feeder fills the "Feeder Load" table (and which round opens first)
+
+There are two kinds of overload alert — **transformer** (`type==='tx'`) and **feeder/cable**
+(`type==='cb'`) — and the Feeder Load half of the current table must always describe the
+feeder that is actually carrying the load, e.g. TX 125 → feeder 5.
+
+**Feeder pick, per round** (in `openProposal`, `index.html`):
+```js
+let tgt = null;
+if (feederNum != null && feederNum !== '') tgt = fds.find(x => String(x.num) === String(feederNum)) || null;
+if (!tgt && fds.length) {
+  // fallback: the feeder with the highest phase current in this round
+  tgt = fds.reduce((best, f) => {
+    const cur  = Math.max(parseFloat(f.iL1)||0, parseFloat(f.iL2)||0, parseFloat(f.iL3)||0);
+    const bcur = best ? Math.max(parseFloat(best.iL1)||0, parseFloat(best.iL2)||0, parseFloat(best.iL3)||0) : -1;
+    return cur > bcur ? f : best;
+  }, null);
+}
+```
+So:
+- **Feeder alert** — the alert row's own `feederNum` wins. If that feeder has no reading in
+  a given round (it can be missing from an older round), that round falls back to the
+  most-loaded feeder instead of leaving the table blank.
+- **Transformer alert** — no `feederNum` is passed, so the fallback always applies: the
+  proposal shows the transformer's most-loaded feeder. Previously the whole Feeder Load
+  half stayed empty for `tx` alerts.
+
+`fNum` (the chosen feeder's number) travels with each round and is rendered in the form
+header as `Feeder Load (F5)` — both in the current table's group header and in the
+`Feeder Load … %` row — so it's never ambiguous which feeder the numbers came from. It
+re-computes on every round switch, since the most-loaded feeder can differ per round.
+
+## 2.2 The two percentages are computed on different bases
+
+- **TX. Load %** — against the transformer's rated current:
+  `rated = cap·1000 / (√3 · 415)`, `txPct = max(tR,tY,tB) / rated`.
+- **Feeder Load %** — against the **cable's ampacity**, *not* the transformer rating. This
+  matches `cableStatus()` in `index.html`, which is what raises the cable alert in the first
+  place, so the number in the proposal now agrees with the number in the alerts list.
+  Previously `fPct` reused `_pct(d.cap, …)` and reported a transformer-percentage under a
+  "Feeder Load" label — that was the wrong basis.
+
+`openProposal` resolves the ampacity from the chosen feeder's cable size
+(`CABLE_AMPACITY[parseInt(tgt.name)]`) and ships it per round as `fAmp` (with `fSize` for
+display). `مقترح.html` then uses a separate helper:
+```js
+function _pctCable(amp, cur) {
+  const a = Number(amp) || 0;
+  if (!a || !cur) return '';
+  return String(Math.round((Number(cur) / a) * 100));
+}
+d.fPct = _pctCable(d.fAmp, Math.max(Number(d.fR)||0, Number(d.fY)||0, Number(d.fB)||0));
+```
+If the cable size is unknown/unmapped there's no ampacity, so `fPct` renders blank rather
+than a misleading figure — the cell stays `contenteditable` for a manual entry. The group
+header shows only the feeder number — `Feeder Load (F4)`; the cable size is deliberately
+*not* repeated there, since it already has its own "Main cable/conductor size" row below.
+
+**Main cable/conductor size** is auto-filled from the same feeder, in `renderRound`:
+```js
+if (d.fSize && !d.cableSize) d.cableSize = d.fSize + ' mm²';
+```
+The `!d.cableSize` guard means it only fills an *empty* field, so anything the user typed
+(synced into `d` by the `focusout` listener, §4) survives a round switch or re-render. It
+also loses to a saved value: `_loadSavedProposal` maps `cable_size: r.cable_size ||
+d.cableSize`, so a stored size wins and the auto-fill stays as the fallback when the DB
+value is empty.
+
+**Default round** — the form used to always open on Round 1, which could show a near-empty
+reading while the overload sat in a later round. `openProposal` now computes `bestRound`:
+the index of the round with the highest **feeder** current for `cb` alerts, or the highest
+**transformer** current for `tx` alerts. `مقترح.html` opens on `_payload.bestRound` and
+highlights that round's button; the user can still click any other round.
 - Payload is written to `sessionStorage.setItem('proposalData', JSON.stringify(payload))`
   — this is how data crosses into the iframe (see §3), since the iframe navigates to a
   real file URL (`مقترح.html`), not `srcdoc`, so it can't receive data via closures.
@@ -107,10 +183,16 @@ On screen this renders as two distinct "paper sheets" on a grey background; when
 printed, each `.a4-page` becomes its own physical A4 page.
 
 **Page 1** — nama logo + "ENHANCEMENT PRE-INVESTMENT PROJECT APPRAISAL" header, then:
-- PROJECT DETAILS (Ref No, Project Description, Area, District, Requesting Department)
+- PROJECT DETAILS (Ref No, Project Description, Area, District, Requesting Department).
+  **District** (`Dhahira`) and **Requesting Department** (`Operation`) are pre-filled with
+  defaults in the `d` object — they're the same on every proposal, so they're not retyped
+  each time; both stay `contenteditable` for the exceptions. `_loadSavedProposal` restores
+  them as `r.district || d.district` / `r.requesting_department || d.reqDept`, so a saved
+  value wins and the default fills in when the stored value is empty.
 - TRANSFORMER DETAILS (TX No, Capacity, No. of Complaints)
 - Voltage Reading table (R-N, Y-N, B-N, R-Y, R-B, Y-B)
-- TX Load / Feeder Load current table (R, Y, B, N each) + computed % badges
+- TX Load / Feeder Load current table (R, Y, B, N each) + computed % badges. The Feeder
+  Load side is titled with the feeder it describes — `Feeder Load (F5)` — see §2.1.
 - Main cable/conductor size + Connection point (compact 2-column custom row: wide label,
   narrow input)
 - PROJECT DESCRIPTION OPTION (Option 1/2 + Cost estimated)
@@ -252,6 +334,11 @@ alter table public.proposals enable row level security;
 create policy "Allow anon insert on proposals" on public.proposals for insert to anon with check (true);
 create policy "Allow anon select on proposals" on public.proposals for select to anon using (true);
 ```
+
+`fNum` / `fSize` / `fAmp` are **not** persisted (no columns for them) — they're derived
+fresh from the live readings every time the form opens, like the rest of the reading data.
+Add e.g. `f_num text, f_size text` columns and map them in `_saveProposal` if the feeder
+number/cable size ever needs to be stored.
 
 ### Save (`_saveProposal`)
 Maps every camelCase `d` field to the matching snake_case column and `POST`s it to

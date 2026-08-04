@@ -65,11 +65,11 @@
 
   // ── Fill this object with your data (or leave blank / edit inline) ─
   const d = {
-    refNo:'', projDesc:'', station: '', district:'', reqDept:'',   // Area = station
+    refNo:'', projDesc:'', station: '', district:'Dhahira', reqDept:'Operation',   // Area = station
     txNo: '', cap: '', complaints:'', lat: null, lng: null,
     vRN:'', vYN:'', vBN:'', vRY:'', vRB:'', vYB:'',
     tR:'', tY:'', tB:'', tN:'', txPct:'',
-    fR:'', fY:'', fB:'', fN:'', fPct:'',
+    fR:'', fY:'', fB:'', fN:'', fPct:'', fNum:'', fAmp:'', fSize:'',
     cableSize:'', connPoint:'',
     opt1:'', opt1Cost:'', opt2:'', opt2Cost:'',
     reason:'', risk:'', gisImage:null,
@@ -81,7 +81,7 @@
 
   // ── Prefill from URL query params (e.g. ?station=...&txNo=...&cap=...&txPct=...) ─
   const _qs = new URLSearchParams(location.search);
-  ['station','txNo','cap','txPct','fPct'].forEach(k => {
+  ['station','txNo','cap','txPct','fPct','fNum'].forEach(k => {
     const v = _qs.get(k);
     if (v) d[k] = v;
   });
@@ -97,6 +97,13 @@
     const rated = cap ? (Number(cap) * 1000) / (Math.sqrt(3) * 415) : 0;
     if (!rated || !cur) return '';
     return String(Math.round((Number(cur) / rated) * 100));
+  }
+
+  // نسبة حمل الفيدر = أعلى تيار ÷ قدرة تحمّل الكيبل (ampacity) — وليس قدرة المحول
+  function _pctCable(amp, cur) {
+    const a = Number(amp) || 0;
+    if (!a || !cur) return '';
+    return String(Math.round((Number(cur) / a) * 100));
   }
 
   function dateCell(key) {
@@ -174,7 +181,7 @@
   </div>
   <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
   <table style="${S.tbl};min-width:560px">
-    <tr><td style="${S.grp}" colspan="4">TX. Load</td><td style="${S.grp}" colspan="4">Feeder Load</td></tr>
+    <tr><td style="${S.grp}" colspan="4">TX. Load</td><td style="${S.grp}" colspan="4">Feeder Load${d.fNum ? ` <span style="font-weight:800">(F${d.fNum})</span>` : ''}</td></tr>
     <tr>${colh('R')}${colh('Y')}${colh('B')}${colh('N')}${colh('R')}${colh('Y')}${colh('B')}${colh('N')}</tr>
     <tr>${cval(d.tR,'tR')}${cval(d.tY,'tY')}${cval(d.tB,'tB')}${cval(d.tN,'tN')}${cval(d.fR,'fR')}${cval(d.fY,'fY')}${cval(d.fB,'fB')}${cval(d.fN,'fN')}</tr>
   </table>
@@ -182,7 +189,7 @@
   <table style="${S.tbl}">
     <tr>
       <td style="${S.grp};width:50%">TX. Load &nbsp; <span data-key="txPct" style="display:inline-block;min-width:42px;background:#e7ecf7;padding:2px 8px;border-radius:3px;cursor:pointer" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.txPct}</span> &nbsp; %</td>
-      <td style="${S.grp};width:50%">Feeder Load &nbsp; <span data-key="fPct" style="display:inline-block;min-width:42px;background:#e7ecf7;padding:2px 8px;border-radius:3px;cursor:pointer" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.fPct}</span> &nbsp; %</td>
+      <td style="${S.grp};width:50%">Feeder Load${d.fNum ? ` (F${d.fNum})` : ''} &nbsp; <span data-key="fPct" style="display:inline-block;min-width:42px;background:#e7ecf7;padding:2px 8px;border-radius:3px;cursor:pointer" contenteditable="true" onclick="_copyCell(this)" title="${tip}">${d.fPct}</span> &nbsp; %</td>
     </tr>
   </table>
   <table style="${S.tbl};table-layout:fixed">
@@ -260,7 +267,9 @@
     d.lat = _payload.lat || d.lat;
     d.lng = _payload.lng || d.lng;
     d.txPct = _pct(d.cap, Math.max(Number(d.tR)||0, Number(d.tY)||0, Number(d.tB)||0));
-    d.fPct = _pct(d.cap, Math.max(Number(d.fR)||0, Number(d.fY)||0, Number(d.fB)||0));
+    d.fPct = _pctCable(d.fAmp, Math.max(Number(d.fR)||0, Number(d.fY)||0, Number(d.fB)||0));
+    // حجم الكيبل الرئيسي يُعبّأ تلقائياً من كيبل الفيدر — بدون المساس بما كتبه المستخدم
+    if (d.fSize && !d.cableSize) d.cableSize = d.fSize + ' mm²';
     document.getElementById('proposalForm').innerHTML = reportFormHtml(d);
   }
 
@@ -276,14 +285,16 @@
     if (_payload.station) d.station = _payload.station;
     if (_payload.txNo) d.txNo = _payload.txNo;
     if (_payload.cap) d.cap = _payload.cap;
+    // الجولة الافتراضية: الجولة الأعلى حملاً كما حسبها التطبيق (وليس دائماً الجولة الأولى)
+    const _start = Number(_payload.bestRound) || 0;
     if (_payload.rounds.length > 1) {
       document.getElementById('roundSelWrap').innerHTML =
         '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.8rem">' +
         _payload.rounds.map((r, i) =>
-          `<button onclick="selectRound(${i})" style="padding:0.4rem 0.9rem;border-radius:8px;border:1px solid #cbd5e1;background:${i===0?'#2563eb':'#efefef'};color:${i===0?'#fff':'#111'};cursor:pointer;font-size:0.85rem;font-weight:700">${r.label}</button>`
+          `<button onclick="selectRound(${i})" style="padding:0.4rem 0.9rem;border-radius:8px;border:1px solid #cbd5e1;background:${i===_start?'#2563eb':'#efefef'};color:${i===_start?'#fff':'#111'};cursor:pointer;font-size:0.85rem;font-weight:700">${r.label}</button>`
         ).join('') + '</div>';
     }
-    renderRound(0);
+    renderRound(_start);
   } else {
     document.getElementById('proposalForm').innerHTML = reportFormHtml(d);
   }
@@ -304,7 +315,7 @@
       const r = rows[0];
       Object.assign(d, {
         refNo: r.ref_no || '', projDesc: r.project_description || '',
-        district: r.district || '', reqDept: r.requesting_department || '', complaints: r.complaints || '',
+        district: r.district || d.district, reqDept: r.requesting_department || d.reqDept, complaints: r.complaints || '',
         cableSize: r.cable_size || d.cableSize, connPoint: r.connection_point || '',
         opt1: r.option1 || '', opt1Cost: r.option1_cost || '', opt2: r.option2 || '', opt2Cost: r.option2_cost || '',
         reason: r.reason || '', risk: r.risk || '',

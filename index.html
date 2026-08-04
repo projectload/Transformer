@@ -4672,10 +4672,25 @@ ${(()=>{
       const fds = (rd.feeders || []).filter(hasData);
       const sum = k => fds.reduce((s, f) => s + (parseFloat(f[k]) || 0), 0);
       const round1 = n => n ? String(Math.round(n * 10) / 10) : '';
-      let fR = '', fY = '', fB = '', fN = '';
-      if (type === 'cb' && feederNum != null) {
-        const f = fds.find(x => String(x.num) === String(feederNum));
-        if (f) { fR = f.iL1 || ''; fY = f.iL2 || ''; fB = f.iL3 || ''; fN = f.iN || ''; }
+      // فيدر التنبيه: الفيدر المحدد إن وُجد، وإلا أعلى فيدر حملاً في هذه الجولة
+      let fR = '', fY = '', fB = '', fN = '', fNum = '';
+      let tgt = null;
+      if (feederNum != null && feederNum !== '') tgt = fds.find(x => String(x.num) === String(feederNum)) || null;
+      if (!tgt && fds.length) {
+        tgt = fds.reduce((best, f) => {
+          const cur = Math.max(parseFloat(f.iL1) || 0, parseFloat(f.iL2) || 0, parseFloat(f.iL3) || 0);
+          const bcur = best ? Math.max(parseFloat(best.iL1) || 0, parseFloat(best.iL2) || 0, parseFloat(best.iL3) || 0) : -1;
+          return cur > bcur ? f : best;
+        }, null);
+      }
+      let fAmp = '', fSize = '';
+      if (tgt) {
+        fR = tgt.iL1 || ''; fY = tgt.iL2 || ''; fB = tgt.iL3 || ''; fN = tgt.iN || '';
+        fNum = tgt.num != null ? String(tgt.num) : '';
+        // نسبة حمل الفيدر تُحسب على قدرة تحمل الكيبل (ampacity) وليس على قدرة المحول
+        fSize = tgt.name || '';
+        const amp = CABLE_AMPACITY[parseInt(tgt.name)];
+        if (amp) fAmp = String(amp);
       }
       const v = rd.volt || {};
       const dateLabel = rd.voltSavedAt ? formatDateTimeShort(rd.voltSavedAt) : '';
@@ -4684,10 +4699,18 @@ ${(()=>{
         vRN: v.vL1N || '', vYN: v.vL2N || '', vBN: v.vL3N || '',
         vRY: v.vL1L2 || '', vRB: v.vL1L3 || '', vYB: v.vL2L3 || '',
         tR: round1(sum('iL1')), tY: round1(sum('iL2')), tB: round1(sum('iL3')), tN: round1(sum('iN')),
-        fR, fY, fB, fN
+        fR, fY, fB, fN, fNum, fAmp, fSize
       };
     });
-    const payload = { station: rec.station || '', txNo: rec.id || '', cap: capKVA || '', lat: rec.lat || null, lng: rec.lng || null, rounds: roundsData };
+    // الجولة الافتراضية = أعلى جولة حملاً (حمل الفيدر لتنبيه الكيبل، حمل المحول لتنبيه المحول)
+    let bestRound = 0, bestVal = -1;
+    roundsData.forEach((rd, i) => {
+      const v = type === 'cb'
+        ? Math.max(Number(rd.fR) || 0, Number(rd.fY) || 0, Number(rd.fB) || 0)
+        : Math.max(Number(rd.tR) || 0, Number(rd.tY) || 0, Number(rd.tB) || 0);
+      if (v > bestVal) { bestVal = v; bestRound = i; }
+    });
+    const payload = { station: rec.station || '', txNo: rec.id || '', cap: capKVA || '', lat: rec.lat || null, lng: rec.lng || null, type: type || 'tx', bestRound, rounds: roundsData };
     try { sessionStorage.setItem('proposalData', JSON.stringify(payload)); } catch (e) {}
     let ov = document.getElementById('proposalOverlay');
     if (!ov) {
