@@ -4645,7 +4645,10 @@ ${(()=>{
       document.body.appendChild(ov);
       // إغلاق بزر Escape
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && ov.style.display !== 'none') closeReportPage();
+        if (e.key !== 'Escape') return;
+        const ql = document.getElementById('quickLoadOverlay');
+        if (ql && ql.style.display === 'flex') { closeQuickLoad(); return; }
+        if (ov.style.display !== 'none') closeReportPage();
       });
     }
     const dir = isAr ? 'rtl' : 'ltr';
@@ -4760,6 +4763,129 @@ ${(()=>{
     loadModalMode = 'browse';
     openLoadModal(uid, false);
   }
+
+  // ─── نظرة سريعة: حمل المحول + أحمال الفيدرات في نافذة واحدة بدون تمرير ───
+  var _qlUid = null, _qlRound = null;
+  function qlColor(p) { return p >= 100 ? '#dc2626' : p >= 80 ? '#ea580c' : p >= 60 ? '#f59e0b' : '#16a34a'; }
+  function qlRounds(uid) {
+    const ld = loadings[uid];
+    if (!ld) return [];
+    const SQRT3 = Math.sqrt(3);
+    const rec = records.find(r => r.uid === uid);
+    const capKVA = rec ? Number(rec.capacity) : 0;
+    const rated = capKVA > 0 ? (capKVA * 1000) / (SQRT3 * 415) : 0;
+    const all = (ld._allRounds && Object.keys(ld._allRounds).length)
+      ? ld._allRounds
+      : { [ld._round || 1]: { volt: ld.volt||{}, pf: ld.pf, feeders: ld.feeders||[], voltSavedAt: ld.voltSavedAt } };
+    return Object.keys(all).map(Number).sort((a,b)=>a-b).map(num => {
+      const rd = all[num] || {};
+      const fds = (rd.feeders || []).filter(hasData).sort((a,b)=>(a.num||0)-(b.num||0));
+      const totR = fds.reduce((s,f)=>s+(parseFloat(f.iL1)||0),0);
+      const totY = fds.reduce((s,f)=>s+(parseFloat(f.iL2)||0),0);
+      const totB = fds.reduce((s,f)=>s+(parseFloat(f.iL3)||0),0);
+      const maxI = Math.max(totR, totY, totB);
+      const pct  = rated > 0 ? (maxI / rated) * 100 : 0;
+      const at   = fds.map(f=>f.savedAt).filter(Boolean).sort().pop() || rd.voltSavedAt || null;
+      return { num, feeders: fds, totR, totY, totB, maxI, pct, rated, capKVA, savedAt: at };
+    }).filter(r => r.feeders.length);
+  }
+  function openQuickLoad(uid) {
+    _qlUid = uid;
+    const rounds = qlRounds(uid);
+    let best = null;
+    rounds.forEach(r => { if (!best || r.pct > best.pct) best = r; });
+    _qlRound = best ? best.num : null;
+    renderQuickLoad();
+  }
+  function renderQuickLoad() {
+    const uid = _qlUid, isAr = lang === 'ar';
+    const rec = records.find(r => r.uid === uid);
+    if (!rec) return;
+    let ov = document.getElementById('quickLoadOverlay');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.id = 'quickLoadOverlay';
+      ov.style.cssText = 'position:fixed;inset:0;z-index:10001;background:rgba(15,23,42,0.55);display:none;align-items:center;justify-content:center;padding:1rem';
+      ov.addEventListener('click', e => { if (e.target === ov) closeQuickLoad(); });
+      document.body.appendChild(ov);
+    }
+    ov.dir = isAr ? 'rtl' : 'ltr';
+    const rounds = qlRounds(uid);
+    const cur = rounds.find(r => r.num === _qlRound) || rounds[0];
+    const hv = formatHvFeeder(rec.hvFeeder);
+    const cellS = 'padding:0.32rem 0.3rem;text-align:center;border-bottom:1px solid #eef2f6;font-family:monospace;font-size:0.84rem';
+    let body;
+    if (!cur) {
+      body = `<div style="padding:1.6rem;text-align:center;color:#94a3b8;font-family:'Tajawal',sans-serif">${isAr?'لا توجد قراءات محفوظة':'No saved readings'}</div>`;
+    } else {
+      const c = qlColor(cur.pct);
+      const kva = cur.capKVA ? (cur.capKVA * cur.pct / 100) : 0;
+      const tabs = rounds.length > 1 ? `<div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-bottom:0.7rem">` + rounds.map(r => {
+        const on = r.num === cur.num, rc = qlColor(r.pct);
+        return `<button onclick="_qlRound=${r.num};renderQuickLoad()" style="padding:0.22rem 0.6rem;border-radius:8px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:0.75rem;font-weight:700;border:1px solid ${on?rc:'#cbd5e1'};background:${on?rc:'#fff'};color:${on?'#fff':'#64748b'}">${isAr?'ق':'R'}${r.num} · ${Math.round(r.pct)}%</button>`;
+      }).join('') + `</div>` : '';
+      const rows = cur.feeders.map(f => {
+        const cs = cableStatus(f);
+        const fc = cs ? qlColor(cs.pct) : '#94a3b8';
+        return `<tr>
+          <td style="${cellS};color:#a78bfa;font-weight:800">${f.num||'—'}</td>
+          <td style="${cellS};font-family:'Tajawal',sans-serif;color:#475569">${f.name?f.name+' mm²':'—'}</td>
+          <td style="${cellS};color:#dc2626">${f.iL1||'—'}</td>
+          <td style="${cellS};color:#ca8a04">${f.iL2||'—'}</td>
+          <td style="${cellS};color:#2563eb">${f.iL3||'—'}</td>
+          <td style="${cellS};color:#64748b">${f.iN||'—'}</td>
+          <td style="${cellS};color:${fc};font-weight:800">${cs?Math.round(cs.pct)+'%':'—'}</td>
+        </tr>`;
+      }).join('');
+      const thS = "padding:0.35rem 0.3rem;text-align:center;font-size:0.7rem;font-weight:700;color:#475569;background:#f1f5f9;font-family:'Tajawal',sans-serif";
+      body = `${tabs}
+        <div style="display:flex;align-items:center;gap:0.9rem;background:${c}12;border:1px solid ${c}55;border-radius:12px;padding:0.6rem 0.9rem;margin-bottom:0.7rem">
+          <div style="font-size:1.7rem;font-weight:900;color:${c};font-family:monospace;line-height:1">${Math.round(cur.pct)}%</div>
+          <div style="flex:1 1 auto;min-width:0">
+            <div style="height:7px;border-radius:4px;background:#e2e8f0;overflow:hidden;margin-bottom:0.3rem"><i style="display:block;height:100%;width:${Math.min(100,cur.pct)}%;background:${c}"></i></div>
+            <div style="font-size:0.76rem;color:#64748b;font-family:'Tajawal',sans-serif">${kva.toFixed(1)} / ${cur.capKVA} KVA · ${cur.maxI.toFixed(0)} / ${cur.rated.toFixed(0)} A</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:0.4rem;margin-bottom:0.7rem;font-family:monospace;font-size:0.8rem">
+          <span style="flex:1;text-align:center;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:0.25rem 0;color:#dc2626;font-weight:800">R ${cur.totR.toFixed(0)}</span>
+          <span style="flex:1;text-align:center;background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:0.25rem 0;color:#ca8a04;font-weight:800">Y ${cur.totY.toFixed(0)}</span>
+          <span style="flex:1;text-align:center;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:0.25rem 0;color:#2563eb;font-weight:800">B ${cur.totB.toFixed(0)}</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr>
+            <th style="${thS}">#</th><th style="${thS}">${isAr?'الكيبل':'Cable'}</th>
+            <th style="${thS};color:#dc2626">R</th><th style="${thS};color:#ca8a04">Y</th>
+            <th style="${thS};color:#2563eb">B</th><th style="${thS}">N</th>
+            <th style="${thS}">${isAr?'الكيبل %':'Cable %'}</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        ${cur.savedAt?`<div style="margin-top:0.5rem;font-size:0.72rem;color:#94a3b8;text-align:center;font-family:'Tajawal',sans-serif">🕐 ${formatDateTimeShort(cur.savedAt)}</div>`:''}`;
+    }
+    const btnS = "padding:0.35rem 0.7rem;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#475569;font-family:'Cairo',sans-serif;font-size:0.76rem;font-weight:700;cursor:pointer";
+    ov.innerHTML = `<div style="background:#fff;border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,0.35);width:100%;max-width:540px;max-height:92vh;overflow:auto;padding:0.9rem 1rem;font-family:'Cairo',sans-serif;color:#0f172a">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.6rem;margin-bottom:0.7rem">
+        <div style="min-width:0">
+          <div style="font-size:1.02rem;font-weight:900">Tx: ${rec.id||'—'}</div>
+          <div style="font-size:0.76rem;color:#64748b;font-family:'Tajawal',sans-serif">${rec.station||'—'}${hv!=='—'?' · '+hv:''} · ${rec.capacity||'—'} KVA</div>
+        </div>
+        <button onclick="closeQuickLoad()" style="flex:0 0 auto;width:30px;height:30px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:0.95rem;cursor:pointer;line-height:1">✕</button>
+      </div>
+      ${body}
+      <div style="display:flex;gap:0.4rem;justify-content:center;margin-top:0.8rem;flex-wrap:wrap">
+        <button onclick="qlOpenFull()" style="${btnS}">📊 ${isAr?'كل القراءات':'All readings'}</button>
+        <button onclick="qlOpenReport()" style="${btnS}">📄 ${isAr?'التقرير':'Report'}</button>
+      </div>
+    </div>`;
+    ov.style.display = 'flex';
+  }
+  function closeQuickLoad() {
+    const ov = document.getElementById('quickLoadOverlay');
+    if (ov) ov.style.display = 'none';
+    _qlUid = null;
+  }
+  function qlOpenFull() { const u = _qlUid; closeQuickLoad(); if (u) openLoadFromAlerts(u); }
+  function qlOpenReport() { const u = _qlUid; closeQuickLoad(); if (u) { _returnToAlerts = true; openReport(u); } }
   function closeReportPage() {
     if (_returnToAlerts) { _returnToAlerts = false; openAlerts(); return; }
     const ov = document.getElementById('reportOverlay');
@@ -6308,7 +6434,7 @@ ${(()=>{
     function colorFor(p){return p>=100?'#dc2626':'#ea580c';}
     var TEAM_CLR={'Ibri':'#3B82F6','Wadi Alain':'#10B981','Araqi':'#F59E0B','Hijermat':'#EF4444','Dank':'#8B5CF6','Yanqul':'#06B6D4','Hamra AlDaroo':'#F97316','Masrooq':'#EC4899'};
     function teamClr(t){return TEAM_CLR[t]||'#64748b';}
-    function goTo(uid){parent.openLoadFromAlerts(uid);};
+    function goTo(uid){parent.openQuickLoad(uid);};
     function setLoc(uid){parent.openLocFromAlerts(uid);}
     // ── noLoc filters & render ──
     var nlTeamSel=document.getElementById('nlFTeam');
